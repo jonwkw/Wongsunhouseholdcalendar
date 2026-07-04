@@ -57,7 +57,21 @@ export function KidCorner() {
 
   return (
     <div className="kid-page">
-      <h2 className="kid-title">⭐ {kid.name}'s Corner ⭐</h2>
+      <div className="kid-hero">
+        <span className="kid-hero-star s1">✦</span>
+        <span className="kid-hero-star s2">✦</span>
+        <span className="kid-hero-star s3">✦</span>
+        <span className="kid-hero-star s4">✦</span>
+        <span className="kid-hero-star s5">✦</span>
+        <span className="kid-hero-planet">🪐</span>
+        <span className="kid-hero-rocket">🚀</span>
+        <div className="kid-hero-text">
+          <h2 className="kid-title">{kid.name}'s Mission Control</h2>
+          <p className="kid-hero-sub">Ready for lift-off, Captain {kid.name}? 🧑‍🚀</p>
+        </div>
+        <span className="kid-hero-robot">🤖</span>
+        <span className="kid-hero-moon">🌙</span>
+      </div>
 
       <div className="star-bank">
         <div className="star-bank-super" title="One super gold star for every 5 gold stars">
@@ -77,7 +91,7 @@ export function KidCorner() {
 
       <div className={`kid-card checklist ${allDone ? 'complete' : ''}`}>
         <div className="checklist-head">
-          <h3>✅ Today's checklist</h3>
+          <h3>🤖 Today's missions</h3>
           <button className="icon-btn" title="Edit the list" onClick={() => setEditList((v) => !v)}>
             {editList ? 'Done' : '✏️'}
           </button>
@@ -111,7 +125,7 @@ export function KidCorner() {
             </button>
           </div>
         )}
-        {allDone && <div className="checklist-star">🌟 All done — you earned today's gold star! 🌟</div>}
+        {allDone && <div className="checklist-star">🚀 All missions complete — you earned today's gold star! 🌟</div>}
       </div>
 
       <div className="kid-daily">
@@ -140,7 +154,7 @@ export function KidCorner() {
         </div>
       </div>
 
-      <h3 className="kid-subtitle">🗓️ Your next few days</h3>
+      <h3 className="kid-subtitle">🛸 Your flight plan — next few days</h3>
       <div className="kid-days">
         {daySpan.map((date, i) => {
           const acts = activitiesOn(data.activities, date).filter(

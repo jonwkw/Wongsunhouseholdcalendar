@@ -7,6 +7,7 @@ import {
 } from '../utils/dates'
 import { Legend, MemberChips, MemberToggle, Modal, EmojiPicker, tagColor } from './shared'
 import { ActivityModal } from './ActivityModal'
+import { setDragPayload, getDragPayload, leavesTarget } from '../utils/dnd'
 
 type DragPayload = { type: 'template'; id: string } | { type: 'activity'; id: string }
 
@@ -19,13 +20,12 @@ export function Timetable() {
   const [filterMember, setFilterMember] = useState<string>('all')
   const [editing, setEditing] = useState<{ activity: Activity | null; date: string; prefill?: Partial<Activity> } | null>(null)
   const [noteDay, setNoteDay] = useState<string | null>(null)
-  const [armedTemplate, setArmedTemplate] = useState<string | null>(null)
   const [showTemplateForm, setShowTemplateForm] = useState(false)
   const [dragOverDay, setDragOverDay] = useState<string | null>(null)
 
   const weeks = Array.from({ length: WEEKS_SHOWN }, (_, i) => weekDays(addDays(monday, i * 7)))
 
-  /** Opening the full form on placement means "repeat weekly" is always one tap away */
+  /** Clicking or dropping a card opens the same full form as adding on a day */
   const placeTemplate = (t: ActivityTemplate, date: string) => {
     setEditing({
       activity: null,
@@ -51,24 +51,13 @@ export function Timetable() {
   const onDrop = (e: DragEvent, date: string) => {
     e.preventDefault()
     setDragOverDay(null)
-    try {
-      const payload = JSON.parse(e.dataTransfer.getData('application/json')) as DragPayload
-      if (payload.type === 'template') {
-        const t = data.activityTemplates.find((x) => x.id === payload.id)
-        if (t) placeTemplate(t, date)
-      } else {
-        moveActivity(payload.id, date)
-      }
-    } catch {
-      // ignore malformed drops
-    }
-  }
-
-  const onDayClick = (date: string) => {
-    if (armedTemplate) {
-      const t = data.activityTemplates.find((x) => x.id === armedTemplate)
+    const payload = getDragPayload<DragPayload>(e)
+    if (!payload) return
+    if (payload.type === 'template') {
+      const t = data.activityTemplates.find((x) => x.id === payload.id)
       if (t) placeTemplate(t, date)
-      setArmedTemplate(null)
+    } else {
+      moveActivity(payload.id, date)
     }
   }
 
@@ -90,17 +79,16 @@ export function Timetable() {
     <div className="timetable-layout">
       <aside className="library">
         <h3>🧩 Activity cards</h3>
-        <p className="hint">Drag a card onto a day — or tap it, then tap a day. You'll get the chance to set it repeating before saving.</p>
+        <p className="hint">Click a card to add that activity (you pick the day and repeat in the form) — or drag it straight onto a day.</p>
         {data.activityTemplates.map((t) => (
           <div
             key={t.id}
-            className={`library-card ${armedTemplate === t.id ? 'armed' : ''}`}
+            className="library-card"
             style={{ borderLeft: `4px solid ${tagColor(t.memberIds, data.members)}` }}
             draggable
-            onDragStart={(e) =>
-              e.dataTransfer.setData('application/json', JSON.stringify({ type: 'template', id: t.id }))
-            }
-            onClick={() => setArmedTemplate(armedTemplate === t.id ? null : t.id)}
+            onDragStart={(e) => setDragPayload(e, { type: 'template', id: t.id })}
+            onClick={() => placeTemplate(t, today)}
+            title="Click to add this activity"
           >
             <span className="card-emoji">{t.emoji}</span>
             <span className="card-title">{t.title}</span>
@@ -120,9 +108,6 @@ export function Timetable() {
         <button className="btn subtle full" onClick={() => setShowTemplateForm(true)}>
           ＋ New activity card
         </button>
-        {armedTemplate && (
-          <p className="armed-hint">👉 Now tap a day to place it (tap card again to cancel)</p>
-        )}
       </aside>
 
       <div className="timetable-main">
@@ -186,14 +171,16 @@ export function Timetable() {
                   return (
                     <div
                       key={date}
-                      className={`day-col ${date === today ? 'today' : ''} ${dragOverDay === date ? 'drag-over' : ''} ${armedTemplate ? 'placeable' : ''}`}
+                      className={`day-col ${date === today ? 'today' : ''} ${dragOverDay === date ? 'drag-over' : ''}`}
                       onDragOver={(e) => {
                         e.preventDefault()
+                        e.dataTransfer.dropEffect = 'copy'
                         setDragOverDay(date)
                       }}
-                      onDragLeave={() => setDragOverDay((cur) => (cur === date ? null : cur))}
+                      onDragLeave={(e) => {
+                        if (leavesTarget(e)) setDragOverDay((cur) => (cur === date ? null : cur))
+                      }}
                       onDrop={(e) => onDrop(e, date)}
-                      onClick={() => onDayClick(date)}
                     >
                       <div className="day-head">
                         <span className="day-name">{['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d.getDay()]}</span>
@@ -207,9 +194,10 @@ export function Timetable() {
                           className="activity-card"
                           style={{ borderLeft: `4px solid ${tagColor(a.memberIds, data.members)}` }}
                           draggable={Boolean(a.date)}
+                          title={a.date ? 'Click to edit · drag to another day' : 'Click to edit'}
                           onDragStart={(e) => {
                             e.stopPropagation()
-                            e.dataTransfer.setData('application/json', JSON.stringify({ type: 'activity', id: a.id }))
+                            setDragPayload(e, { type: 'activity', id: a.id })
                           }}
                           onClick={(e) => {
                             e.stopPropagation()
@@ -231,6 +219,7 @@ export function Timetable() {
                             <MemberChips memberIds={a.memberIds} everyone />
                           </div>
                           {a.location && <div className="activity-loc">📍 {a.location}</div>}
+                          {a.notes && <div className="activity-notes">📝 {a.notes}</div>}
                         </div>
                       ))}
 
@@ -241,21 +230,17 @@ export function Timetable() {
                       <div className="day-actions">
                         <button
                           className="btn ghost"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setEditing({ activity: null, date })
-                          }}
+                          title="Add an activity on this day"
+                          onClick={() => setEditing({ activity: null, date })}
                         >
-                          ＋
+                          ＋ Activity
                         </button>
                         <button
                           className="btn ghost"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setNoteDay(date)
-                          }}
+                          title="Add a note or reminder on this day"
+                          onClick={() => setNoteDay(date)}
                         >
-                          📝
+                          📝 Note
                         </button>
                       </div>
                     </div>
@@ -388,6 +373,8 @@ function TemplateModal({ onClose }: { onClose: () => void }) {
   const [emoji, setEmoji] = useState('📚')
   const [memberIds, setMemberIds] = useState<string[]>([])
   const [time, setTime] = useState('')
+  const [endTime, setEndTime] = useState('')
+  const [location, setLocation] = useState('')
 
   const save = () => {
     if (!title.trim()) return
@@ -395,7 +382,15 @@ function TemplateModal({ onClose }: { onClose: () => void }) {
       ...d,
       activityTemplates: [
         ...d.activityTemplates,
-        { id: uid('t'), title: title.trim(), emoji, memberIds, time: time || undefined },
+        {
+          id: uid('t'),
+          title: title.trim(),
+          emoji,
+          memberIds,
+          time: time || undefined,
+          endTime: endTime || undefined,
+          location: location.trim() || undefined,
+        },
       ],
     }))
     onClose()
@@ -412,9 +407,19 @@ function TemplateModal({ onClose }: { onClose: () => void }) {
         <EmojiPicker value={emoji} onChange={setEmoji} />
         <label>Usually for</label>
         <MemberToggle selected={memberIds} onChange={setMemberIds} />
+        <div className="form-row">
+          <label>
+            Usual start (optional)
+            <input type="time" value={time} onChange={(e) => setTime(e.target.value)} />
+          </label>
+          <label>
+            Usual end (optional)
+            <input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
+          </label>
+        </div>
         <label>
-          Usual start time (optional)
-          <input type="time" value={time} onChange={(e) => setTime(e.target.value)} />
+          Usual place (optional)
+          <input value={location} onChange={(e) => setLocation(e.target.value)} />
         </label>
         <div className="form-actions">
           <span className="spacer" />

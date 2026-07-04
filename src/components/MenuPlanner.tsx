@@ -4,6 +4,7 @@ import type { Dish, MealSlot, MenuEntry } from '../types'
 import { useApp, uid } from '../store'
 import { addDays, fromKey, mondayOf, prettyDate, todayKey, weekDays, DAY_SHORT } from '../utils/dates'
 import { MemberChips, MemberToggle, Modal, tagColor } from './shared'
+import { setDragPayload, getDragPayload, leavesTarget } from '../utils/dnd'
 
 const SLOTS: MealSlot[] = ['breakfast', 'snack-am', 'lunch', 'snack-pm', 'dinner']
 const SLOT_LABEL: Record<MealSlot, string> = {
@@ -18,7 +19,7 @@ export function MenuPlanner() {
   const { data, update } = useApp()
   const today = todayKey()
   const [monday, setMonday] = useState(() => mondayOf(today))
-  const [armedDish, setArmedDish] = useState<string | null>(null)
+  const [placingDish, setPlacingDish] = useState<Dish | null>(null)
   const [showDishForm, setShowDishForm] = useState(false)
   const [typing, setTyping] = useState<{ date: string; slot: MealSlot } | null>(null)
   const [typedName, setTypedName] = useState('')
@@ -40,22 +41,12 @@ export function MenuPlanner() {
   const onDrop = (e: DragEvent, date: string, slot: MealSlot) => {
     e.preventDefault()
     setDragOver(null)
-    try {
-      const { id } = JSON.parse(e.dataTransfer.getData('application/json')) as { id: string }
-      const dish = data.dishes.find((x) => x.id === id)
-      if (dish) addEntry(date, slot, dish.name, dish.emoji)
-    } catch {
-      // ignore malformed drops
-    }
+    const payload = getDragPayload<{ id: string }>(e)
+    const dish = payload && data.dishes.find((x) => x.id === payload.id)
+    if (dish) addEntry(date, slot, dish.name, dish.emoji)
   }
 
   const onCellClick = (date: string, slot: MealSlot) => {
-    if (armedDish) {
-      const dish = data.dishes.find((x) => x.id === armedDish)
-      if (dish) addEntry(date, slot, dish.name, dish.emoji)
-      setArmedDish(null)
-      return
-    }
     setTyping({ date, slot })
     setTypedName('')
   }
@@ -69,14 +60,15 @@ export function MenuPlanner() {
     <div className="timetable-layout">
       <aside className="library">
         <h3>🍲 Dish library</h3>
-        <p className="hint">Drag a dish onto a meal — or tap it, then tap a meal box. You can also tap any box and just type.</p>
+        <p className="hint">Click a dish to add it to the menu (you pick the day and meal) — or drag it straight onto a meal box. You can also tap any box and just type.</p>
         {data.dishes.map((dish) => (
           <div
             key={dish.id}
-            className={`library-card ${armedDish === dish.id ? 'armed' : ''}`}
+            className="library-card"
             draggable
-            onDragStart={(e) => e.dataTransfer.setData('application/json', JSON.stringify({ id: dish.id }))}
-            onClick={() => setArmedDish(armedDish === dish.id ? null : dish.id)}
+            onDragStart={(e) => setDragPayload(e, { id: dish.id })}
+            onClick={() => setPlacingDish(dish)}
+            title="Click to add this dish to the menu"
           >
             <span className="card-emoji">{dish.emoji}</span>
             <span className="card-title">{dish.name}</span>
@@ -96,7 +88,6 @@ export function MenuPlanner() {
         <button className="btn subtle full" onClick={() => setShowDishForm(true)}>
           ＋ New dish
         </button>
-        {armedDish && <p className="armed-hint">👉 Now tap a meal box to place it</p>}
       </aside>
 
       <div className="timetable-main">
@@ -134,7 +125,6 @@ export function MenuPlanner() {
               setTypedName={setTypedName}
               saveTyped={saveTyped}
               cancelTyped={() => setTyping(null)}
-              armed={Boolean(armedDish)}
             />
           ))}
         </div>
@@ -144,7 +134,58 @@ export function MenuPlanner() {
 
       {showDishForm && <DishModal onClose={() => setShowDishForm(false)} />}
       {editingEntry && <MealModal entry={editingEntry} onClose={() => setEditingEntry(null)} />}
+      {placingDish && (
+        <PlaceDishModal
+          dish={placingDish}
+          onPlace={(date, slot) => {
+            addEntry(date, slot, placingDish.name, placingDish.emoji)
+            setPlacingDish(null)
+          }}
+          onClose={() => setPlacingDish(null)}
+        />
+      )}
     </div>
+  )
+}
+
+/** Pick which day and meal a clicked dish goes to */
+function PlaceDishModal({
+  dish,
+  onPlace,
+  onClose,
+}: {
+  dish: Dish
+  onPlace: (date: string, slot: MealSlot) => void
+  onClose: () => void
+}) {
+  const [date, setDate] = useState(todayKey())
+  const [slot, setSlot] = useState<MealSlot>(dish.slot === 'breakfast' || dish.slot === 'lunch' || dish.slot === 'dinner' ? dish.slot : dish.slot === 'snack' ? 'snack-pm' : 'dinner')
+
+  return (
+    <Modal title={`Add ${dish.emoji} ${dish.name} to the menu`} onClose={onClose}>
+      <div className="form">
+        <label>
+          Which day?
+          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+        </label>
+        <label>
+          Which meal?
+          <select value={slot} onChange={(e) => setSlot(e.target.value as MealSlot)}>
+            {SLOTS.map((s) => (
+              <option key={s} value={s}>
+                {SLOT_LABEL[s]}
+              </option>
+            ))}
+          </select>
+        </label>
+        <div className="form-actions">
+          <span className="spacer" />
+          <button className="btn primary" onClick={() => onPlace(date, slot)}>
+            Add to menu
+          </button>
+        </div>
+      </div>
+    </Modal>
   )
 }
 
@@ -161,14 +202,13 @@ interface RowProps {
   setTypedName: (v: string) => void
   saveTyped: () => void
   cancelTyped: () => void
-  armed: boolean
 }
 
 function MenuRow(props: RowProps) {
   const { data } = useApp()
   const {
     slot, days, dragOver, setDragOver, onDrop, onCellClick, onEntryClick,
-    typing, typedName, setTypedName, saveTyped, cancelTyped, armed,
+    typing, typedName, setTypedName, saveTyped, cancelTyped,
   } = props
 
   return (
@@ -181,12 +221,15 @@ function MenuRow(props: RowProps) {
         return (
           <div
             key={key}
-            className={`menu-cell ${dragOver === key ? 'drag-over' : ''} ${armed ? 'placeable' : ''}`}
+            className={`menu-cell ${dragOver === key ? 'drag-over' : ''}`}
             onDragOver={(e) => {
               e.preventDefault()
+              e.dataTransfer.dropEffect = 'copy'
               setDragOver(key)
             }}
-            onDragLeave={() => dragOver === key && setDragOver(null)}
+            onDragLeave={(e) => {
+              if (leavesTarget(e) && dragOver === key) setDragOver(null)
+            }}
             onDrop={(e) => onDrop(e, date, slot)}
             onClick={() => !isTyping && onCellClick(date, slot)}
           >
@@ -201,9 +244,15 @@ function MenuRow(props: RowProps) {
                   onEntryClick(entry)
                 }}
               >
-                <span>{entry.emoji}</span>
-                <span className="menu-entry-name">{entry.dishName}</span>
-                <MemberChips memberIds={entry.memberIds} everyone />
+                <div className="menu-entry-top">
+                  <span>{entry.emoji}</span>
+                  <span className="menu-entry-name">{entry.dishName}</span>
+                </div>
+                {entry.memberIds.length > 0 && (
+                  <div className="menu-entry-tags">
+                    <MemberChips memberIds={entry.memberIds} />
+                  </div>
+                )}
               </div>
             ))}
             {isTyping ? (

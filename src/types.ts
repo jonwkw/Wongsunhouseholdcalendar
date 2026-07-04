@@ -78,7 +78,10 @@ export interface BoardItem {
   id: string
   kind: 'request' | 'reminder'
   text: string
+  /** Who raised it ("Requested by …") */
   byMemberId: string
+  /** Who should handle it ("Assigned to …") */
+  assignedToId?: string
   forDate?: string
   status: 'open' | 'done'
   createdAt: string

@@ -5,7 +5,8 @@ import { seedData, DEFAULT_CHECKLIST } from './data/seed'
 
 // Stage 1 persistence: localStorage on this device.
 // Stage 2 swaps `load`/`persist` for a synced backend without touching the UI.
-const STORAGE_KEY = 'wongsun-household-v1'
+// v2: fresh start with the real family names and minimal sample data.
+const STORAGE_KEY = 'wongsun-household-v2'
 
 export function uid(prefix: string): string {
   return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`
