@@ -1,5 +1,14 @@
-import type { AppData } from '../types'
+import type { AppData, ChecklistItem } from '../types'
 import { todayKey, addDays, mondayOf } from '../utils/dates'
+
+export const DEFAULT_CHECKLIST: ChecklistItem[] = [
+  { id: 'c-teeth-am', emoji: '🪥', text: 'Brush teeth in the morning' },
+  { id: 'c-breakfast', emoji: '🥣', text: 'Eat a good breakfast' },
+  { id: 'c-bag', emoji: '🎒', text: 'Pack your school bag' },
+  { id: 'c-read', emoji: '📖', text: 'Read for 15 minutes' },
+  { id: 'c-tidy', emoji: '🧸', text: 'Tidy up your toys' },
+  { id: 'c-teeth-pm', emoji: '🌙', text: 'Brush teeth before bed' },
+]
 
 // Starter data so the app is understandable on first open.
 // Every member, activity and dish here can be edited or deleted in the app.
@@ -72,6 +81,9 @@ export function seedData(): AppData {
     menuEntries: [
       { id: 'm-1', date: today, slot: 'dinner', dishName: 'Fish porridge', emoji: '🐟', memberIds: [] },
     ],
+    kidChecklist: DEFAULT_CHECKLIST,
+    kidChecks: {},
+    starDays: [],
     boardItems: [
       {
         id: 'b-1',

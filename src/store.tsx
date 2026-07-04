@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { AppData, Member } from './types'
-import { seedData } from './data/seed'
+import { seedData, DEFAULT_CHECKLIST } from './data/seed'
 
 // Stage 1 persistence: localStorage on this device.
 // Stage 2 swaps `load`/`persist` for a synced backend without touching the UI.
@@ -31,6 +31,9 @@ function migrate(data: AppData): AppData {
       // 'snack' split into snack-am / snack-pm rows
       slot: (m.slot as string) === 'snack' ? 'snack-am' : m.slot,
     })),
+    kidChecklist: data.kidChecklist ?? DEFAULT_CHECKLIST,
+    kidChecks: data.kidChecks ?? {},
+    starDays: data.starDays ?? [],
   }
 }
 

@@ -85,6 +85,13 @@ export interface BoardItem {
   reply?: string
 }
 
+/** A daily habit on the kid's checklist (brush teeth, eat breakfast, …) */
+export interface ChecklistItem {
+  id: string
+  emoji: string
+  text: string
+}
+
 export interface AppData {
   version: number
   members: Member[]
@@ -94,4 +101,10 @@ export interface AppData {
   dishes: Dish[]
   menuEntries: MenuEntry[]
   boardItems: BoardItem[]
+  /** The kid's daily habits */
+  kidChecklist: ChecklistItem[]
+  /** Which checklist items were ticked on each date */
+  kidChecks: Record<string, string[]>
+  /** Dates where every checklist item was ticked — one gold star each */
+  starDays: string[]
 }

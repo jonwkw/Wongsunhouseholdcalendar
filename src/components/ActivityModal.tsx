@@ -25,6 +25,7 @@ export function ActivityModal({ activity, date, prefill, onClose }: Props) {
   const [notes, setNotes] = useState(activity?.notes ?? '')
   const [recurring, setRecurring] = useState(Boolean(activity?.recurrence))
   const [days, setDays] = useState<number[]>(activity?.recurrence?.days ?? [new Date(date + 'T00:00').getDay()])
+  const [from, setFrom] = useState(activity?.recurrence?.from ?? date)
   const [until, setUntil] = useState(activity?.recurrence?.until ?? '')
   const [oneOffDate, setOneOffDate] = useState(activity?.date ?? date)
 
@@ -44,7 +45,7 @@ export function ActivityModal({ activity, date, prefill, onClose }: Props) {
       notes: notes.trim() || undefined,
       exceptions: activity?.exceptions ?? [],
       ...(recurring
-        ? { recurrence: { days: days.length ? days : [new Date(date + 'T00:00').getDay()], from: activity?.recurrence?.from ?? date, until: until || undefined } }
+        ? { recurrence: { days: days.length ? days : [new Date(date + 'T00:00').getDay()], from: from || date, until: until || undefined } }
         : { date: oneOffDate }),
     }
     update((d) => ({
@@ -148,10 +149,16 @@ export function ActivityModal({ activity, date, prefill, onClose }: Props) {
                 </button>
               ))}
             </div>
-            <label>
-              Repeats until (optional)
-              <input type="date" value={until} min={todayKey()} onChange={(e) => setUntil(e.target.value)} />
-            </label>
+            <div className="form-row">
+              <label>
+                Starts on
+                <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+              </label>
+              <label>
+                Stops after (optional)
+                <input type="date" value={until} min={from || todayKey()} onChange={(e) => setUntil(e.target.value)} />
+              </label>
+            </div>
           </>
         ) : (
           <label>
