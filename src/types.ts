@@ -1,0 +1,95 @@
+// Shared data model. All dates are "YYYY-MM-DD" local strings; times are "HH:MM".
+
+export type MealSlot = 'breakfast' | 'lunch' | 'dinner' | 'snack'
+
+export interface Member {
+  id: string
+  name: string
+  emoji: string
+  color: string
+  isChild?: boolean
+}
+
+export interface Recurrence {
+  /** Weekdays the activity repeats on: 0 = Sunday … 6 = Saturday */
+  days: number[]
+  from: string
+  until?: string
+}
+
+export interface Activity {
+  id: string
+  title: string
+  emoji: string
+  memberIds: string[]
+  /** Set for one-off activities */
+  date?: string
+  /** Set for repeating activities */
+  recurrence?: Recurrence
+  time?: string
+  endTime?: string
+  location?: string
+  notes?: string
+  /** Dates where a recurring activity is skipped */
+  exceptions: string[]
+}
+
+/** Reusable card in the activity library that can be dragged onto a day */
+export interface ActivityTemplate {
+  id: string
+  title: string
+  emoji: string
+  memberIds: string[]
+  time?: string
+  endTime?: string
+  location?: string
+}
+
+export interface DayNote {
+  id: string
+  date: string
+  text: string
+  kind: 'note' | 'reminder'
+  memberId?: string
+  done: boolean
+}
+
+/** Reusable dish in the menu library that can be dragged onto a day */
+export interface Dish {
+  id: string
+  name: string
+  emoji: string
+  slot: MealSlot | 'any'
+}
+
+export interface MenuEntry {
+  id: string
+  date: string
+  slot: MealSlot
+  dishName: string
+  emoji: string
+  byMemberId?: string
+  note?: string
+}
+
+export interface BoardItem {
+  id: string
+  kind: 'request' | 'reminder'
+  text: string
+  byMemberId: string
+  forDate?: string
+  status: 'open' | 'done'
+  createdAt: string
+  reply?: string
+}
+
+export interface AppData {
+  version: number
+  members: Member[]
+  activities: Activity[]
+  activityTemplates: ActivityTemplate[]
+  dayNotes: DayNote[]
+  dishes: Dish[]
+  menuEntries: MenuEntry[]
+  boardItems: BoardItem[]
+}
