@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import type { Member } from '../types'
 import { useApp } from '../store'
+import { t } from '../i18n'
 
 /** Colour used when something is tagged to the whole family */
 export const EVERYONE_COLOR = '#b08b3e'
@@ -38,7 +39,7 @@ export function MemberChips({
     return (
       <span className="member-chips">
         <span className="name-pill" style={{ borderColor: EVERYONE_COLOR, background: EVERYONE_COLOR + '1e', color: EVERYONE_COLOR }}>
-          Everyone
+          {t('everyone')}
         </span>
       </span>
     )
@@ -79,7 +80,7 @@ export function MemberToggle({
         style={selected.length === 0 ? { background: EVERYONE_COLOR + '2a', borderColor: EVERYONE_COLOR } : undefined}
         onClick={() => onChange([])}
       >
-        <span>👨‍👩‍👧‍👦</span> Everyone
+        <span>👨‍👩‍👧‍👦</span> {t('everyone')}
       </button>
       {data.members.map((m) => (
         <button
@@ -109,7 +110,7 @@ export function Legend({ onEdit }: { onEdit?: () => void }) {
       ))}
       <span className="legend-item">
         <span className="legend-dot" style={{ background: EVERYONE_COLOR }} />
-        👨‍👩‍👧‍👦 Everyone
+        👨‍👩‍👧‍👦 {t('everyone')}
       </span>
       {onEdit && (
         <button className="icon-btn" title="Edit family" onClick={onEdit}>

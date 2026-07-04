@@ -1,9 +1,12 @@
 import { useState } from 'react'
 import { useApp, uid } from '../store'
-import { activitiesOn, addDays, prettyTime, relativeLabel, todayKey, fromKey } from '../utils/dates'
+import { activitiesOn, addDays, prettyTime, relativeLabel, todayKey, fromKey, weekdayName } from '../utils/dates'
 import { useForecast } from '../utils/useForecast'
 import { weatherEmoji } from '../utils/weather'
 import { mathProblemFor, missionFor, wordFor } from '../data/kidContent'
+import { t } from '../i18n'
+
+const MISSION_EMOJI = ['✅', '🪥', '🥣', '🎒', '📖', '🧸', '🌙', '🧦', '🚿', '🐟', '💪', '🎹', '✏️', '🧹', '💧', '🙏']
 
 /** A page for the family's young reader: checklist, stars, schedule + daily word, maths, and mission. */
 export function KidCorner() {
@@ -12,6 +15,7 @@ export function KidCorner() {
   const [showAnswer, setShowAnswer] = useState(false)
   const [editList, setEditList] = useState(false)
   const [newItem, setNewItem] = useState('')
+  const [newEmoji, setNewEmoji] = useState('✅')
 
   const kid = data.members.find((m) => m.isChild) ?? data.members[0]
   const today = todayKey()
@@ -44,9 +48,10 @@ export function KidCorner() {
     if (!newItem.trim()) return
     update((d) => ({
       ...d,
-      kidChecklist: [...d.kidChecklist, { id: uid('c'), emoji: '✅', text: newItem.trim() }],
+      kidChecklist: [...d.kidChecklist, { id: uid('c'), emoji: newEmoji, text: newItem.trim() }],
     }))
     setNewItem('')
+    setNewEmoji('✅')
   }
 
   const removeItem = (id: string) => {
@@ -66,34 +71,43 @@ export function KidCorner() {
         <span className="kid-hero-planet">🪐</span>
         <span className="kid-hero-rocket">🚀</span>
         <div className="kid-hero-text">
-          <h2 className="kid-title">{kid.name}'s Mission Control</h2>
-          <p className="kid-hero-sub">Ready for lift-off, Captain {kid.name}? 🧑‍🚀</p>
+          <h2 className="kid-title">{t('missionControl', { name: kid.name })}</h2>
+          <p className="kid-hero-sub">{t('readyLiftoff', { name: kid.name })}</p>
         </div>
         <span className="kid-hero-robot">🤖</span>
         <span className="kid-hero-moon">🌙</span>
       </div>
 
-      <div className="star-bank">
-        <div className="star-bank-super" title="One super gold star for every 5 gold stars">
-          {superStars > 0 ? Array.from({ length: superStars }, () => '🌟').join(' ') : 'No super stars yet…'}
+      <div className="star-zone">
+        <div className="star-bank">
+          <div className="star-bank-super" title={t('superStarsTitle')}>
+            {superStars > 0
+              ? Array.from({ length: superStars }, (_, i) => (
+                  <span key={i} className="super-star">🌟</span>
+                ))
+              : t('noSuperStars')}
+          </div>
+          <div className="star-bank-progress">
+            {Array.from({ length: 5 }, (_, i) => (
+              <span key={i} className={`star-slot ${i < towardNext ? 'earned' : ''}`}>
+                {i < towardNext ? '⭐' : '☆'}
+              </span>
+            ))}
+            <span className="star-bank-label">{t('moreToNext', { n: 5 - towardNext })}</span>
+          </div>
         </div>
-        <div className="star-bank-progress">
-          {Array.from({ length: 5 }, (_, i) => (
-            <span key={i} className={`star-slot ${i < towardNext ? 'earned' : ''}`}>
-              {i < towardNext ? '⭐' : '☆'}
-            </span>
-          ))}
-          <span className="star-bank-label">
-            {stars} gold star{stars === 1 ? '' : 's'} · {5 - towardNext} more to the next 🌟
-          </span>
+        <div className={`star-counter ${allDone ? 'celebrate' : ''}`} title={t('goldStarsTitle')}>
+          <span className="star-counter-star">⭐</span>
+          <span className="star-counter-num">{stars}</span>
+          <span className="star-counter-label">{t('goldStarsTitle')}</span>
         </div>
       </div>
 
       <div className={`kid-card checklist ${allDone ? 'complete' : ''}`}>
         <div className="checklist-head">
-          <h3>🤖 Today's missions</h3>
-          <button className="icon-btn" title="Edit the list" onClick={() => setEditList((v) => !v)}>
-            {editList ? 'Done' : '✏️'}
+          <h3>{t('todaysMissions')}</h3>
+          <button className="icon-btn" onClick={() => setEditList((v) => !v)}>
+            {editList ? t('doneBtn') : '✏️'}
           </button>
         </div>
         {data.kidChecklist.map((item) => (
@@ -106,55 +120,64 @@ export function KidCorner() {
             <span className="checklist-emoji">{item.emoji}</span>
             <span className="checklist-text">{item.text}</span>
             {editList && (
-              <button className="icon-btn tiny" title="Remove" onClick={(e) => { e.preventDefault(); removeItem(item.id) }}>
+              <button className="icon-btn tiny" onClick={(e) => { e.preventDefault(); removeItem(item.id) }}>
                 ✕
               </button>
             )}
           </label>
         ))}
         {editList && (
-          <div className="checklist-add">
-            <input
-              value={newItem}
-              onChange={(e) => setNewItem(e.target.value)}
-              placeholder="Add something to do every day…"
-              onKeyDown={(e) => e.key === 'Enter' && addItem()}
-            />
-            <button className="btn primary" onClick={addItem} disabled={!newItem.trim()}>
-              Add
-            </button>
+          <div className="checklist-add-block">
+            <div className="emoji-picker">
+              {MISSION_EMOJI.map((e) => (
+                <button key={e} type="button" className={`emoji-opt ${newEmoji === e ? 'on' : ''}`} onClick={() => setNewEmoji(e)}>
+                  {e}
+                </button>
+              ))}
+            </div>
+            <div className="checklist-add">
+              <input
+                value={newItem}
+                onChange={(e) => setNewItem(e.target.value)}
+                placeholder={t('addMissionPh')}
+                onKeyDown={(e) => e.key === 'Enter' && addItem()}
+              />
+              <button className="btn primary" onClick={addItem} disabled={!newItem.trim()}>
+                {newEmoji} {t('add')}
+              </button>
+            </div>
           </div>
         )}
-        {allDone && <div className="checklist-star">🚀 All missions complete — you earned today's gold star! 🌟</div>}
+        {allDone && <div className="checklist-star">{t('allDoneStar')}</div>}
       </div>
 
       <div className="kid-daily">
         <div className="kid-card word">
-          <h3>📖 Word of the day</h3>
+          <h3>{t('wordOfDay')}</h3>
           <div className="kid-word">{word.word}</div>
           <p className="kid-meaning">{word.meaning}</p>
           <p className="kid-sentence">“{word.sentence}”</p>
         </div>
 
         <div className="kid-card math">
-          <h3>🔢 Maths problem of the day</h3>
+          <h3>{t('mathOfDay')}</h3>
           <p className="kid-question">{math.question}</p>
           {showAnswer ? (
-            <div className="kid-answer">The answer is {math.answer}! 🎉</div>
+            <div className="kid-answer">{t('answerIs', { n: math.answer })}</div>
           ) : (
             <button className="btn primary" onClick={() => setShowAnswer(true)}>
-              Show the answer
+              {t('showAnswer')}
             </button>
           )}
         </div>
 
         <div className="kid-card mission">
-          <h3>🏅 Mission of the day</h3>
+          <h3>{t('missionOfDay')}</h3>
           <p className="kid-question">{mission}</p>
         </div>
       </div>
 
-      <h3 className="kid-subtitle">🛸 Your flight plan — next few days</h3>
+      <h3 className="kid-subtitle">{t('flightPlan')}</h3>
       <div className="kid-days">
         {daySpan.map((date, i) => {
           const acts = activitiesOn(data.activities, date).filter(
@@ -167,10 +190,13 @@ export function KidCorner() {
           return (
             <div key={date} className={`kid-day ${i === 0 ? 'today' : ''}`}>
               <div className="kid-day-head">
-                <strong>{relativeLabel(date)}</strong>
+                <div>
+                  <strong>{relativeLabel(date)}</strong>
+                  <div className="kid-day-weekday">{weekdayName(date)}</div>
+                </div>
                 {f && <span title={f.summary}>{weatherEmoji(f.summary)}</span>}
               </div>
-              {acts.length === 0 && <p className="kid-free">Free day! 🎈</p>}
+              {acts.length === 0 && <p className="kid-free">{t('freeDay')}</p>}
               {acts.map((a) => (
                 <div key={a.id} className="kid-activity">
                   <span className="kid-activity-emoji">{a.emoji}</span>

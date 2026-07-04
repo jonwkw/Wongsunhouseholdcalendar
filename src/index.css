@@ -758,6 +758,18 @@ textarea:focus {
   margin: 0;
 }
 
+.today-col-weekday {
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
 .today-section {
   margin-top: 10px;
 }
@@ -923,19 +935,78 @@ textarea:focus {
   font-size: 18px;
 }
 
+.star-zone {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+  align-items: stretch;
+}
+
 .star-bank {
+  flex: 1;
   background: linear-gradient(135deg, #fff8e0, #fdefc8);
   border: 2px solid #eccf7c;
   border-radius: 16px;
   padding: 12px 16px;
-  margin-bottom: 12px;
   text-align: center;
+}
+
+.star-counter {
+  width: 130px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(160deg, #ffd76e, #f0a835);
+  border: 3px solid #d98f1b;
+  border-radius: 16px;
+  color: #6b4a05;
+  box-shadow: 0 4px 14px rgba(217, 143, 27, 0.35);
+}
+
+.star-counter-star {
+  font-size: 26px;
+  animation: twinkle 2.2s ease-in-out infinite;
+}
+
+.star-counter-num {
+  font-size: 34px;
+  font-weight: 900;
+  line-height: 1;
+  text-shadow: 0 1px 0 #ffe9b0;
+}
+
+.star-counter-label {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.star-counter.celebrate {
+  animation: counter-pop 0.9s ease-in-out infinite alternate;
+}
+
+@keyframes counter-pop {
+  from { transform: scale(1) rotate(-1.5deg); }
+  to { transform: scale(1.06) rotate(1.5deg); }
 }
 
 .star-bank-super {
   font-size: 26px;
   min-height: 32px;
   color: #a5842e;
+}
+
+.super-star {
+  display: inline-block;
+  margin: 0 2px;
+  animation: twinkle 2s ease-in-out infinite;
+}
+
+.super-star:nth-child(2n) {
+  animation-delay: 0.5s;
 }
 
 .star-bank-progress {
@@ -1005,6 +1076,12 @@ textarea:focus {
 
 .checklist-text {
   flex: 1;
+}
+
+.checklist-add-block {
+  margin-top: 8px;
+  border-top: 1px dashed #e5cdd9;
+  padding-top: 8px;
 }
 
 .checklist-add {
@@ -1107,9 +1184,14 @@ textarea:focus {
 .kid-day-head {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   font-size: 16px;
   margin-bottom: 6px;
+}
+
+.kid-day-weekday {
+  font-size: 12px;
+  color: var(--muted);
 }
 
 .kid-free {

@@ -35,6 +35,8 @@ function migrate(data: AppData): AppData {
     kidChecklist: data.kidChecklist ?? DEFAULT_CHECKLIST,
     kidChecks: data.kidChecks ?? {},
     starDays: data.starDays ?? [],
+    // school timetable cancelled (holidays) — remove the seeded series everywhere
+    activities: (data.activities ?? []).filter((a) => a.id !== 'a-school'),
   }
 }
 

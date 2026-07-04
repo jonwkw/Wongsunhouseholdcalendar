@@ -3,8 +3,9 @@ import type { DragEvent } from 'react'
 import type { Activity, ActivityTemplate, DayNote } from '../types'
 import { useApp, uid } from '../store'
 import {
-  activitiesOn, addDays, mondayOf, prettyTime, todayKey, weekDays, fromKey, MONTH_SHORT,
+  activitiesOn, addDays, mondayOf, prettyTime, todayKey, weekDays, fromKey, weekRangeLabel,
 } from '../utils/dates'
+import { t, dayShort } from '../i18n'
 import { Legend, MemberChips, MemberToggle, Modal, EmojiPicker, tagColor } from './shared'
 import { ActivityModal } from './ActivityModal'
 import { setDragPayload, getDragPayload, leavesTarget } from '../utils/dnd'
@@ -26,17 +27,18 @@ export function Timetable() {
   const weeks = Array.from({ length: WEEKS_SHOWN }, (_, i) => weekDays(addDays(monday, i * 7)))
 
   /** Clicking or dropping a card opens the same full form as adding on a day */
-  const placeTemplate = (t: ActivityTemplate, date: string) => {
+  const placeTemplate = (tpl: ActivityTemplate, date: string) => {
     setEditing({
       activity: null,
       date,
       prefill: {
-        title: t.title,
-        emoji: t.emoji,
-        memberIds: t.memberIds,
-        time: t.time,
-        endTime: t.endTime,
-        location: t.location,
+        title: tpl.title,
+        emoji: tpl.emoji,
+        memberIds: tpl.memberIds,
+        time: tpl.time,
+        endTime: tpl.endTime,
+        location: tpl.location,
+        recurrence: tpl.recurrence,
       },
     })
   }
@@ -54,20 +56,11 @@ export function Timetable() {
     const payload = getDragPayload<DragPayload>(e)
     if (!payload) return
     if (payload.type === 'template') {
-      const t = data.activityTemplates.find((x) => x.id === payload.id)
-      if (t) placeTemplate(t, date)
+      const tpl = data.activityTemplates.find((x) => x.id === payload.id)
+      if (tpl) placeTemplate(tpl, date)
     } else {
       moveActivity(payload.id, date)
     }
-  }
-
-  const rangeLabel = (days: string[]) => {
-    const start = fromKey(days[0])
-    const end = fromKey(days[6])
-    const sameMonth = start.getMonth() === end.getMonth()
-    return sameMonth
-      ? `${start.getDate()}–${end.getDate()} ${MONTH_SHORT[end.getMonth()]} ${end.getFullYear()}`
-      : `${start.getDate()} ${MONTH_SHORT[start.getMonth()]} – ${end.getDate()} ${MONTH_SHORT[end.getMonth()]} ${end.getFullYear()}`
   }
 
   const filtered = (date: string) =>
@@ -78,27 +71,26 @@ export function Timetable() {
   return (
     <div className="timetable-layout">
       <aside className="library">
-        <h3>🧩 Activity cards</h3>
-        <p className="hint">Click a card to add that activity (you pick the day and repeat in the form) — or drag it straight onto a day.</p>
-        {data.activityTemplates.map((t) => (
+        <h3>{t('activityCards')}</h3>
+        <p className="hint">{t('cardsHint')}</p>
+        {data.activityTemplates.map((tpl) => (
           <div
-            key={t.id}
+            key={tpl.id}
             className="library-card"
-            style={{ borderLeft: `4px solid ${tagColor(t.memberIds, data.members)}` }}
+            style={{ borderLeft: `4px solid ${tagColor(tpl.memberIds, data.members)}` }}
             draggable
-            onDragStart={(e) => setDragPayload(e, { type: 'template', id: t.id })}
-            onClick={() => placeTemplate(t, today)}
-            title="Click to add this activity"
+            onDragStart={(e) => setDragPayload(e, { type: 'template', id: tpl.id })}
+            onClick={() => placeTemplate(tpl, today)}
           >
-            <span className="card-emoji">{t.emoji}</span>
-            <span className="card-title">{t.title}</span>
-            {t.time && <span className="card-time">{prettyTime(t.time)}</span>}
+            <span className="card-emoji">{tpl.emoji}</span>
+            <span className="card-title">{tpl.title}</span>
+            {tpl.recurrence && <span title={t('repeatsWeekly')}>🔁</span>}
+            {tpl.time && <span className="card-time">{prettyTime(tpl.time)}</span>}
             <button
               className="icon-btn tiny"
-              title="Remove this card"
               onClick={(e) => {
                 e.stopPropagation()
-                update((d) => ({ ...d, activityTemplates: d.activityTemplates.filter((x) => x.id !== t.id) }))
+                update((d) => ({ ...d, activityTemplates: d.activityTemplates.filter((x) => x.id !== tpl.id) }))
               }}
             >
               ✕
@@ -106,7 +98,7 @@ export function Timetable() {
           </div>
         ))}
         <button className="btn subtle full" onClick={() => setShowTemplateForm(true)}>
-          ＋ New activity card
+          {t('newActivityCard')}
         </button>
       </aside>
 
@@ -116,10 +108,10 @@ export function Timetable() {
             ⏪
           </button>
           <button className="btn subtle" onClick={() => setMonday((m) => addDays(m, -7))}>
-            ← Prev week
+            {t('prevWeek')}
           </button>
           <button className="btn subtle" onClick={() => setMonday(mondayOf(today))}>
-            This week
+            {t('thisWeek')}
           </button>
           <input
             type="date"
@@ -129,7 +121,7 @@ export function Timetable() {
             title="Jump to any date, past or future"
           />
           <button className="btn subtle" onClick={() => setMonday((m) => addDays(m, 7))}>
-            Next week →
+            {t('nextWeek')}
           </button>
           <button className="btn subtle" onClick={() => setMonday((m) => addDays(m, 28))} title="Forward 4 weeks">
             ⏩
@@ -137,9 +129,9 @@ export function Timetable() {
         </div>
 
         <div className="filter-row">
-          <span className="hint" style={{ margin: 0 }}>Show:</span>
+          <span className="hint" style={{ margin: 0 }}>{t('show')}</span>
           <button className={`filter-btn ${filterMember === 'all' ? 'on' : ''}`} onClick={() => setFilterMember('all')}>
-            Everyone
+            {t('everyone')}
           </button>
           {data.members.map((m) => (
             <button
@@ -160,8 +152,8 @@ export function Timetable() {
           return (
             <div key={days[0]} className={`week-block ${isCurrentWeek ? 'current' : ''}`}>
               <div className="week-block-label">
-                {isCurrentWeek && <span className="today-tag">This week</span>}
-                <span>{rangeLabel(days)}</span>
+                {isCurrentWeek && <span className="today-tag">{t('thisWeek')}</span>}
+                <span>{weekRangeLabel(days)}</span>
               </div>
               <div className="week-grid">
                 {days.map((date) => {
@@ -183,9 +175,9 @@ export function Timetable() {
                       onDrop={(e) => onDrop(e, date)}
                     >
                       <div className="day-head">
-                        <span className="day-name">{['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d.getDay()]}</span>
+                        <span className="day-name">{dayShort(d.getDay())}</span>
                         <span className="day-num">{d.getDate()}</span>
-                        {date === today && <span className="today-tag">Today</span>}
+                        {date === today && <span className="today-tag">{t('today')}</span>}
                       </div>
 
                       {acts.map((a) => (
@@ -207,7 +199,7 @@ export function Timetable() {
                           <div className="activity-top">
                             <span className="card-emoji">{a.emoji}</span>
                             <span className="card-title">{a.title}</span>
-                            {a.recurrence && <span title="Repeats weekly">🔁</span>}
+                            {a.recurrence && <span title={t('repeatsWeekly')}>🔁</span>}
                           </div>
                           <div className="activity-meta">
                             {a.time && (
@@ -228,19 +220,11 @@ export function Timetable() {
                       ))}
 
                       <div className="day-actions">
-                        <button
-                          className="btn ghost"
-                          title="Add an activity on this day"
-                          onClick={() => setEditing({ activity: null, date })}
-                        >
-                          ＋ Activity
+                        <button className="btn ghost" onClick={() => setEditing({ activity: null, date })}>
+                          {t('addActivityBtn')}
                         </button>
-                        <button
-                          className="btn ghost"
-                          title="Add a note or reminder on this day"
-                          onClick={() => setNoteDay(date)}
-                        >
-                          📝 Note
+                        <button className="btn ghost" onClick={() => setNoteDay(date)}>
+                          {t('addNoteBtn')}
                         </button>
                       </div>
                     </div>
@@ -321,34 +305,34 @@ function NoteModal({ date, onClose }: { date: string; onClose: () => void }) {
   }
 
   return (
-    <Modal title="Add a note or reminder" onClose={onClose}>
+    <Modal title={t('addNoteTitle')} onClose={onClose}>
       <div className="form">
         <div className="kind-toggle">
           <button className={`btn ${kind === 'reminder' ? 'primary' : 'subtle'}`} onClick={() => setKind('reminder')}>
-            ⏰ Reminder
+            {t('reminderBtn')}
           </button>
           <button className={`btn ${kind === 'note' ? 'primary' : 'subtle'}`} onClick={() => setKind('note')}>
-            💬 Note
+            {t('noteBtn')}
           </button>
         </div>
         <label>
-          {kind === 'reminder' ? 'What should we remember?' : 'What do you want to say?'}
+          {kind === 'reminder' ? t('whatRemember') : t('whatSay')}
           <input
             autoFocus
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder={kind === 'reminder' ? 'e.g. Pack water bottle' : 'e.g. Half day at school'}
+            placeholder={kind === 'reminder' ? t('remExample') : t('noteExample')}
             onKeyDown={(e) => e.key === 'Enter' && save()}
           />
         </label>
         <label>
-          Which day?
+          {t('whichDayQ')}
           <input type="date" value={when} onChange={(e) => setWhen(e.target.value)} />
         </label>
         <label>
-          Who is it about? (optional)
+          {t('aboutWho')}
           <select value={memberId} onChange={(e) => setMemberId(e.target.value)}>
-            <option value="">— nobody in particular —</option>
+            <option value="">{t('nobody')}</option>
             {data.members.map((m) => (
               <option key={m.id} value={m.id}>
                 {m.name}
@@ -359,7 +343,7 @@ function NoteModal({ date, onClose }: { date: string; onClose: () => void }) {
         <div className="form-actions">
           <span className="spacer" />
           <button className="btn primary" onClick={save} disabled={!text.trim()}>
-            Save
+            {t('save')}
           </button>
         </div>
       </div>
@@ -369,12 +353,20 @@ function NoteModal({ date, onClose }: { date: string; onClose: () => void }) {
 
 function TemplateModal({ onClose }: { onClose: () => void }) {
   const { update } = useApp()
+  const today = todayKey()
   const [title, setTitle] = useState('')
   const [emoji, setEmoji] = useState('📚')
   const [memberIds, setMemberIds] = useState<string[]>([])
   const [time, setTime] = useState('')
   const [endTime, setEndTime] = useState('')
   const [location, setLocation] = useState('')
+  const [recurring, setRecurring] = useState(false)
+  const [days, setDays] = useState<number[]>([1, 2, 3, 4, 5])
+  const [from, setFrom] = useState(today)
+  const [until, setUntil] = useState('')
+
+  const toggleDay = (d: number) =>
+    setDays((prev) => (prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d].sort()))
 
   const save = () => {
     if (!title.trim()) return
@@ -390,6 +382,7 @@ function TemplateModal({ onClose }: { onClose: () => void }) {
           time: time || undefined,
           endTime: endTime || undefined,
           location: location.trim() || undefined,
+          recurrence: recurring && days.length ? { days, from, until: until || undefined } : undefined,
         },
       ],
     }))
@@ -397,34 +390,77 @@ function TemplateModal({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <Modal title="New activity card" onClose={onClose}>
+    <Modal title={t('newActivityCard').replace('＋ ', '')} onClose={onClose}>
       <div className="form">
         <label>
-          Activity name
-          <input autoFocus value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Piano lesson" />
+          {t('activityName')}
+          <input autoFocus value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t('egPiano')} />
         </label>
-        <label>Icon</label>
+        <label>{t('icon')}</label>
         <EmojiPicker value={emoji} onChange={setEmoji} />
-        <label>Usually for</label>
+        <label>{t('usuallyFor')}</label>
         <MemberToggle selected={memberIds} onChange={setMemberIds} />
         <div className="form-row">
           <label>
-            Usual start (optional)
+            {t('usualStart')}
             <input type="time" value={time} onChange={(e) => setTime(e.target.value)} />
           </label>
           <label>
-            Usual end (optional)
+            {t('usualEnd')}
             <input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
           </label>
         </div>
         <label>
-          Usual place (optional)
+          {t('usualPlace')}
           <input value={location} onChange={(e) => setLocation(e.target.value)} />
         </label>
+
+        <label className="check-row">
+          <input type="checkbox" checked={recurring} onChange={(e) => setRecurring(e.target.checked)} />
+          {t('repeat')}
+        </label>
+        {recurring && (
+          <>
+            <div className="kind-toggle">
+              <button type="button" className="btn subtle" onClick={() => setDays([1, 2, 3, 4, 5])}>
+                {t('everyWeekday')}
+              </button>
+              <button type="button" className="btn subtle" onClick={() => setDays([0, 1, 2, 3, 4, 5, 6])}>
+                {t('everyDay')}
+              </button>
+              <button type="button" className="btn subtle" onClick={() => setDays([0, 6])}>
+                {t('weekends')}
+              </button>
+            </div>
+            <div className="weekday-picker">
+              {[1, 2, 3, 4, 5, 6, 0].map((d) => (
+                <button
+                  key={d}
+                  type="button"
+                  className={`weekday-btn ${days.includes(d) ? 'on' : ''}`}
+                  onClick={() => toggleDay(d)}
+                >
+                  {dayShort(d)}
+                </button>
+              ))}
+            </div>
+            <div className="form-row">
+              <label>
+                {t('startsOn')}
+                <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+              </label>
+              <label>
+                {t('stopsAfter')}
+                <input type="date" value={until} min={from} onChange={(e) => setUntil(e.target.value)} />
+              </label>
+            </div>
+          </>
+        )}
+
         <div className="form-actions">
           <span className="spacer" />
           <button className="btn primary" onClick={save} disabled={!title.trim()}>
-            Save card
+            {t('saveCard')}
           </button>
         </div>
       </div>

@@ -1,8 +1,5 @@
 import type { Activity } from '../types'
-
-export const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
-export const DAY_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-export const MONTH_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+import { dayName, dayShort, monthShort, t, getLang } from '../i18n'
 
 export function toKey(d: Date): string {
   const y = d.getFullYear()
@@ -40,58 +37,49 @@ export function weekDays(mondayKey: string): string[] {
 
 export function prettyDate(key: string): string {
   const d = fromKey(key)
-  return `${DAY_SHORT[d.getDay()]} ${d.getDate()} ${MONTH_SHORT[d.getMonth()]}`
+  return getLang() === 'zh'
+    ? `${monthShort(d.getMonth())}${d.getDate()}日 ${dayShort(d.getDay())}`
+    : `${dayShort(d.getDay())} ${d.getDate()} ${monthShort(d.getMonth())}`
 }
 
 export function longDate(key: string): string {
   const d = fromKey(key)
-  return `${DAY_NAMES[d.getDay()]}, ${d.getDate()} ${MONTH_SHORT[d.getMonth()]} ${d.getFullYear()}`
+  return getLang() === 'zh'
+    ? `${d.getFullYear()}年${monthShort(d.getMonth())}${d.getDate()}日 ${dayName(d.getDay())}`
+    : `${dayName(d.getDay())}, ${d.getDate()} ${monthShort(d.getMonth())} ${d.getFullYear()}`
 }
 
 export function relativeLabel(key: string): string {
   const today = todayKey()
-  if (key === today) return 'Today'
-  if (key === addDays(today, 1)) return 'Tomorrow'
+  if (key === today) return t('today')
+  if (key === addDays(today, 1)) return t('tomorrow')
   return prettyDate(key)
 }
 
-export function prettyTime(t?: string): string {
-  if (!t) return ''
-  const [h, m] = t.split(':').map(Number)
+/** Full weekday name for a date key, e.g. "Saturday" / "星期六" */
+export function weekdayName(key: string): string {
+  return dayName(fromKey(key).getDay())
+}
+
+/** Short range label for a Mon–Sun week */
+export function weekRangeLabel(days: string[]): string {
+  const start = fromKey(days[0])
+  const end = fromKey(days[6])
+  if (getLang() === 'zh') {
+    return `${monthShort(start.getMonth())}${start.getDate()}日 – ${monthShort(end.getMonth())}${end.getDate()}日 ${end.getFullYear()}`
+  }
+  const sameMonth = start.getMonth() === end.getMonth()
+  return sameMonth
+    ? `${start.getDate()}–${end.getDate()} ${monthShort(end.getMonth())} ${end.getFullYear()}`
+    : `${start.getDate()} ${monthShort(start.getMonth())} – ${end.getDate()} ${monthShort(end.getMonth())} ${end.getFullYear()}`
+}
+
+export function prettyTime(time?: string): string {
+  if (!time) return ''
+  const [h, m] = time.split(':').map(Number)
   const suffix = h < 12 ? 'am' : 'pm'
   const hh = h % 12 === 0 ? 12 : h % 12
   return m ? `${hh}:${String(m).padStart(2, '0')}${suffix}` : `${hh}${suffix}`
-}
-
-/** "YYYY-MM" of the month containing the given date key */
-export function monthOf(key: string): string {
-  return key.slice(0, 7)
-}
-
-export function addMonths(ym: string, n: number): string {
-  const [y, m] = ym.split('-').map(Number)
-  const d = new Date(y, m - 1 + n, 1)
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-}
-
-export function monthLabel(ym: string): string {
-  const [y, m] = ym.split('-').map(Number)
-  return `${['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][m - 1]} ${y}`
-}
-
-/** Mon–Sun weeks covering the given month, as arrays of date keys */
-export function weeksOfMonth(ym: string): string[][] {
-  const [y, m] = ym.split('-').map(Number)
-  const first = mondayOf(toKey(new Date(y, m - 1, 1)))
-  const weeks: string[][] = []
-  let cursor = first
-  while (monthOf(cursor) <= ym && weeks.length < 6) {
-    const week = weekDays(cursor)
-    if (monthOf(week[0]) > ym) break
-    weeks.push(week)
-    cursor = addDays(cursor, 7)
-  }
-  return weeks
 }
 
 /** Does this activity happen on the given date? */

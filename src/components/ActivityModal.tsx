@@ -2,31 +2,33 @@ import { useState } from 'react'
 import type { Activity } from '../types'
 import { useApp, uid } from '../store'
 import { Modal, MemberToggle, EmojiPicker } from './shared'
-import { DAY_SHORT, prettyDate, todayKey } from '../utils/dates'
+import { prettyDate, todayKey } from '../utils/dates'
+import { t, dayShort } from '../i18n'
 
 interface Props {
   /** Existing activity to edit, or null to create */
   activity: Activity | null
   /** Day the modal was opened from (drop target / quick add) */
   date: string
-  /** Prefill for new activities created from a template */
+  /** Prefill for new activities created from an activity card */
   prefill?: Partial<Activity>
   onClose: () => void
 }
 
 export function ActivityModal({ activity, date, prefill, onClose }: Props) {
   const { update } = useApp()
-  const [title, setTitle] = useState(activity?.title ?? prefill?.title ?? '')
-  const [emoji, setEmoji] = useState(activity?.emoji ?? prefill?.emoji ?? '🗓️')
-  const [memberIds, setMemberIds] = useState<string[]>(activity?.memberIds ?? prefill?.memberIds ?? [])
-  const [time, setTime] = useState(activity?.time ?? prefill?.time ?? '')
-  const [endTime, setEndTime] = useState(activity?.endTime ?? prefill?.endTime ?? '')
-  const [location, setLocation] = useState(activity?.location ?? prefill?.location ?? '')
+  const src = activity ?? prefill
+  const [title, setTitle] = useState(src?.title ?? '')
+  const [emoji, setEmoji] = useState(src?.emoji ?? '🗓️')
+  const [memberIds, setMemberIds] = useState<string[]>(src?.memberIds ?? [])
+  const [time, setTime] = useState(src?.time ?? '')
+  const [endTime, setEndTime] = useState(src?.endTime ?? '')
+  const [location, setLocation] = useState(src?.location ?? '')
   const [notes, setNotes] = useState(activity?.notes ?? '')
-  const [recurring, setRecurring] = useState(Boolean(activity?.recurrence))
-  const [days, setDays] = useState<number[]>(activity?.recurrence?.days ?? [new Date(date + 'T00:00').getDay()])
-  const [from, setFrom] = useState(activity?.recurrence?.from ?? date)
-  const [until, setUntil] = useState(activity?.recurrence?.until ?? '')
+  const [recurring, setRecurring] = useState(Boolean(src?.recurrence))
+  const [days, setDays] = useState<number[]>(src?.recurrence?.days ?? [new Date(date + 'T00:00').getDay()])
+  const [from, setFrom] = useState(src?.recurrence?.from ?? date)
+  const [until, setUntil] = useState(src?.recurrence?.until ?? '')
   const [oneOffDate, setOneOffDate] = useState(activity?.date ?? date)
 
   const toggleDay = (d: number) =>
@@ -75,68 +77,68 @@ export function ActivityModal({ activity, date, prefill, onClose }: Props) {
   }
 
   return (
-    <Modal title={activity ? 'Edit activity' : 'New activity'} onClose={onClose}>
+    <Modal title={activity ? t('editActivity') : t('newActivity')} onClose={onClose}>
       <div className="form">
         <label>
-          What is it?
+          {t('whatIsIt')}
           <input
             autoFocus
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="e.g. Piano lesson"
+            placeholder={t('egPiano')}
             onKeyDown={(e) => e.key === 'Enter' && save()}
           />
         </label>
 
-        <label>Pick an icon</label>
+        <label>{t('pickIcon')}</label>
         <EmojiPicker value={emoji} onChange={setEmoji} />
 
-        <label>Who is it for?</label>
+        <label>{t('whoFor')}</label>
         <MemberToggle selected={memberIds} onChange={setMemberIds} />
 
         <div className="form-row">
           <label>
-            Starts
+            {t('starts')}
             <input type="time" value={time} onChange={(e) => setTime(e.target.value)} />
           </label>
           <label>
-            Ends
+            {t('ends')}
             <input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
           </label>
         </div>
 
         <label>
-          Where?
-          <input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="optional" />
+          {t('where')}
+          <input value={location} onChange={(e) => setLocation(e.target.value)} placeholder={t('optional')} />
         </label>
 
         <label>
-          Notes
-          <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} placeholder="optional" />
+          {t('notes')}
+          <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} placeholder={t('optional')} />
         </label>
 
         <label className="check-row">
           <input type="checkbox" checked={recurring} onChange={(e) => setRecurring(e.target.checked)} />
-          🔁 Repeat
+          {t('repeat')}
         </label>
 
         {recurring ? (
           <>
             <div className="kind-toggle">
               <button type="button" className="btn subtle" onClick={() => setDays([1, 2, 3, 4, 5])}>
-                Every weekday
+                {t('everyWeekday')}
               </button>
               <button type="button" className="btn subtle" onClick={() => setDays([0, 1, 2, 3, 4, 5, 6])}>
-                Every day
+                {t('everyDay')}
               </button>
               <button type="button" className="btn subtle" onClick={() => setDays([0, 6])}>
-                Weekends
+                {t('weekends')}
               </button>
               <button type="button" className="btn subtle" onClick={() => setDays([new Date(date + 'T00:00').getDay()])}>
-                Weekly on {DAY_SHORT[new Date(date + 'T00:00').getDay()]}
+                {t('weeklyOn')} {dayShort(new Date(date + 'T00:00').getDay())}
               </button>
             </div>
-            <label>Or pick the days yourself</label>
+            <label>{t('pickDays')}</label>
             <div className="weekday-picker">
               {[1, 2, 3, 4, 5, 6, 0].map((d) => (
                 <button
@@ -145,24 +147,24 @@ export function ActivityModal({ activity, date, prefill, onClose }: Props) {
                   className={`weekday-btn ${days.includes(d) ? 'on' : ''}`}
                   onClick={() => toggleDay(d)}
                 >
-                  {DAY_SHORT[d]}
+                  {dayShort(d)}
                 </button>
               ))}
             </div>
             <div className="form-row">
               <label>
-                Starts on
+                {t('startsOn')}
                 <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
               </label>
               <label>
-                Stops after (optional)
+                {t('stopsAfter')}
                 <input type="date" value={until} min={from || todayKey()} onChange={(e) => setUntil(e.target.value)} />
               </label>
             </div>
           </>
         ) : (
           <label>
-            On which day?
+            {t('whichDay')}
             <input type="date" value={oneOffDate} onChange={(e) => setOneOffDate(e.target.value)} />
           </label>
         )}
@@ -170,17 +172,17 @@ export function ActivityModal({ activity, date, prefill, onClose }: Props) {
         <div className="form-actions">
           {activity && activity.recurrence && (
             <button className="btn subtle" onClick={skipThisDay}>
-              Skip {prettyDate(date)} only
+              {t('skipOnly', { d: prettyDate(date) })}
             </button>
           )}
           {activity && (
             <button className="btn danger" onClick={deleteSeries}>
-              Delete{activity.recurrence ? ' series' : ''}
+              {activity.recurrence ? t('delSeries') : t('del')}
             </button>
           )}
           <span className="spacer" />
           <button className="btn primary" onClick={save} disabled={!title.trim()}>
-            Save
+            {t('save')}
           </button>
         </div>
       </div>

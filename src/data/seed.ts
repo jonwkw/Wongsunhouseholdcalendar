@@ -1,5 +1,5 @@
 import type { AppData, ChecklistItem } from '../types'
-import { todayKey, mondayOf } from '../utils/dates'
+import { todayKey } from '../utils/dates'
 
 export const DEFAULT_CHECKLIST: ChecklistItem[] = [
   { id: 'c-teeth-am', emoji: '🪥', text: 'Brush teeth in the morning' },
@@ -13,7 +13,6 @@ export const DEFAULT_CHECKLIST: ChecklistItem[] = [
 // Minimal starter data: one example of each thing so the logic is easy to verify.
 export function seedData(): AppData {
   const today = todayKey()
-  const monday = mondayOf(today)
 
   return {
     version: 2,
@@ -25,18 +24,7 @@ export function seedData(): AppData {
       { id: 'rosco', name: 'Rosco', emoji: '🧒', color: '#e08a2e', isChild: true },
       { id: 'casper', name: 'Casper', emoji: '👶', color: '#d95d5d', isChild: true },
     ],
-    activities: [
-      {
-        id: 'a-school',
-        title: 'School',
-        emoji: '🏫',
-        memberIds: ['rosco'],
-        recurrence: { days: [1, 2, 3, 4, 5], from: monday },
-        time: '07:30',
-        endTime: '13:30',
-        exceptions: [],
-      },
-    ],
+    activities: [],
     activityTemplates: [
       { id: 't-school', title: 'School', emoji: '🏫', memberIds: ['rosco'], time: '07:30', endTime: '13:30' },
       { id: 't-enrich', title: 'Enrichment class', emoji: '📚', memberIds: ['rosco'], time: '15:00' },

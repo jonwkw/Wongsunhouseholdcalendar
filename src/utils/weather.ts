@@ -19,17 +19,20 @@ export interface DayForecast {
 const FOUR_DAY_URL = 'https://api-open.data.gov.sg/v2/real-time/api/four-day-outlook'
 const TODAY_URL = 'https://api-open.data.gov.sg/v2/real-time/api/twenty-four-hr-forecast'
 
-/** Friendly, actionable reminders derived from the forecast text. */
+/**
+ * Friendly, actionable reminders derived from the forecast text.
+ * Returns i18n keys (wx_*) so they render in the chosen language.
+ */
 export function remindersFor(summary: string, high?: number): string[] {
   const s = summary.toLowerCase()
   const out: string[] = []
-  if (s.includes('thundery')) out.push('⛈️ Thunderstorms expected — bring an umbrella and plan indoor backup!')
-  else if (s.includes('rain') || s.includes('shower')) out.push('☔ Bring an umbrella!')
-  if (s.includes('haz')) out.push('😷 Hazy — consider masks and keep windows closed.')
-  if (high !== undefined && high >= 34) out.push('🥵 Very hot — extra water bottles and sunscreen!')
-  else if (high !== undefined && high >= 32) out.push('🧴 Warm day — sunscreen and water for outdoor time.')
+  if (s.includes('thundery')) out.push('wx_thunder')
+  else if (s.includes('rain') || s.includes('shower')) out.push('wx_umbrella')
+  if (s.includes('haz')) out.push('wx_haze')
+  if (high !== undefined && high >= 34) out.push('wx_veryhot')
+  else if (high !== undefined && high >= 32) out.push('wx_warm')
   if (out.length === 0 && (s.includes('fair') || s.includes('sunny') || s.includes('partly cloudy'))) {
-    out.push('😎 Nice day — good for outdoor play!')
+    out.push('wx_nice')
   }
   return out
 }
@@ -69,19 +72,20 @@ export async function fetchForecast(): Promise<DayForecast[]> {
     const low = g.temperature?.low
     const high = g.temperature?.high
 
-    // NEA's 24h forecast comes in ~6-hour periods; label each by its start hour
+    // NEA's 24h forecast comes in ~6-hour periods; label each by its start hour.
+    // Labels are i18n keys (morning/afternoon/evening/overnight) or raw NEA text.
     const periods: PeriodForecast[] = []
     for (const p of todayRecord.periods ?? []) {
       const startHour = new Date(p?.timePeriod?.start ?? '').getHours()
       const label = isNaN(startHour)
         ? p?.timePeriod?.text ?? ''
         : startHour < 6
-          ? 'Overnight'
+          ? 'overnight'
           : startHour < 12
-            ? 'Morning'
+            ? 'morning'
             : startHour < 18
-              ? 'Afternoon'
-              : 'Evening'
+              ? 'afternoon'
+              : 'evening'
       const text = p?.regions?.central?.text ?? p?.regions?.central?.code
       if (label && text) periods.push({ label, summary: text })
     }

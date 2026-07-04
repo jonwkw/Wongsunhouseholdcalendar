@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { BoardItem } from '../types'
 import { useApp, uid } from '../store'
 import { prettyDate, todayKey } from '../utils/dates'
+import { t } from '../i18n'
 
 export function FamilyBoard() {
   const { data, update, memberById } = useApp()
@@ -61,7 +62,7 @@ export function FamilyBoard() {
 
   const reply = (id: string) => {
     const current = data.boardItems.find((b) => b.id === id)
-    const answer = window.prompt('Reply:', current?.reply ?? '')
+    const answer = window.prompt(t('replyPrompt'), current?.reply ?? '')
     if (answer === null) return
     update((d) => ({
       ...d,
@@ -91,11 +92,11 @@ export function FamilyBoard() {
         <div className="board-meta">
           {b.byMemberId && (
             <span className="board-who">
-              {b.kind === 'request' ? 'Requested by' : 'Added by'} {pill(b.byMemberId)}
+              {b.kind === 'request' ? t('requestedBy') : t('addedBy')} {pill(b.byMemberId)}
             </span>
           )}
           {b.assignedToId && (
-            <span className="board-who">→ Assigned to {pill(b.assignedToId)}</span>
+            <span className="board-who">→ {t('assignedTo')} {pill(b.assignedToId)}</span>
           )}
           {b.forDate && <span className="board-date">📅 {prettyDate(b.forDate)}</span>}
         </div>
@@ -109,30 +110,30 @@ export function FamilyBoard() {
   return (
     <div className="board-page">
       <div className="page-head">
-        <h2>📌 Requests &amp; Reminders</h2>
+        <h2>{t('boardTitle')}</h2>
         <label className="check-row">
           <input type="checkbox" checked={showDone} onChange={(e) => setShowDone(e.target.checked)} />
-          Show completed
+          {t('showCompleted')}
         </label>
       </div>
 
       <div className="board-form">
         <div className="kind-toggle">
           <button className={`btn ${kind === 'request' ? 'primary' : 'subtle'}`} onClick={() => setKind('request')}>
-            🙋 Request
+            {t('request')}
           </button>
           <button className={`btn ${kind === 'reminder' ? 'primary' : 'subtle'}`} onClick={() => setKind('reminder')}>
-            📌 Reminder
+            {t('reminder')}
           </button>
         </div>
         <input
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder={kind === 'request' ? 'e.g. Can we add mee goreng to the menu?' : 'e.g. Clean the balcony'}
+          placeholder={kind === 'request' ? t('reqPlaceholder') : t('remPlaceholder')}
           onKeyDown={(e) => e.key === 'Enter' && add()}
         />
         <select value={byMemberId} onChange={(e) => setByMemberId(e.target.value)} title="Who is raising this?">
-          <option value="">{kind === 'request' ? 'Requested by…' : 'Added by…'}</option>
+          <option value="">{kind === 'request' ? t('requestedByOpt') : t('addedByOpt')}</option>
           {data.members.map((m) => (
             <option key={m.id} value={m.id}>
               {m.name}
@@ -140,7 +141,7 @@ export function FamilyBoard() {
           ))}
         </select>
         <select value={assignedToId} onChange={(e) => setAssignedToId(e.target.value)} title="Who should handle it?">
-          <option value="">Assign to… (optional)</option>
+          <option value="">{t('assignToOpt')}</option>
           {data.members.map((m) => (
             <option key={m.id} value={m.id}>
               {m.name}
@@ -149,28 +150,28 @@ export function FamilyBoard() {
         </select>
         <input type="date" value={forDate} onChange={(e) => setForDate(e.target.value)} title="Optional date" />
         <button className="btn primary" onClick={add} disabled={!text.trim()}>
-          Post
+          {t('post')}
         </button>
       </div>
 
       {lastDeleted && (
         <div className="undo-bar">
-          Deleted “{lastDeleted.text.length > 40 ? lastDeleted.text.slice(0, 40) + '…' : lastDeleted.text}”
+          {t('deleted')} “{lastDeleted.text.length > 40 ? lastDeleted.text.slice(0, 40) + '…' : lastDeleted.text}”
           <button className="btn subtle" onClick={undoDelete}>
-            ↩️ Undo
+            {t('undo')}
           </button>
         </div>
       )}
 
       <div className="board-columns">
         <div className="board-col">
-          <h3>🙋 Requests</h3>
-          {requests.length === 0 && <p className="hint">No open requests.</p>}
+          <h3>{t('requestsCol')}</h3>
+          {requests.length === 0 && <p className="hint">{t('noRequests')}</p>}
           {requests.map(renderItem)}
         </div>
         <div className="board-col">
-          <h3>📌 Reminders</h3>
-          {reminders.length === 0 && <p className="hint">No open reminders.</p>}
+          <h3>{t('remindersCol')}</h3>
+          {reminders.length === 0 && <p className="hint">{t('noReminders')}</p>}
           {reminders.map(renderItem)}
         </div>
       </div>

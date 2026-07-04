@@ -2,18 +2,14 @@ import { useMemo, useState } from 'react'
 import type { DragEvent } from 'react'
 import type { Dish, MealSlot, MenuEntry } from '../types'
 import { useApp, uid } from '../store'
-import { addDays, fromKey, mondayOf, prettyDate, todayKey, weekDays, DAY_SHORT } from '../utils/dates'
+import { addDays, fromKey, mondayOf, prettyDate, todayKey, weekDays } from '../utils/dates'
+import { t, dayShort } from '../i18n'
 import { MemberChips, MemberToggle, Modal, tagColor } from './shared'
 import { setDragPayload, getDragPayload, leavesTarget } from '../utils/dnd'
 
 const SLOTS: MealSlot[] = ['breakfast', 'snack-am', 'lunch', 'snack-pm', 'dinner']
-const SLOT_LABEL: Record<MealSlot, string> = {
-  breakfast: '🌅 Breakfast',
-  'snack-am': '🍎 Snack (AM)',
-  lunch: '☀️ Lunch',
-  'snack-pm': '🍪 Snack (PM)',
-  dinner: '🌙 Dinner',
-}
+const slotLabel = (s: MealSlot): string =>
+  s === 'breakfast' ? t('breakfast') : s === 'snack-am' ? t('snackAm') : s === 'lunch' ? t('lunch') : s === 'snack-pm' ? t('snackPm') : t('dinner')
 
 export function MenuPlanner() {
   const { data, update } = useApp()
@@ -59,8 +55,8 @@ export function MenuPlanner() {
   return (
     <div className="timetable-layout">
       <aside className="library">
-        <h3>🍲 Dish library</h3>
-        <p className="hint">Click a dish to add it to the menu (you pick the day and meal) — or drag it straight onto a meal box. You can also tap any box and just type.</p>
+        <h3>{t('dishLibrary')}</h3>
+        <p className="hint">{t('dishHint')}</p>
         {data.dishes.map((dish) => (
           <div
             key={dish.id}
@@ -75,7 +71,7 @@ export function MenuPlanner() {
             {dish.slot !== 'any' && <span className="card-time">{dish.slot}</span>}
             <button
               className="icon-btn tiny"
-              title="Remove dish"
+              
               onClick={(e) => {
                 e.stopPropagation()
                 update((d) => ({ ...d, dishes: d.dishes.filter((x) => x.id !== dish.id) }))
@@ -86,16 +82,16 @@ export function MenuPlanner() {
           </div>
         ))}
         <button className="btn subtle full" onClick={() => setShowDishForm(true)}>
-          ＋ New dish
+          {t('newDish')}
         </button>
       </aside>
 
       <div className="timetable-main">
         <div className="week-nav">
-          <button className="btn subtle" onClick={() => setMonday((m) => addDays(m, -7))}>← Prev</button>
-          <button className="btn subtle" onClick={() => setMonday(mondayOf(today))}>This week</button>
-          <strong className="week-label">Menu for the week</strong>
-          <button className="btn subtle" onClick={() => setMonday((m) => addDays(m, 7))}>Next →</button>
+          <button className="btn subtle" onClick={() => setMonday((m) => addDays(m, -7))}>{t('prevShort')}</button>
+          <button className="btn subtle" onClick={() => setMonday(mondayOf(today))}>{t('thisWeek')}</button>
+          <strong className="week-label">{t('menuWeekTitle')}</strong>
+          <button className="btn subtle" onClick={() => setMonday((m) => addDays(m, 7))}>{t('nextShort')}</button>
         </div>
 
         <div className="menu-grid" style={{ gridTemplateColumns: `90px repeat(7, minmax(0, 1fr))` }}>
@@ -104,8 +100,8 @@ export function MenuPlanner() {
             const d = fromKey(date)
             return (
               <div key={date} className={`menu-day-head ${date === today ? 'today' : ''}`}>
-                {DAY_SHORT[d.getDay()]} {d.getDate()}
-                {date === today && <span className="today-tag">Today</span>}
+                {dayShort(d.getDay())} {d.getDate()}
+                {date === today && <span className="today-tag">{t('today')}</span>}
               </div>
             )
           })}
@@ -129,7 +125,7 @@ export function MenuPlanner() {
           ))}
         </div>
 
-        <p className="hint">Tap a placed meal to rename it, tag who it's for, or remove it.</p>
+        <p className="hint">{t('tapMealHint')}</p>
       </div>
 
       {showDishForm && <DishModal onClose={() => setShowDishForm(false)} />}
@@ -162,18 +158,18 @@ function PlaceDishModal({
   const [slot, setSlot] = useState<MealSlot>(dish.slot === 'breakfast' || dish.slot === 'lunch' || dish.slot === 'dinner' ? dish.slot : dish.slot === 'snack' ? 'snack-pm' : 'dinner')
 
   return (
-    <Modal title={`Add ${dish.emoji} ${dish.name} to the menu`} onClose={onClose}>
+    <Modal title={t('addDishTitle', { dish: `${dish.emoji} ${dish.name}` })} onClose={onClose}>
       <div className="form">
         <label>
-          Which day?
+          {t('whichDayQ')}
           <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
         </label>
         <label>
-          Which meal?
+          {t('whichMeal')}
           <select value={slot} onChange={(e) => setSlot(e.target.value as MealSlot)}>
             {SLOTS.map((s) => (
               <option key={s} value={s}>
-                {SLOT_LABEL[s]}
+                {slotLabel(s)}
               </option>
             ))}
           </select>
@@ -181,7 +177,7 @@ function PlaceDishModal({
         <div className="form-actions">
           <span className="spacer" />
           <button className="btn primary" onClick={() => onPlace(date, slot)}>
-            Add to menu
+            {t('addToMenuBtn')}
           </button>
         </div>
       </div>
@@ -213,7 +209,7 @@ function MenuRow(props: RowProps) {
 
   return (
     <>
-      <div className="menu-slot-label">{SLOT_LABEL[slot]}</div>
+      <div className="menu-slot-label">{slotLabel(slot)}</div>
       {days.map((date) => {
         const key = `${date}|${slot}`
         const entries = data.menuEntries.filter((m) => m.date === date && m.slot === slot)
@@ -260,7 +256,7 @@ function MenuRow(props: RowProps) {
                 autoFocus
                 className="menu-inline-input"
                 value={typedName}
-                placeholder="Type dish…"
+                placeholder={t('typeDish')}
                 onChange={(e) => setTypedName(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') saveTyped()
@@ -302,21 +298,21 @@ function MealModal({ entry, onClose }: { entry: MenuEntry; onClose: () => void }
   }
 
   return (
-    <Modal title={`${SLOT_LABEL[entry.slot]} · ${prettyDate(entry.date)}`} onClose={onClose}>
+    <Modal title={`${slotLabel(entry.slot)} · ${prettyDate(entry.date)}`} onClose={onClose}>
       <div className="form">
         <label>
-          Dish
+          {t('dish')}
           <input autoFocus value={name} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && save()} />
         </label>
-        <label>Who is it for?</label>
+        <label>{t('whoFor')}</label>
         <MemberToggle selected={memberIds} onChange={setMemberIds} />
         <div className="form-actions">
           <button className="btn danger" onClick={remove}>
-            Remove
+            {t('remove')}
           </button>
           <span className="spacer" />
           <button className="btn primary" onClick={save} disabled={!name.trim()}>
-            Save
+            {t('save')}
           </button>
         </div>
       </div>
@@ -339,13 +335,13 @@ function DishModal({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <Modal title="New dish" onClose={onClose}>
+    <Modal title={t('newDish').replace('＋ ', '')} onClose={onClose}>
       <div className="form">
         <label>
-          Dish name
-          <input autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Mee goreng" onKeyDown={(e) => e.key === 'Enter' && save()} />
+          {t('dishName')}
+          <input autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder={t('egDish')} onKeyDown={(e) => e.key === 'Enter' && save()} />
         </label>
-        <label>Icon</label>
+        <label>{t('icon')}</label>
         <div className="emoji-picker">
           {FOOD_EMOJI.map((e) => (
             <button key={e} type="button" className={`emoji-opt ${emoji === e ? 'on' : ''}`} onClick={() => setEmoji(e)}>
@@ -354,19 +350,19 @@ function DishModal({ onClose }: { onClose: () => void }) {
           ))}
         </div>
         <label>
-          Usually for
+          {t('usuallyForMeal')}
           <select value={slot} onChange={(e) => setSlot(e.target.value as Dish['slot'])}>
-            <option value="any">Any meal</option>
-            <option value="breakfast">Breakfast</option>
-            <option value="lunch">Lunch</option>
-            <option value="dinner">Dinner</option>
-            <option value="snack">Snack</option>
+            <option value="any">{t('anyMeal')}</option>
+            <option value="breakfast">{t('breakfastPlain')}</option>
+            <option value="lunch">{t('lunchPlain')}</option>
+            <option value="dinner">{t('dinnerPlain')}</option>
+            <option value="snack">{t('snackPlain')}</option>
           </select>
         </label>
         <div className="form-actions">
           <span className="spacer" />
           <button className="btn primary" onClick={save} disabled={!name.trim()}>
-            Add dish
+            {t('addDish')}
           </button>
         </div>
       </div>

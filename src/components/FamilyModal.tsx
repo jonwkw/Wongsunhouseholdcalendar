@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useApp, uid } from '../store'
 import { Modal } from './shared'
+import { t } from '../i18n'
 
 const PEOPLE_EMOJI = ['👨', '👩', '👵', '👴', '🧑‍🍳', '🧒', '👧', '👦', '👶', '🧑', '👨‍🦳', '👩‍🦳']
 const COLORS = ['#3b82c4', '#c45b9d', '#8a6bbf', '#2f9e77', '#e08a2e', '#d95d5d', '#4a9ba8', '#7d8c3f']
@@ -18,7 +19,7 @@ export function FamilyModal({ onClose }: { onClose: () => void }) {
 
   const remove = (id: string) => {
     if (data.members.length <= 1) return
-    if (!window.confirm('Remove this member? Their activities stay but lose the tag.')) return
+    if (!window.confirm(t('removeMemberConfirm'))) return
     update((d) => ({
       ...d,
       members: d.members.filter((m) => m.id !== id),
@@ -37,7 +38,7 @@ export function FamilyModal({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <Modal title="Our family" onClose={onClose} wide>
+    <Modal title={t('ourFamily')} onClose={onClose} wide>
       <div className="form">
         {data.members.map((m) => (
           <div key={m.id} className="family-row" style={{ borderLeftColor: m.color }}>
@@ -58,11 +59,11 @@ export function FamilyModal({ onClose }: { onClose: () => void }) {
           <input
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
-            placeholder="Add a family member…"
+            placeholder={t('addMemberPh')}
             onKeyDown={(e) => e.key === 'Enter' && add()}
           />
           <button className="btn primary" onClick={add} disabled={!newName.trim()}>
-            Add
+            {t('add')}
           </button>
         </div>
       </div>

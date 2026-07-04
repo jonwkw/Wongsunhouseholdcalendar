@@ -44,6 +44,8 @@ export interface ActivityTemplate {
   time?: string
   endTime?: string
   location?: string
+  /** Cards can carry a full repeat schedule (e.g. school Mon–Fri, Aug–Jun) */
+  recurrence?: Recurrence
 }
 
 export interface DayNote {
