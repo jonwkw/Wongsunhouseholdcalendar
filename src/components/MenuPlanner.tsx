@@ -1,41 +1,44 @@
 import { useMemo, useState } from 'react'
 import type { DragEvent } from 'react'
-import type { Dish, MealSlot } from '../types'
+import type { Dish, MealSlot, MenuEntry } from '../types'
 import { useApp, uid } from '../store'
-import { addDays, fromKey, mondayOf, todayKey, weekDays, DAY_SHORT } from '../utils/dates'
-import { Avatar, Modal } from './shared'
+import { addDays, fromKey, mondayOf, prettyDate, todayKey, weekDays, DAY_SHORT } from '../utils/dates'
+import { Legend, MemberChips, MemberToggle, Modal, tagColor } from './shared'
 
-const SLOTS: MealSlot[] = ['breakfast', 'lunch', 'dinner', 'snack']
+const MAIN_SLOTS: MealSlot[] = ['breakfast', 'lunch', 'dinner']
 const SLOT_LABEL: Record<MealSlot, string> = {
   breakfast: '🌅 Breakfast',
   lunch: '☀️ Lunch',
   dinner: '🌙 Dinner',
-  snack: '🍪 Snack',
+  snack: '🍪 Snacks',
 }
 
 export function MenuPlanner() {
-  const { data, update, currentMember } = useApp()
+  const { data, update } = useApp()
   const today = todayKey()
   const [monday, setMonday] = useState(() => mondayOf(today))
   const [armedDish, setArmedDish] = useState<string | null>(null)
   const [showDishForm, setShowDishForm] = useState(false)
+  const [snacksOpen, setSnacksOpen] = useState(false)
   const [typing, setTyping] = useState<{ date: string; slot: MealSlot } | null>(null)
   const [typedName, setTypedName] = useState('')
   const [dragOver, setDragOver] = useState<string | null>(null)
+  const [editingEntry, setEditingEntry] = useState<MenuEntry | null>(null)
 
   const days = useMemo(() => weekDays(monday), [monday])
+  const weekHasSnacks = data.menuEntries.some((m) => m.slot === 'snack' && days.includes(m.date))
+  const showSnacks = snacksOpen || weekHasSnacks
+  const slots: MealSlot[] = showSnacks ? [...MAIN_SLOTS, 'snack'] : MAIN_SLOTS
 
   const addEntry = (date: string, slot: MealSlot, dishName: string, emoji: string) => {
     update((d) => ({
       ...d,
       menuEntries: [
         ...d.menuEntries,
-        { id: uid('m'), date, slot, dishName, emoji, byMemberId: currentMember?.id },
+        { id: uid('m'), date, slot, dishName, emoji, memberIds: [] },
       ],
     }))
   }
-
-  const placeDish = (dish: Dish, date: string, slot: MealSlot) => addEntry(date, slot, dish.name, dish.emoji)
 
   const onDrop = (e: DragEvent, date: string, slot: MealSlot) => {
     e.preventDefault()
@@ -43,7 +46,7 @@ export function MenuPlanner() {
     try {
       const { id } = JSON.parse(e.dataTransfer.getData('application/json')) as { id: string }
       const dish = data.dishes.find((x) => x.id === id)
-      if (dish) placeDish(dish, date, slot)
+      if (dish) addEntry(date, slot, dish.name, dish.emoji)
     } catch {
       // ignore malformed drops
     }
@@ -52,7 +55,7 @@ export function MenuPlanner() {
   const onCellClick = (date: string, slot: MealSlot) => {
     if (armedDish) {
       const dish = data.dishes.find((x) => x.id === armedDish)
-      if (dish) placeDish(dish, date, slot)
+      if (dish) addEntry(date, slot, dish.name, dish.emoji)
       setArmedDish(null)
       return
     }
@@ -107,7 +110,9 @@ export function MenuPlanner() {
           <button className="btn subtle" onClick={() => setMonday((m) => addDays(m, 7))}>Next →</button>
         </div>
 
-        <div className="menu-grid" style={{ gridTemplateColumns: `90px repeat(7, 1fr)` }}>
+        <Legend />
+
+        <div className="menu-grid" style={{ gridTemplateColumns: `90px repeat(7, minmax(0, 1fr))` }}>
           <div />
           {days.map((date) => {
             const d = fromKey(date)
@@ -119,7 +124,7 @@ export function MenuPlanner() {
             )
           })}
 
-          {SLOTS.map((slot) => (
+          {slots.map((slot) => (
             <MenuRow
               key={slot}
               slot={slot}
@@ -128,6 +133,7 @@ export function MenuPlanner() {
               setDragOver={setDragOver}
               onDrop={onDrop}
               onCellClick={onCellClick}
+              onEntryClick={setEditingEntry}
               typing={typing}
               typedName={typedName}
               setTypedName={setTypedName}
@@ -137,13 +143,22 @@ export function MenuPlanner() {
             />
           ))}
         </div>
-        <p className="hint">
-          Tip: anyone can fill this in — entries show who added them (currently{' '}
-          {currentMember ? `${currentMember.emoji} ${currentMember.name}` : 'nobody'}).
-        </p>
+
+        {!showSnacks && (
+          <button className="btn subtle" style={{ marginTop: 8 }} onClick={() => setSnacksOpen(true)}>
+            🍪 ＋ Add a snacks row
+          </button>
+        )}
+        {showSnacks && !weekHasSnacks && (
+          <button className="btn subtle" style={{ marginTop: 8 }} onClick={() => setSnacksOpen(false)}>
+            Hide snacks row
+          </button>
+        )}
+        <p className="hint">Tap a meal to tag who it's for — colours match the key above.</p>
       </div>
 
       {showDishForm && <DishModal onClose={() => setShowDishForm(false)} />}
+      {editingEntry && <MealModal entry={editingEntry} onClose={() => setEditingEntry(null)} />}
     </div>
   )
 }
@@ -155,6 +170,7 @@ interface RowProps {
   setDragOver: (k: string | null) => void
   onDrop: (e: DragEvent, date: string, slot: MealSlot) => void
   onCellClick: (date: string, slot: MealSlot) => void
+  onEntryClick: (entry: MenuEntry) => void
   typing: { date: string; slot: MealSlot } | null
   typedName: string
   setTypedName: (v: string) => void
@@ -164,8 +180,11 @@ interface RowProps {
 }
 
 function MenuRow(props: RowProps) {
-  const { data, update, memberById } = useApp()
-  const { slot, days, dragOver, setDragOver, onDrop, onCellClick, typing, typedName, setTypedName, saveTyped, cancelTyped, armed } = props
+  const { data } = useApp()
+  const {
+    slot, days, dragOver, setDragOver, onDrop, onCellClick, onEntryClick,
+    typing, typedName, setTypedName, saveTyped, cancelTyped, armed,
+  } = props
 
   return (
     <>
@@ -186,24 +205,22 @@ function MenuRow(props: RowProps) {
             onDrop={(e) => onDrop(e, date, slot)}
             onClick={() => !isTyping && onCellClick(date, slot)}
           >
-            {entries.map((entry) => {
-              const by = memberById(entry.byMemberId)
-              return (
-                <div key={entry.id} className="menu-entry" onClick={(e) => e.stopPropagation()}>
-                  <span>{entry.emoji}</span>
-                  <span className="menu-entry-name">{entry.dishName}</span>
-                  {by && <Avatar member={by} size={16} />}
-                  <button
-                    className="icon-btn tiny"
-                    onClick={() =>
-                      update((d) => ({ ...d, menuEntries: d.menuEntries.filter((x) => x.id !== entry.id) }))
-                    }
-                  >
-                    ✕
-                  </button>
-                </div>
-              )
-            })}
+            {entries.map((entry) => (
+              <div
+                key={entry.id}
+                className="menu-entry"
+                style={{ borderLeft: `4px solid ${tagColor(entry.memberIds, data.members)}` }}
+                title="Tap to edit / tag people"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onEntryClick(entry)
+                }}
+              >
+                <span>{entry.emoji}</span>
+                <span className="menu-entry-name">{entry.dishName}</span>
+                <MemberChips memberIds={entry.memberIds} size={16} everyone />
+              </div>
+            ))}
             {isTyping ? (
               <input
                 autoFocus
@@ -225,6 +242,51 @@ function MenuRow(props: RowProps) {
         )
       })}
     </>
+  )
+}
+
+/** Edit a placed meal: rename, tag people, or remove */
+function MealModal({ entry, onClose }: { entry: MenuEntry; onClose: () => void }) {
+  const { update } = useApp()
+  const [name, setName] = useState(entry.dishName)
+  const [memberIds, setMemberIds] = useState<string[]>(entry.memberIds)
+
+  const save = () => {
+    if (!name.trim()) return
+    update((d) => ({
+      ...d,
+      menuEntries: d.menuEntries.map((m) =>
+        m.id === entry.id ? { ...m, dishName: name.trim(), memberIds } : m,
+      ),
+    }))
+    onClose()
+  }
+
+  const remove = () => {
+    update((d) => ({ ...d, menuEntries: d.menuEntries.filter((m) => m.id !== entry.id) }))
+    onClose()
+  }
+
+  return (
+    <Modal title={`${SLOT_LABEL[entry.slot]} · ${prettyDate(entry.date)}`} onClose={onClose}>
+      <div className="form">
+        <label>
+          Dish
+          <input autoFocus value={name} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && save()} />
+        </label>
+        <label>Who is it for?</label>
+        <MemberToggle selected={memberIds} onChange={setMemberIds} />
+        <div className="form-actions">
+          <button className="btn danger" onClick={remove}>
+            Remove
+          </button>
+          <span className="spacer" />
+          <button className="btn primary" onClick={save} disabled={!name.trim()}>
+            Save
+          </button>
+        </div>
+      </div>
+    </Modal>
   )
 }
 

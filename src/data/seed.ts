@@ -70,7 +70,7 @@ export function seedData(): AppData {
       { id: 'd-7', name: 'Fruit platter', emoji: '🍉', slot: 'snack' },
     ],
     menuEntries: [
-      { id: 'm-1', date: today, slot: 'dinner', dishName: 'Fish porridge', emoji: '🐟', byMemberId: 'auntie' },
+      { id: 'm-1', date: today, slot: 'dinner', dishName: 'Fish porridge', emoji: '🐟', memberIds: [] },
     ],
     boardItems: [
       {

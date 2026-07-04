@@ -21,6 +21,7 @@ export interface Activity {
   id: string
   title: string
   emoji: string
+  /** Who the activity is for; empty array = everyone */
   memberIds: string[]
   /** Set for one-off activities */
   date?: string
@@ -68,7 +69,8 @@ export interface MenuEntry {
   slot: MealSlot
   dishName: string
   emoji: string
-  byMemberId?: string
+  /** Who the meal is for; empty array = everyone */
+  memberIds: string[]
   note?: string
 }
 

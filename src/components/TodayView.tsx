@@ -2,13 +2,13 @@ import { useApp } from '../store'
 import { activitiesOn, addDays, longDate, prettyTime, relativeLabel, todayKey } from '../utils/dates'
 import { useForecast } from '../utils/useForecast'
 import { weatherEmoji } from '../utils/weather'
-import { Avatar, MemberChips } from './shared'
+import { Legend, MemberChips, tagColor } from './shared'
 import { NoteChip } from './Timetable'
 
-/** Default landing view: today + the next 2 days at a glance. */
+/** Default landing view: weather, then today + the next 2 days at a glance. */
 export function TodayView({ goTo }: { goTo: (tab: string) => void }) {
-  const { data, memberById } = useApp()
-  const { days: forecast } = useForecast()
+  const { data } = useApp()
+  const { days: forecast, error, loading, refresh } = useForecast()
   const today = todayKey()
   const daySpan = [today, addDays(today, 1), addDays(today, 2)]
 
@@ -16,17 +16,38 @@ export function TodayView({ goTo }: { goTo: (tab: string) => void }) {
 
   return (
     <div className="today-page">
-      <h2 className="today-title">{longDate(today)}</h2>
+      <div className="page-head">
+        <h2 className="today-title">{longDate(today)}</h2>
+        <Legend />
+      </div>
 
-      {forecast && forecast[0] && (
-        <button className="today-weather" onClick={() => goTo('weather')}>
-          <span className="weather-emoji-sm">{weatherEmoji(forecast[0].summary)}</span>
-          <span>
-            <strong>{forecast[0].summary}</strong>
-            {forecast[0].low !== undefined && ` · ${forecast[0].low}°–${forecast[0].high}°C`}
-          </span>
-          {forecast[0].reminders[0] && <span className="today-weather-reminder">{forecast[0].reminders[0]}</span>}
-        </button>
+      {forecast ? (
+        <div className="weather-strip">
+          {forecast.map((d, i) => (
+            <div key={d.date || i} className={`weather-mini ${i === 0 ? 'today' : ''}`}>
+              <div className="weather-mini-top">
+                <strong>{i === 0 ? 'Today' : d.dayLabel}</strong>
+                <span className="weather-emoji-sm">{weatherEmoji(d.summary)}</span>
+                {d.low !== undefined && d.high !== undefined && (
+                  <span className="weather-mini-temp">{d.low}°–{d.high}°</span>
+                )}
+              </div>
+              <div className="weather-mini-summary">{d.summary}</div>
+              {d.reminders[0] && <div className="weather-reminder">{d.reminders[0]}</div>}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="weather-strip-note">
+          {loading ? (
+            '🌤️ Loading the weather…'
+          ) : (
+            <>
+              🌤️ Weather unavailable{error ? ` (${error})` : ''}.{' '}
+              <button className="linklike" onClick={() => refresh(true)}>Try again</button>
+            </>
+          )}
+        </div>
       )}
 
       <div className="today-columns">
@@ -34,23 +55,23 @@ export function TodayView({ goTo }: { goTo: (tab: string) => void }) {
           const acts = activitiesOn(data.activities, date)
           const notes = data.dayNotes.filter((n) => n.date === date)
           const meals = data.menuEntries.filter((m) => m.date === date)
-          const dayForecast = forecast?.[i]
           const boardDue = openBoard.filter((b) => b.forDate === date)
 
           return (
             <div key={date} className={`today-col ${i === 0 ? 'primary' : ''}`}>
               <div className="today-col-head">
                 <h3>{relativeLabel(date)}</h3>
-                {dayForecast && i > 0 && (
-                  <span title={dayForecast.summary}>{weatherEmoji(dayForecast.summary)}</span>
-                )}
               </div>
 
               <div className="today-section">
                 <h4>🗓️ Activities</h4>
                 {acts.length === 0 && <p className="hint">Nothing planned.</p>}
                 {acts.map((a) => (
-                  <div key={a.id} className="today-activity">
+                  <div
+                    key={a.id}
+                    className="today-activity"
+                    style={{ borderLeft: `4px solid ${tagColor(a.memberIds, data.members)}`, paddingLeft: 8 }}
+                  >
                     <span className="card-emoji">{a.emoji}</span>
                     <div className="today-activity-body">
                       <span className="card-title">{a.title}</span>
@@ -60,12 +81,12 @@ export function TodayView({ goTo }: { goTo: (tab: string) => void }) {
                         {a.location ? ` · 📍 ${a.location}` : ''}
                       </span>
                     </div>
-                    <MemberChips memberIds={a.memberIds} size={20} />
+                    <MemberChips memberIds={a.memberIds} size={20} everyone />
                   </div>
                 ))}
               </div>
 
-              {(notes.length > 0) && (
+              {notes.length > 0 && (
                 <div className="today-section">
                   <h4>📝 Notes &amp; reminders</h4>
                   {notes.map((n) => (
@@ -81,18 +102,19 @@ export function TodayView({ goTo }: { goTo: (tab: string) => void }) {
                     Not planned yet — <button className="linklike" onClick={() => goTo('menu')}>add to menu</button>
                   </p>
                 )}
-                {meals.map((m) => {
-                  const by = memberById(m.byMemberId)
-                  return (
-                    <div key={m.id} className="today-meal">
-                      <span>{m.emoji}</span>
-                      <span className="menu-entry-name">
-                        <em>{m.slot}:</em> {m.dishName}
-                      </span>
-                      {by && <Avatar member={by} size={16} />}
-                    </div>
-                  )
-                })}
+                {meals.map((m) => (
+                  <div
+                    key={m.id}
+                    className="today-meal"
+                    style={{ borderLeft: `4px solid ${tagColor(m.memberIds, data.members)}`, paddingLeft: 8 }}
+                  >
+                    <span>{m.emoji}</span>
+                    <span className="menu-entry-name">
+                      <em>{m.slot}:</em> {m.dishName}
+                    </span>
+                    <MemberChips memberIds={m.memberIds} size={16} everyone />
+                  </div>
+                ))}
               </div>
 
               {boardDue.length > 0 && (

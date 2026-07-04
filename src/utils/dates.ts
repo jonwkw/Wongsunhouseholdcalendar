@@ -63,6 +63,37 @@ export function prettyTime(t?: string): string {
   return m ? `${hh}:${String(m).padStart(2, '0')}${suffix}` : `${hh}${suffix}`
 }
 
+/** "YYYY-MM" of the month containing the given date key */
+export function monthOf(key: string): string {
+  return key.slice(0, 7)
+}
+
+export function addMonths(ym: string, n: number): string {
+  const [y, m] = ym.split('-').map(Number)
+  const d = new Date(y, m - 1 + n, 1)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+}
+
+export function monthLabel(ym: string): string {
+  const [y, m] = ym.split('-').map(Number)
+  return `${['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][m - 1]} ${y}`
+}
+
+/** Mon–Sun weeks covering the given month, as arrays of date keys */
+export function weeksOfMonth(ym: string): string[][] {
+  const [y, m] = ym.split('-').map(Number)
+  const first = mondayOf(toKey(new Date(y, m - 1, 1)))
+  const weeks: string[][] = []
+  let cursor = first
+  while (monthOf(cursor) <= ym && weeks.length < 6) {
+    const week = weekDays(cursor)
+    if (monthOf(week[0]) > ym) break
+    weeks.push(week)
+    cursor = addDays(cursor, 7)
+  }
+  return weeks
+}
+
 /** Does this activity happen on the given date? */
 export function occursOn(a: Activity, dateKey: string): boolean {
   if (a.exceptions.includes(dateKey)) return false

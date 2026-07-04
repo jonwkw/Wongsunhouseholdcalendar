@@ -4,20 +4,19 @@ A household management web app for the whole family — parents, grandma, helper
 
 ## Modules
 
-- **Today** (default view) — today + the next 2 days at a glance: activities, notes & reminders, the day's menu, weather snapshot, and anything due from the Family Board.
-- **Timetable** — Monday–Sunday week view for every family member.
+- **Today** (default view) — Singapore weather for today + next 3 days (live from NEA data.gov.sg, no API key, with friendly reminders like "☔ Bring an umbrella!"), then today + the next 2 days at a glance: activities, notes & reminders, the day's menu, and anything due from the Family Board.
+- **Timetable** — week and **month** views for every family member.
   - Drag activity cards from the **Activity library** onto any day (or tap the card, then tap a day — works on tablets).
   - Activities can be one-off or **recurring** (pick weekdays, optional end date), with time, location, and notes.
   - Notes & reminders can be tagged to any day; reminders have a tick-off checkbox.
-  - Navigate week by week or jump straight to any date up to **one year ahead** (for the academic calendar).
+  - Month view pages out to **one year ahead** (for the academic calendar) and highlights the current week; tap any day to open its week.
   - Filter by family member.
-- **Menu** — weekly meal planner (breakfast / lunch / dinner / snack).
+- **Menu** — weekly meal planner (breakfast / lunch / dinner, plus an optional snacks row).
   - Drag dishes from the **Dish library** into a meal box, or tap any box and type directly.
-  - Every entry shows who added it.
-- **Weather** — today + next 3 days for Singapore, live from NEA (data.gov.sg, no API key), with friendly reminders like "☔ Bring an umbrella!".
+  - Tap a placed meal to tag who it's for.
 - **Family Board** — special requests ("can we add this to the menu?") and one-off reminders ("balcony clean"), with replies and done-ticking.
 
-Family members are switched by tapping an avatar in the header (no passwords — trusted household devices). Edit names/emoji or add members via the ⚙️ button.
+Every activity and meal can be tagged to one or more family members — or **Everyone** — and is colour-coded to the person, with a colour key shown on each page. Edit names/emoji or add members via the "Edit family" button.
 
 ## Running it
 

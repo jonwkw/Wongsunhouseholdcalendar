@@ -5,10 +5,11 @@ import { prettyDate, todayKey } from '../utils/dates'
 import { Avatar } from './shared'
 
 export function FamilyBoard() {
-  const { data, update, currentMember, memberById } = useApp()
+  const { data, update, memberById } = useApp()
   const [kind, setKind] = useState<'request' | 'reminder'>('request')
   const [text, setText] = useState('')
   const [forDate, setForDate] = useState('')
+  const [byMemberId, setByMemberId] = useState('')
   const [showDone, setShowDone] = useState(false)
 
   const add = () => {
@@ -17,7 +18,7 @@ export function FamilyBoard() {
       id: uid('b'),
       kind,
       text: text.trim(),
-      byMemberId: currentMember?.id ?? '',
+      byMemberId,
       forDate: forDate || undefined,
       status: 'open',
       createdAt: todayKey(),
@@ -101,6 +102,14 @@ export function FamilyBoard() {
           placeholder={kind === 'request' ? 'e.g. Can we add mee goreng to the menu?' : 'e.g. Clean the balcony'}
           onKeyDown={(e) => e.key === 'Enter' && add()}
         />
+        <select value={byMemberId} onChange={(e) => setByMemberId(e.target.value)} title="Who is posting this?">
+          <option value="">From…</option>
+          {data.members.map((m) => (
+            <option key={m.id} value={m.id}>
+              {m.emoji} {m.name}
+            </option>
+          ))}
+        </select>
         <input type="date" value={forDate} onChange={(e) => setForDate(e.target.value)} title="Optional date" />
         <button className="btn primary" onClick={add} disabled={!text.trim()}>
           Post

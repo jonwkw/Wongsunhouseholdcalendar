@@ -2,6 +2,15 @@ import type { ReactNode } from 'react'
 import type { Member } from '../types'
 import { useApp } from '../store'
 
+/** Colour used when something is tagged to the whole family */
+export const EVERYONE_COLOR = '#b08b3e'
+
+/** Colour an item takes: first tagged member's colour, or the family colour */
+export function tagColor(memberIds: string[], members: Member[]): string {
+  if (memberIds.length === 0) return EVERYONE_COLOR
+  return members.find((m) => m.id === memberIds[0])?.color ?? EVERYONE_COLOR
+}
+
 export function Avatar({ member, size = 28 }: { member: Member; size?: number }) {
   return (
     <span
@@ -14,12 +23,32 @@ export function Avatar({ member, size = 28 }: { member: Member; size?: number })
   )
 }
 
-export function MemberChips({ memberIds, size = 22 }: { memberIds: string[]; size?: number }) {
+export function MemberChips({
+  memberIds,
+  size = 22,
+  everyone = false,
+}: {
+  memberIds: string[]
+  size?: number
+  /** Show a family chip when memberIds is empty (i.e. tagged to everyone) */
+  everyone?: boolean
+}) {
   const { data } = useApp()
+  if (memberIds.length === 0) {
+    if (!everyone) return null
+    return (
+      <span
+        className="avatar"
+        title="Everyone"
+        style={{ width: size, height: size, fontSize: size * 0.55, background: EVERYONE_COLOR + '33', borderColor: EVERYONE_COLOR }}
+      >
+        👨‍👩‍👧‍👦
+      </span>
+    )
+  }
   const members = memberIds
     .map((id) => data.members.find((m) => m.id === id))
     .filter((m): m is Member => Boolean(m))
-  if (members.length === 0) return null
   return (
     <span className="member-chips">
       {members.map((m) => (
@@ -29,7 +58,10 @@ export function MemberChips({ memberIds, size = 22 }: { memberIds: string[]; siz
   )
 }
 
-/** Multi-select row of member avatars used in forms */
+/**
+ * Multi-select row of member avatars used in forms.
+ * An empty selection means "Everyone" — shown as its own leading option.
+ */
 export function MemberToggle({
   selected,
   onChange,
@@ -42,6 +74,14 @@ export function MemberToggle({
     onChange(selected.includes(id) ? selected.filter((x) => x !== id) : [...selected, id])
   return (
     <div className="member-toggle">
+      <button
+        type="button"
+        className={`member-toggle-btn ${selected.length === 0 ? 'on' : ''}`}
+        style={selected.length === 0 ? { background: EVERYONE_COLOR + '2a', borderColor: EVERYONE_COLOR } : undefined}
+        onClick={() => onChange([])}
+      >
+        <span>👨‍👩‍👧‍👦</span> Everyone
+      </button>
       {data.members.map((m) => (
         <button
           key={m.id}
@@ -53,6 +93,30 @@ export function MemberToggle({
           <span>{m.emoji}</span> {m.name}
         </button>
       ))}
+    </div>
+  )
+}
+
+/** Colour key mapping each family member (and Everyone) to their colour */
+export function Legend({ onEdit }: { onEdit?: () => void }) {
+  const { data } = useApp()
+  return (
+    <div className="legend">
+      {data.members.map((m) => (
+        <span key={m.id} className="legend-item">
+          <span className="legend-dot" style={{ background: m.color }} />
+          {m.emoji} {m.name}
+        </span>
+      ))}
+      <span className="legend-item">
+        <span className="legend-dot" style={{ background: EVERYONE_COLOR }} />
+        👨‍👩‍👧‍👦 Everyone
+      </span>
+      {onEdit && (
+        <button className="icon-btn" title="Edit family" onClick={onEdit}>
+          ⚙️
+        </button>
+      )}
     </div>
   )
 }
