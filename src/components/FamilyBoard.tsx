@@ -2,7 +2,6 @@ import { useState } from 'react'
 import type { BoardItem } from '../types'
 import { useApp, uid } from '../store'
 import { prettyDate, todayKey } from '../utils/dates'
-import { Avatar } from './shared'
 
 export function FamilyBoard() {
   const { data, update, memberById } = useApp()
@@ -62,9 +61,9 @@ export function FamilyBoard() {
           <div className="board-text">{b.text}</div>
           <div className="board-meta">
             {by && (
-              <>
-                <Avatar member={by} size={18} /> {by.name}
-              </>
+              <span className="name-pill" style={{ borderColor: by.color, background: by.color + '1e', color: by.color }}>
+                {by.name}
+              </span>
             )}
             {b.forDate && <span className="board-date">📅 {prettyDate(b.forDate)}</span>}
           </div>
@@ -106,7 +105,7 @@ export function FamilyBoard() {
           <option value="">From…</option>
           {data.members.map((m) => (
             <option key={m.id} value={m.id}>
-              {m.emoji} {m.name}
+              {m.name}
             </option>
           ))}
         </select>

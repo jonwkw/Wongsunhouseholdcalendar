@@ -419,6 +419,7 @@ textarea:focus {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 4px;
   margin-top: 2px;
 }
@@ -466,99 +467,45 @@ textarea:focus {
   display: inline-block;
 }
 
-/* ---------- month view ---------- */
-.view-toggle {
-  display: flex;
-  gap: 4px;
-  margin-right: 6px;
-}
-
-.month-view {
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  padding: 10px;
-}
-
-.month-head-row,
-.month-week {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 4px;
-}
-
-.month-head-cell {
-  text-align: center;
-  font-size: 12px;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  padding: 4px 0;
-}
-
-.month-week {
-  margin-bottom: 4px;
-  border-radius: 10px;
-  padding: 2px;
-}
-
-.month-week.current {
-  background: #fbedd9;
-  box-shadow: 0 0 0 2px var(--accent);
-}
-
-.month-cell {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 3px;
-  min-height: 84px;
-  padding: 5px;
-  text-align: left;
-  background: #fdfbf5;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  font-family: inherit;
-  font-size: 11.5px;
-}
-
-.month-cell:hover {
-  border-color: var(--accent);
-}
-
-.month-cell.other-month {
-  opacity: 0.4;
-}
-
-.month-cell.today {
-  border-color: var(--accent);
-  background: #fff;
-  box-shadow: inset 0 0 0 1.5px var(--accent);
-}
-
-.month-daynum {
+/* ---------- name pills ---------- */
+.name-pill {
+  display: inline-block;
+  border: 1.5px solid;
+  border-radius: 999px;
+  padding: 1px 8px;
+  font-size: 11px;
   font-weight: 700;
-  font-size: 13px;
-}
-
-.month-items {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  overflow: hidden;
-}
-
-.month-item {
-  background: #fff;
-  border-radius: 4px;
-  padding: 1px 4px;
+  line-height: 1.5;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
-.month-more {
+.member-chips {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+
+/* ---------- 4-week view ---------- */
+.week-block {
+  margin-bottom: 14px;
+}
+
+.week-block-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 14px;
+  margin-bottom: 6px;
   color: var(--muted);
+}
+
+.week-block.current .week-block-label {
+  color: var(--accent-ink);
+}
+
+.week-block.current .week-block-label .today-tag {
+  margin-left: 0;
 }
 
 /* ---------- weather strip (Today page) ---------- */
@@ -598,6 +545,34 @@ textarea:focus {
   margin-top: 2px;
 }
 
+.weather-periods {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 5px;
+}
+
+.weather-period {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.weather-period-label {
+  font-weight: 700;
+  width: 70px;
+  flex-shrink: 0;
+  color: var(--muted);
+}
+
+.weather-period-text {
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .weather-strip-note {
   background: var(--card);
   border: 1px dashed var(--line);
@@ -612,6 +587,7 @@ textarea:focus {
 .note-chip {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 5px;
   font-size: 12.5px;
   background: #fff8e6;
@@ -833,6 +809,146 @@ textarea:focus {
   border-color: var(--accent);
 }
 
+.today-board {
+  margin-top: 20px;
+  border-top: 2px dashed var(--line);
+  padding-top: 14px;
+}
+
+/* ---------- kid corner ---------- */
+.kid-page {
+  max-width: 980px;
+  margin: 0 auto;
+}
+
+.kid-title {
+  text-align: center;
+  font-size: 28px;
+  margin: 4px 0 14px;
+}
+
+.kid-subtitle {
+  margin: 18px 0 8px;
+  font-size: 18px;
+}
+
+.kid-daily {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.kid-card {
+  border-radius: 16px;
+  padding: 16px;
+  border: 2px solid;
+  font-size: 15px;
+}
+
+.kid-card h3 {
+  margin: 0 0 8px;
+  font-size: 15px;
+}
+
+.kid-card.word {
+  background: #eef4fb;
+  border-color: #9dbede;
+}
+
+.kid-card.math {
+  background: #eaf6f0;
+  border-color: #93cdb6;
+}
+
+.kid-card.mission {
+  background: #fff3e0;
+  border-color: #ecc189;
+}
+
+.kid-word {
+  font-size: 30px;
+  font-weight: 800;
+  text-transform: lowercase;
+}
+
+.kid-meaning {
+  margin: 4px 0;
+}
+
+.kid-sentence {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-style: italic;
+}
+
+.kid-question {
+  font-size: 17px;
+  margin: 4px 0 10px;
+}
+
+.kid-answer {
+  font-size: 19px;
+  font-weight: 800;
+  color: var(--primary);
+}
+
+.kid-days {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+}
+
+.kid-day {
+  background: var(--card);
+  border: 1.5px solid var(--line);
+  border-radius: 14px;
+  padding: 12px;
+  font-size: 14.5px;
+}
+
+.kid-day.today {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px #f3cf9f;
+}
+
+.kid-day-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 16px;
+  margin-bottom: 6px;
+}
+
+.kid-free {
+  color: var(--muted);
+  margin: 4px 0;
+}
+
+.kid-activity {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+}
+
+.kid-activity-emoji {
+  font-size: 22px;
+}
+
+.kid-note {
+  background: #fff8e6;
+  border: 1px solid #eddfb5;
+  border-radius: 8px;
+  padding: 4px 8px;
+  margin-top: 4px;
+  font-size: 13px;
+}
+
+.kid-note.done {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
 /* ---------- board ---------- */
 .board-form {
   display: flex;
@@ -853,6 +969,7 @@ textarea:focus {
 
 .kind-toggle {
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
 }
 

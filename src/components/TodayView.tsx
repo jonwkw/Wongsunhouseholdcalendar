@@ -4,15 +4,14 @@ import { useForecast } from '../utils/useForecast'
 import { weatherEmoji } from '../utils/weather'
 import { Legend, MemberChips, tagColor } from './shared'
 import { NoteChip } from './Timetable'
+import { FamilyBoard } from './FamilyBoard'
 
-/** Default landing view: weather, then today + the next 2 days at a glance. */
+/** Default landing view: weather, today + the next 2 days, and the family board. */
 export function TodayView({ goTo }: { goTo: (tab: string) => void }) {
   const { data } = useApp()
   const { days: forecast, error, loading, refresh } = useForecast()
   const today = todayKey()
   const daySpan = [today, addDays(today, 1), addDays(today, 2)]
-
-  const openBoard = data.boardItems.filter((b) => b.status === 'open')
 
   return (
     <div className="today-page">
@@ -32,7 +31,19 @@ export function TodayView({ goTo }: { goTo: (tab: string) => void }) {
                   <span className="weather-mini-temp">{d.low}°–{d.high}°</span>
                 )}
               </div>
-              <div className="weather-mini-summary">{d.summary}</div>
+              {d.periods && d.periods.length > 0 ? (
+                <div className="weather-periods">
+                  {d.periods.map((p) => (
+                    <div key={p.label} className="weather-period">
+                      <span className="weather-period-label">{p.label}</span>
+                      <span>{weatherEmoji(p.summary)}</span>
+                      <span className="weather-period-text">{p.summary}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="weather-mini-summary">{d.summary}</div>
+              )}
               {d.reminders[0] && <div className="weather-reminder">{d.reminders[0]}</div>}
             </div>
           ))}
@@ -55,7 +66,7 @@ export function TodayView({ goTo }: { goTo: (tab: string) => void }) {
           const acts = activitiesOn(data.activities, date)
           const notes = data.dayNotes.filter((n) => n.date === date)
           const meals = data.menuEntries.filter((m) => m.date === date)
-          const boardDue = openBoard.filter((b) => b.forDate === date)
+          const boardDue = data.boardItems.filter((b) => b.status === 'open' && b.forDate === date)
 
           return (
             <div key={date} className={`today-col ${i === 0 ? 'primary' : ''}`}>
@@ -81,7 +92,7 @@ export function TodayView({ goTo }: { goTo: (tab: string) => void }) {
                         {a.location ? ` · 📍 ${a.location}` : ''}
                       </span>
                     </div>
-                    <MemberChips memberIds={a.memberIds} size={20} everyone />
+                    <MemberChips memberIds={a.memberIds} everyone />
                   </div>
                 ))}
               </div>
@@ -112,7 +123,7 @@ export function TodayView({ goTo }: { goTo: (tab: string) => void }) {
                     <span className="menu-entry-name">
                       <em>{m.slot}:</em> {m.dishName}
                     </span>
-                    <MemberChips memberIds={m.memberIds} size={16} everyone />
+                    <MemberChips memberIds={m.memberIds} everyone />
                   </div>
                 ))}
               </div>
@@ -132,11 +143,9 @@ export function TodayView({ goTo }: { goTo: (tab: string) => void }) {
         })}
       </div>
 
-      {openBoard.length > 0 && (
-        <button className="today-board-summary" onClick={() => goTo('board')}>
-          📌 {openBoard.length} open item{openBoard.length > 1 ? 's' : ''} on the Family Board →
-        </button>
-      )}
+      <div className="today-board">
+        <FamilyBoard />
+      </div>
     </div>
   )
 }

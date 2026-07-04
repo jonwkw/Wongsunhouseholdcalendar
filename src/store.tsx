@@ -25,7 +25,12 @@ function load(): AppData {
 function migrate(data: AppData): AppData {
   return {
     ...data,
-    menuEntries: (data.menuEntries ?? []).map((m) => ({ ...m, memberIds: m.memberIds ?? [] })),
+    menuEntries: (data.menuEntries ?? []).map((m) => ({
+      ...m,
+      memberIds: m.memberIds ?? [],
+      // 'snack' split into snack-am / snack-pm rows
+      slot: (m.slot as string) === 'snack' ? 'snack-am' : m.slot,
+    })),
   }
 }
 

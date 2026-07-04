@@ -1,22 +1,21 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import type { DragEvent } from 'react'
 import type { Activity, ActivityTemplate, DayNote } from '../types'
 import { useApp, uid } from '../store'
 import {
-  activitiesOn, addDays, addMonths, mondayOf, monthLabel, monthOf, prettyTime, todayKey,
-  weekDays, weeksOfMonth, fromKey, MONTH_SHORT,
+  activitiesOn, addDays, mondayOf, prettyTime, todayKey, weekDays, fromKey, MONTH_SHORT,
 } from '../utils/dates'
-import { Avatar, Legend, MemberChips, MemberToggle, Modal, EmojiPicker, tagColor } from './shared'
+import { Legend, MemberChips, MemberToggle, Modal, EmojiPicker, tagColor } from './shared'
 import { ActivityModal } from './ActivityModal'
 
 type DragPayload = { type: 'template'; id: string } | { type: 'activity'; id: string }
 
+const WEEKS_SHOWN = 4
+
 export function Timetable() {
   const { data, update } = useApp()
   const today = todayKey()
-  const [view, setView] = useState<'week' | 'month'>('week')
   const [monday, setMonday] = useState(() => mondayOf(today))
-  const [month, setMonth] = useState(() => monthOf(today))
   const [filterMember, setFilterMember] = useState<string>('all')
   const [editing, setEditing] = useState<{ activity: Activity | null; date: string; prefill?: Partial<Activity> } | null>(null)
   const [noteDay, setNoteDay] = useState<string | null>(null)
@@ -24,30 +23,22 @@ export function Timetable() {
   const [showTemplateForm, setShowTemplateForm] = useState(false)
   const [dragOverDay, setDragOverDay] = useState<string | null>(null)
 
-  const days = useMemo(() => weekDays(monday), [monday])
-  const maxMonday = mondayOf(addDays(today, 365))
-  const minMonday = mondayOf(addDays(today, -90))
-  const maxMonth = monthOf(addDays(today, 365))
-  const minMonth = monthOf(addDays(today, -90))
+  const weeks = Array.from({ length: WEEKS_SHOWN }, (_, i) => weekDays(addDays(monday, i * 7)))
 
+  /** Opening the full form on placement means "repeat weekly" is always one tap away */
   const placeTemplate = (t: ActivityTemplate, date: string) => {
-    update((d) => ({
-      ...d,
-      activities: [
-        ...d.activities,
-        {
-          id: uid('a'),
-          title: t.title,
-          emoji: t.emoji,
-          memberIds: t.memberIds,
-          date,
-          time: t.time,
-          endTime: t.endTime,
-          location: t.location,
-          exceptions: [],
-        },
-      ],
-    }))
+    setEditing({
+      activity: null,
+      date,
+      prefill: {
+        title: t.title,
+        emoji: t.emoji,
+        memberIds: t.memberIds,
+        time: t.time,
+        endTime: t.endTime,
+        location: t.location,
+      },
+    })
   }
 
   const moveActivity = (id: string, date: string) => {
@@ -81,12 +72,7 @@ export function Timetable() {
     }
   }
 
-  const goToWeek = (date: string) => {
-    setMonday(mondayOf(date))
-    setView('week')
-  }
-
-  const weekLabel = () => {
+  const rangeLabel = (days: string[]) => {
     const start = fromKey(days[0])
     const end = fromKey(days[6])
     const sameMonth = start.getMonth() === end.getMonth()
@@ -103,8 +89,8 @@ export function Timetable() {
   return (
     <div className="timetable-layout">
       <aside className="library">
-        <h3>🧩 Activity library</h3>
-        <p className="hint">Drag a card onto a day — or tap it, then tap a day.</p>
+        <h3>🧩 Activity cards</h3>
+        <p className="hint">Drag a card onto a day — or tap it, then tap a day. You'll get the chance to set it repeating before saving.</p>
         {data.activityTemplates.map((t) => (
           <div
             key={t.id}
@@ -118,11 +104,10 @@ export function Timetable() {
           >
             <span className="card-emoji">{t.emoji}</span>
             <span className="card-title">{t.title}</span>
-            <MemberChips memberIds={t.memberIds} size={18} everyone />
             {t.time && <span className="card-time">{prettyTime(t.time)}</span>}
             <button
               className="icon-btn tiny"
-              title="Remove from library"
+              title="Remove this card"
               onClick={(e) => {
                 e.stopPropagation()
                 update((d) => ({ ...d, activityTemplates: d.activityTemplates.filter((x) => x.id !== t.id) }))
@@ -133,7 +118,7 @@ export function Timetable() {
           </div>
         ))}
         <button className="btn subtle full" onClick={() => setShowTemplateForm(true)}>
-          ＋ New library card
+          ＋ New activity card
         </button>
         {armedTemplate && (
           <p className="armed-hint">👉 Now tap a day to place it (tap card again to cancel)</p>
@@ -142,57 +127,28 @@ export function Timetable() {
 
       <div className="timetable-main">
         <div className="week-nav">
-          <div className="view-toggle">
-            <button className={`btn ${view === 'week' ? 'primary' : 'subtle'}`} onClick={() => setView('week')}>
-              Week
-            </button>
-            <button
-              className={`btn ${view === 'month' ? 'primary' : 'subtle'}`}
-              onClick={() => {
-                setMonth(monthOf(days[0]) < monthOf(today) ? monthOf(today) : monthOf(days[3]))
-                setView('month')
-              }}
-            >
-              Month
-            </button>
-          </div>
-
-          {view === 'week' ? (
-            <>
-              <button className="btn subtle" onClick={() => setMonday((m) => (addDays(m, -7) >= minMonday ? addDays(m, -7) : m))}>
-                ← Prev
-              </button>
-              <button className="btn subtle" onClick={() => setMonday(mondayOf(today))}>
-                This week
-              </button>
-              <strong className="week-label">{weekLabel()}</strong>
-              <input
-                type="date"
-                className="jump-date"
-                value={days[0]}
-                min={addDays(today, -90)}
-                max={addDays(today, 365)}
-                onChange={(e) => e.target.value && setMonday(mondayOf(e.target.value))}
-                title="Jump to a date (up to one year ahead)"
-              />
-              <button className="btn subtle" onClick={() => setMonday((m) => (addDays(m, 7) <= maxMonday ? addDays(m, 7) : m))}>
-                Next →
-              </button>
-            </>
-          ) : (
-            <>
-              <button className="btn subtle" onClick={() => setMonth((m) => (addMonths(m, -1) >= minMonth ? addMonths(m, -1) : m))}>
-                ← Prev
-              </button>
-              <button className="btn subtle" onClick={() => setMonth(monthOf(today))}>
-                This month
-              </button>
-              <strong className="week-label">{monthLabel(month)}</strong>
-              <button className="btn subtle" onClick={() => setMonth((m) => (addMonths(m, 1) <= maxMonth ? addMonths(m, 1) : m))}>
-                Next →
-              </button>
-            </>
-          )}
+          <button className="btn subtle" onClick={() => setMonday((m) => addDays(m, -28))} title="Back 4 weeks">
+            ⏪
+          </button>
+          <button className="btn subtle" onClick={() => setMonday((m) => addDays(m, -7))}>
+            ← Prev week
+          </button>
+          <button className="btn subtle" onClick={() => setMonday(mondayOf(today))}>
+            This week
+          </button>
+          <input
+            type="date"
+            className="jump-date"
+            value={weeks[0][0]}
+            onChange={(e) => e.target.value && setMonday(mondayOf(e.target.value))}
+            title="Jump to any date, past or future"
+          />
+          <button className="btn subtle" onClick={() => setMonday((m) => addDays(m, 7))}>
+            Next week →
+          </button>
+          <button className="btn subtle" onClick={() => setMonday((m) => addDays(m, 28))} title="Forward 4 weeks">
+            ⏩
+          </button>
         </div>
 
         <div className="filter-row">
@@ -207,143 +163,108 @@ export function Timetable() {
               style={filterMember === m.id ? { borderColor: m.color, background: m.color + '22' } : undefined}
               onClick={() => setFilterMember(m.id)}
             >
-              {m.emoji} {m.name}
+              {m.name}
             </button>
           ))}
         </div>
 
         <Legend />
 
-        {view === 'week' ? (
-          <div className="week-grid">
-            {days.map((date) => {
-              const acts = filtered(date)
-              const notes = data.dayNotes.filter((n) => n.date === date)
-              const d = fromKey(date)
-              return (
-                <div
-                  key={date}
-                  className={`day-col ${date === today ? 'today' : ''} ${dragOverDay === date ? 'drag-over' : ''} ${armedTemplate ? 'placeable' : ''}`}
-                  onDragOver={(e) => {
-                    e.preventDefault()
-                    setDragOverDay(date)
-                  }}
-                  onDragLeave={() => setDragOverDay((cur) => (cur === date ? null : cur))}
-                  onDrop={(e) => onDrop(e, date)}
-                  onClick={() => onDayClick(date)}
-                >
-                  <div className="day-head">
-                    <span className="day-name">{['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d.getDay()]}</span>
-                    <span className="day-num">{d.getDate()}</span>
-                    {date === today && <span className="today-tag">Today</span>}
-                  </div>
-
-                  {acts.map((a) => (
+        {weeks.map((days) => {
+          const isCurrentWeek = days.includes(today)
+          return (
+            <div key={days[0]} className={`week-block ${isCurrentWeek ? 'current' : ''}`}>
+              <div className="week-block-label">
+                {isCurrentWeek && <span className="today-tag">This week</span>}
+                <span>{rangeLabel(days)}</span>
+              </div>
+              <div className="week-grid">
+                {days.map((date) => {
+                  const acts = filtered(date)
+                  const notes = data.dayNotes.filter((n) => n.date === date)
+                  const d = fromKey(date)
+                  return (
                     <div
-                      key={a.id}
-                      className="activity-card"
-                      style={{ borderLeft: `4px solid ${tagColor(a.memberIds, data.members)}` }}
-                      draggable={Boolean(a.date)}
-                      onDragStart={(e) => {
-                        e.stopPropagation()
-                        e.dataTransfer.setData('application/json', JSON.stringify({ type: 'activity', id: a.id }))
+                      key={date}
+                      className={`day-col ${date === today ? 'today' : ''} ${dragOverDay === date ? 'drag-over' : ''} ${armedTemplate ? 'placeable' : ''}`}
+                      onDragOver={(e) => {
+                        e.preventDefault()
+                        setDragOverDay(date)
                       }}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setEditing({ activity: a, date })
-                      }}
+                      onDragLeave={() => setDragOverDay((cur) => (cur === date ? null : cur))}
+                      onDrop={(e) => onDrop(e, date)}
+                      onClick={() => onDayClick(date)}
                     >
-                      <div className="activity-top">
-                        <span className="card-emoji">{a.emoji}</span>
-                        <span className="card-title">{a.title}</span>
-                        {a.recurrence && <span title="Repeats weekly">🔁</span>}
+                      <div className="day-head">
+                        <span className="day-name">{['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d.getDay()]}</span>
+                        <span className="day-num">{d.getDate()}</span>
+                        {date === today && <span className="today-tag">Today</span>}
                       </div>
-                      <div className="activity-meta">
-                        {a.time && (
-                          <span className="card-time">
-                            {prettyTime(a.time)}
-                            {a.endTime ? `–${prettyTime(a.endTime)}` : ''}
-                          </span>
-                        )}
-                        <MemberChips memberIds={a.memberIds} size={18} everyone />
+
+                      {acts.map((a) => (
+                        <div
+                          key={a.id}
+                          className="activity-card"
+                          style={{ borderLeft: `4px solid ${tagColor(a.memberIds, data.members)}` }}
+                          draggable={Boolean(a.date)}
+                          onDragStart={(e) => {
+                            e.stopPropagation()
+                            e.dataTransfer.setData('application/json', JSON.stringify({ type: 'activity', id: a.id }))
+                          }}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setEditing({ activity: a, date })
+                          }}
+                        >
+                          <div className="activity-top">
+                            <span className="card-emoji">{a.emoji}</span>
+                            <span className="card-title">{a.title}</span>
+                            {a.recurrence && <span title="Repeats weekly">🔁</span>}
+                          </div>
+                          <div className="activity-meta">
+                            {a.time && (
+                              <span className="card-time">
+                                {prettyTime(a.time)}
+                                {a.endTime ? `–${prettyTime(a.endTime)}` : ''}
+                              </span>
+                            )}
+                            <MemberChips memberIds={a.memberIds} everyone />
+                          </div>
+                          {a.location && <div className="activity-loc">📍 {a.location}</div>}
+                        </div>
+                      ))}
+
+                      {notes.map((n) => (
+                        <NoteChip key={n.id} note={n} />
+                      ))}
+
+                      <div className="day-actions">
+                        <button
+                          className="btn ghost"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setEditing({ activity: null, date })
+                          }}
+                        >
+                          ＋
+                        </button>
+                        <button
+                          className="btn ghost"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setNoteDay(date)
+                          }}
+                        >
+                          📝
+                        </button>
                       </div>
-                      {a.location && <div className="activity-loc">📍 {a.location}</div>}
                     </div>
-                  ))}
-
-                  {notes.map((n) => (
-                    <NoteChip key={n.id} note={n} />
-                  ))}
-
-                  <div className="day-actions">
-                    <button
-                      className="btn ghost"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setEditing({ activity: null, date })
-                      }}
-                    >
-                      ＋ Activity
-                    </button>
-                    <button
-                      className="btn ghost"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setNoteDay(date)
-                      }}
-                    >
-                      📝 Note
-                    </button>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        ) : (
-          <div className="month-view">
-            <div className="month-head-row">
-              {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d) => (
-                <div key={d} className="month-head-cell">{d}</div>
-              ))}
+                  )
+                })}
+              </div>
             </div>
-            {weeksOfMonth(month).map((week) => {
-              const isCurrentWeek = week.includes(today)
-              return (
-                <div key={week[0]} className={`month-week ${isCurrentWeek ? 'current' : ''}`}>
-                  {week.map((date) => {
-                    const acts = filtered(date)
-                    const notes = data.dayNotes.filter((n) => n.date === date)
-                    const inMonth = monthOf(date) === month
-                    return (
-                      <button
-                        key={date}
-                        className={`month-cell ${inMonth ? '' : 'other-month'} ${date === today ? 'today' : ''}`}
-                        onClick={() => goToWeek(date)}
-                        title="Open this week"
-                      >
-                        <span className="month-daynum">{fromKey(date).getDate()}</span>
-                        <span className="month-items">
-                          {acts.slice(0, 3).map((a) => (
-                            <span
-                              key={a.id}
-                              className="month-item"
-                              style={{ borderLeft: `3px solid ${tagColor(a.memberIds, data.members)}` }}
-                            >
-                              {a.emoji} {a.title}
-                            </span>
-                          ))}
-                          {acts.length > 3 && <span className="month-more">+{acts.length - 3} more</span>}
-                          {notes.length > 0 && <span className="month-more">📝 {notes.length}</span>}
-                        </span>
-                      </button>
-                    )
-                  })}
-                </div>
-              )
-            })}
-            <p className="hint">Tap any day to open its week. The current week is highlighted.</p>
-          </div>
-        )}
+          )
+        })}
       </div>
 
       {editing && (
@@ -380,7 +301,11 @@ export function NoteChip({ note }: { note: DayNote }) {
         <span>💬</span>
       )}
       <span className="note-text">{note.text}</span>
-      {member && <Avatar member={member} size={16} />}
+      {member && (
+        <span className="name-pill" style={{ borderColor: member.color, background: member.color + '1e', color: member.color }}>
+          {member.name}
+        </span>
+      )}
       <button
         className="icon-btn tiny"
         onClick={() => update((d) => ({ ...d, dayNotes: d.dayNotes.filter((n) => n.id !== note.id) }))}
@@ -441,7 +366,7 @@ function NoteModal({ date, onClose }: { date: string; onClose: () => void }) {
             <option value="">— nobody in particular —</option>
             {data.members.map((m) => (
               <option key={m.id} value={m.id}>
-                {m.emoji} {m.name}
+                {m.name}
               </option>
             ))}
           </select>
@@ -477,7 +402,7 @@ function TemplateModal({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <Modal title="New library card" onClose={onClose}>
+    <Modal title="New activity card" onClose={onClose}>
       <div className="form">
         <label>
           Activity name
@@ -494,7 +419,7 @@ function TemplateModal({ onClose }: { onClose: () => void }) {
         <div className="form-actions">
           <span className="spacer" />
           <button className="btn primary" onClick={save} disabled={!title.trim()}>
-            Add to library
+            Save card
           </button>
         </div>
       </div>

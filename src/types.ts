@@ -1,6 +1,6 @@
 // Shared data model. All dates are "YYYY-MM-DD" local strings; times are "HH:MM".
 
-export type MealSlot = 'breakfast' | 'lunch' | 'dinner' | 'snack'
+export type MealSlot = 'breakfast' | 'lunch' | 'dinner' | 'snack-am' | 'snack-pm'
 
 export interface Member {
   id: string
@@ -60,7 +60,7 @@ export interface Dish {
   id: string
   name: string
   emoji: string
-  slot: MealSlot | 'any'
+  slot: 'breakfast' | 'lunch' | 'dinner' | 'snack' | 'any'
 }
 
 export interface MenuEntry {

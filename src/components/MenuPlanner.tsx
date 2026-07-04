@@ -3,14 +3,15 @@ import type { DragEvent } from 'react'
 import type { Dish, MealSlot, MenuEntry } from '../types'
 import { useApp, uid } from '../store'
 import { addDays, fromKey, mondayOf, prettyDate, todayKey, weekDays, DAY_SHORT } from '../utils/dates'
-import { Legend, MemberChips, MemberToggle, Modal, tagColor } from './shared'
+import { MemberChips, MemberToggle, Modal, tagColor } from './shared'
 
-const MAIN_SLOTS: MealSlot[] = ['breakfast', 'lunch', 'dinner']
+const SLOTS: MealSlot[] = ['breakfast', 'snack-am', 'lunch', 'snack-pm', 'dinner']
 const SLOT_LABEL: Record<MealSlot, string> = {
   breakfast: '🌅 Breakfast',
+  'snack-am': '🍎 Snack (AM)',
   lunch: '☀️ Lunch',
+  'snack-pm': '🍪 Snack (PM)',
   dinner: '🌙 Dinner',
-  snack: '🍪 Snacks',
 }
 
 export function MenuPlanner() {
@@ -19,16 +20,12 @@ export function MenuPlanner() {
   const [monday, setMonday] = useState(() => mondayOf(today))
   const [armedDish, setArmedDish] = useState<string | null>(null)
   const [showDishForm, setShowDishForm] = useState(false)
-  const [snacksOpen, setSnacksOpen] = useState(false)
   const [typing, setTyping] = useState<{ date: string; slot: MealSlot } | null>(null)
   const [typedName, setTypedName] = useState('')
   const [dragOver, setDragOver] = useState<string | null>(null)
   const [editingEntry, setEditingEntry] = useState<MenuEntry | null>(null)
 
   const days = useMemo(() => weekDays(monday), [monday])
-  const weekHasSnacks = data.menuEntries.some((m) => m.slot === 'snack' && days.includes(m.date))
-  const showSnacks = snacksOpen || weekHasSnacks
-  const slots: MealSlot[] = showSnacks ? [...MAIN_SLOTS, 'snack'] : MAIN_SLOTS
 
   const addEntry = (date: string, slot: MealSlot, dishName: string, emoji: string) => {
     update((d) => ({
@@ -110,8 +107,6 @@ export function MenuPlanner() {
           <button className="btn subtle" onClick={() => setMonday((m) => addDays(m, 7))}>Next →</button>
         </div>
 
-        <Legend />
-
         <div className="menu-grid" style={{ gridTemplateColumns: `90px repeat(7, minmax(0, 1fr))` }}>
           <div />
           {days.map((date) => {
@@ -124,7 +119,7 @@ export function MenuPlanner() {
             )
           })}
 
-          {slots.map((slot) => (
+          {SLOTS.map((slot) => (
             <MenuRow
               key={slot}
               slot={slot}
@@ -144,17 +139,7 @@ export function MenuPlanner() {
           ))}
         </div>
 
-        {!showSnacks && (
-          <button className="btn subtle" style={{ marginTop: 8 }} onClick={() => setSnacksOpen(true)}>
-            🍪 ＋ Add a snacks row
-          </button>
-        )}
-        {showSnacks && !weekHasSnacks && (
-          <button className="btn subtle" style={{ marginTop: 8 }} onClick={() => setSnacksOpen(false)}>
-            Hide snacks row
-          </button>
-        )}
-        <p className="hint">Tap a meal to tag who it's for — colours match the key above.</p>
+        <p className="hint">Tap a placed meal to rename it, tag who it's for, or remove it.</p>
       </div>
 
       {showDishForm && <DishModal onClose={() => setShowDishForm(false)} />}
@@ -218,7 +203,7 @@ function MenuRow(props: RowProps) {
               >
                 <span>{entry.emoji}</span>
                 <span className="menu-entry-name">{entry.dishName}</span>
-                <MemberChips memberIds={entry.memberIds} size={16} everyone />
+                <MemberChips memberIds={entry.memberIds} everyone />
               </div>
             ))}
             {isTyping ? (

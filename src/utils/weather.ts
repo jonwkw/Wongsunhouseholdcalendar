@@ -1,5 +1,10 @@
 // Singapore weather via NEA / data.gov.sg open APIs (free, no API key).
 
+export interface PeriodForecast {
+  label: string
+  summary: string
+}
+
 export interface DayForecast {
   date: string
   dayLabel: string
@@ -7,6 +12,8 @@ export interface DayForecast {
   low?: number
   high?: number
   reminders: string[]
+  /** Morning / afternoon / evening breakdown — only available for today */
+  periods?: PeriodForecast[]
 }
 
 const FOUR_DAY_URL = 'https://api-open.data.gov.sg/v2/real-time/api/four-day-outlook'
@@ -61,6 +68,24 @@ export async function fetchForecast(): Promise<DayForecast[]> {
     const summary: string = g.forecast?.text ?? g.forecast?.summary ?? 'No forecast'
     const low = g.temperature?.low
     const high = g.temperature?.high
+
+    // NEA's 24h forecast comes in ~6-hour periods; label each by its start hour
+    const periods: PeriodForecast[] = []
+    for (const p of todayRecord.periods ?? []) {
+      const startHour = new Date(p?.timePeriod?.start ?? '').getHours()
+      const label = isNaN(startHour)
+        ? p?.timePeriod?.text ?? ''
+        : startHour < 6
+          ? 'Overnight'
+          : startHour < 12
+            ? 'Morning'
+            : startHour < 18
+              ? 'Afternoon'
+              : 'Evening'
+      const text = p?.regions?.central?.text ?? p?.regions?.central?.code
+      if (label && text) periods.push({ label, summary: text })
+    }
+
     days.push({
       date: todayRecord.date ?? '',
       dayLabel: 'Today',
@@ -68,6 +93,7 @@ export async function fetchForecast(): Promise<DayForecast[]> {
       low,
       high,
       reminders: remindersFor(summary, high),
+      periods: periods.slice(0, 3),
     })
   }
 

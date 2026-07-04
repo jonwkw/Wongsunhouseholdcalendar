@@ -23,26 +23,23 @@ export function Avatar({ member, size = 28 }: { member: Member; size?: number })
   )
 }
 
+/** Coloured name pills so it's always clear who something belongs to */
 export function MemberChips({
   memberIds,
-  size = 22,
   everyone = false,
 }: {
   memberIds: string[]
-  size?: number
-  /** Show a family chip when memberIds is empty (i.e. tagged to everyone) */
+  /** Show an "Everyone" pill when memberIds is empty (i.e. tagged to everyone) */
   everyone?: boolean
 }) {
   const { data } = useApp()
   if (memberIds.length === 0) {
     if (!everyone) return null
     return (
-      <span
-        className="avatar"
-        title="Everyone"
-        style={{ width: size, height: size, fontSize: size * 0.55, background: EVERYONE_COLOR + '33', borderColor: EVERYONE_COLOR }}
-      >
-        👨‍👩‍👧‍👦
+      <span className="member-chips">
+        <span className="name-pill" style={{ borderColor: EVERYONE_COLOR, background: EVERYONE_COLOR + '1e', color: EVERYONE_COLOR }}>
+          Everyone
+        </span>
       </span>
     )
   }
@@ -52,7 +49,9 @@ export function MemberChips({
   return (
     <span className="member-chips">
       {members.map((m) => (
-        <Avatar key={m.id} member={m} size={size} />
+        <span key={m.id} className="name-pill" style={{ borderColor: m.color, background: m.color + '1e', color: m.color }}>
+          {m.name}
+        </span>
       ))}
     </span>
   )

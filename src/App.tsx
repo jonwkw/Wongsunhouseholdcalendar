@@ -1,21 +1,23 @@
 import { useState } from 'react'
-import { StoreProvider } from './store'
+import { StoreProvider, useApp } from './store'
 import { TodayView } from './components/TodayView'
 import { Timetable } from './components/Timetable'
 import { MenuPlanner } from './components/MenuPlanner'
-import { FamilyBoard } from './components/FamilyBoard'
+import { KidCorner } from './components/KidCorner'
 import { FamilyModal } from './components/FamilyModal'
 
-const TABS = [
-  { id: 'today', label: '🏡 Today', title: 'Today & next 2 days, with weather' },
-  { id: 'timetable', label: '🗓️ Timetable', title: 'Weekly & monthly timetable' },
-  { id: 'menu', label: '🍽️ Menu', title: 'Meal planner' },
-  { id: 'board', label: '📌 Board', title: 'Requests & reminders' },
-]
-
 function Shell() {
+  const { data } = useApp()
   const [tab, setTab] = useState('today')
   const [showFamily, setShowFamily] = useState(false)
+
+  const kid = data.members.find((m) => m.isChild)
+  const tabs = [
+    { id: 'today', label: '🏡 Today', title: 'Weather, next few days, and the family board' },
+    { id: 'timetable', label: '🗓️ Timetable', title: '4-week timetable' },
+    { id: 'menu', label: '🍽️ Menu', title: 'Meal planner' },
+    ...(kid ? [{ id: 'kid', label: `⭐ ${kid.name}`, title: `${kid.name}'s corner` }] : []),
+  ]
 
   return (
     <div className="app">
@@ -33,7 +35,7 @@ function Shell() {
       </header>
 
       <nav className="tabs">
-        {TABS.map((t) => (
+        {tabs.map((t) => (
           <button key={t.id} className={`tab ${tab === t.id ? 'on' : ''}`} onClick={() => setTab(t.id)} title={t.title}>
             {t.label}
           </button>
@@ -44,7 +46,7 @@ function Shell() {
         {tab === 'today' && <TodayView goTo={setTab} />}
         {tab === 'timetable' && <Timetable />}
         {tab === 'menu' && <MenuPlanner />}
-        {tab === 'board' && <FamilyBoard />}
+        {tab === 'kid' && <KidCorner />}
       </main>
 
       {showFamily && <FamilyModal onClose={() => setShowFamily(false)} />}

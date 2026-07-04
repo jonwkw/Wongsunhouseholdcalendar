@@ -116,11 +116,26 @@ export function ActivityModal({ activity, date, prefill, onClose }: Props) {
 
         <label className="check-row">
           <input type="checkbox" checked={recurring} onChange={(e) => setRecurring(e.target.checked)} />
-          🔁 Repeats every week
+          🔁 Repeat
         </label>
 
         {recurring ? (
           <>
+            <div className="kind-toggle">
+              <button type="button" className="btn subtle" onClick={() => setDays([1, 2, 3, 4, 5])}>
+                Every weekday
+              </button>
+              <button type="button" className="btn subtle" onClick={() => setDays([0, 1, 2, 3, 4, 5, 6])}>
+                Every day
+              </button>
+              <button type="button" className="btn subtle" onClick={() => setDays([0, 6])}>
+                Weekends
+              </button>
+              <button type="button" className="btn subtle" onClick={() => setDays([new Date(date + 'T00:00').getDay()])}>
+                Weekly on {DAY_SHORT[new Date(date + 'T00:00').getDay()]}
+              </button>
+            </div>
+            <label>Or pick the days yourself</label>
             <div className="weekday-picker">
               {[1, 2, 3, 4, 5, 6, 0].map((d) => (
                 <button

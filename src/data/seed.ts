@@ -14,7 +14,7 @@ export function seedData(): AppData {
       { id: 'mama', name: 'Mama', emoji: '👩', color: '#c45b9d' },
       { id: 'ahma', name: 'Ah Ma', emoji: '👵', color: '#8a6bbf' },
       { id: 'auntie', name: 'Auntie', emoji: '🧑‍🍳', color: '#2f9e77' },
-      { id: 'gorgor', name: 'Gor Gor', emoji: '🧒', color: '#e08a2e', isChild: true },
+      { id: 'gorgor', name: 'Rosco', emoji: '🧒', color: '#e08a2e', isChild: true },
       { id: 'meimei', name: 'Mei Mei', emoji: '👧', color: '#d95d5d', isChild: true },
     ],
     activities: [
