@@ -7,6 +7,7 @@ import {
 } from '../utils/dates'
 import { t, dayShort } from '../i18n'
 import { Legend, LockedBanner, MemberChips, Modal, tagColor } from './shared'
+import { MemberFace } from './avatars'
 import { ActivityModal } from './ActivityModal'
 import { setDragPayload, getDragPayload, leavesTarget } from '../utils/dnd'
 
@@ -88,10 +89,11 @@ export function Timetable() {
           {data.members.map((m) => (
             <button
               key={m.id}
-              className={`filter-btn ${filterMember === m.id ? 'on' : ''}`}
+              className={`filter-btn with-face ${filterMember === m.id ? 'on' : ''}`}
               style={filterMember === m.id ? { borderColor: m.color, background: m.color + '22' } : undefined}
               onClick={() => setFilterMember(m.id)}
             >
+              <MemberFace member={m} size={20} />
               {m.name}
             </button>
           ))}

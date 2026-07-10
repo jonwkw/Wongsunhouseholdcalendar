@@ -1278,6 +1278,33 @@ textarea:focus {
   border-color: #ecc189;
 }
 
+/* mission of the day runs the full width as a banner */
+.kid-daily .kid-card.mission {
+  grid-column: 1 / -1;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+}
+
+.kid-card.mission h3 {
+  margin: 0;
+  white-space: nowrap;
+}
+
+.kid-card.mission .kid-question {
+  flex: 1;
+  min-width: 220px;
+  margin: 0;
+  font-size: 18px;
+}
+
+.kid-card.mission .kid-btn-row {
+  margin-top: 0;
+  padding-top: 0;
+  margin-left: auto;
+}
+
 .kid-word {
   font-size: 30px;
   font-weight: 800;
@@ -2663,3 +2690,140 @@ textarea:focus {
 }
 
 .explore-card.cat-new { border-left: 5px solid #3b82c4; }
+
+/* ---------- playful pass: less dashboard, more family pinboard ---------- */
+
+/* sticker-tilted active states */
+.tab.on {
+  transform: rotate(-2deg) scale(1.05);
+}
+
+.day-chip.on {
+  transform: rotate(-1.5deg) scale(1.04);
+}
+
+/* rounder, bouncier buttons */
+.btn {
+  border-radius: 12px;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.btn.primary:hover:not(:disabled) {
+  transform: translateY(-1px) scale(1.03);
+}
+
+.icon-btn {
+  transition: transform 0.12s ease;
+}
+
+.icon-btn:hover {
+  transform: scale(1.15);
+}
+
+/* crayon-underlined headings */
+.today-section h4,
+.kid-subtitle,
+.today-board h2,
+.library h3 {
+  text-decoration: underline wavy color-mix(in srgb, var(--accent) 55%, transparent);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 5px;
+}
+
+/* cards perk up when you reach for them */
+.explore-card,
+.library-card,
+.kid-card,
+.person-section,
+.today-activity.v2 {
+  transition: transform 0.14s ease, box-shadow 0.14s ease;
+}
+
+.explore-card:hover,
+.library-card:hover,
+.kid-card:hover {
+  transform: translateY(-3px) rotate(-0.5deg);
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+.today-activity.v2:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 12px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+/* the day panel gets a fat crayon border + soft accent glow */
+.today-col.single {
+  border-width: 2.5px;
+  border-radius: 22px;
+  box-shadow: 0 6px 22px color-mix(in srgb, var(--accent) 16%, transparent);
+}
+
+/* person sections tinted like sticky notes */
+.person-section {
+  border-radius: 14px;
+  border-width: 2px;
+  background: linear-gradient(160deg, #fffdf6, #fff);
+}
+
+/* header confetti */
+.app-header {
+  position: relative;
+  overflow: hidden;
+}
+
+.app-header::before,
+.app-header::after {
+  position: absolute;
+  font-size: 15px;
+  opacity: 0.8;
+  pointer-events: none;
+  animation: confetti-bob 4.2s ease-in-out infinite;
+}
+
+.app-header::before {
+  content: '🎈';
+  left: 42%;
+  top: 6px;
+}
+
+.app-header::after {
+  content: '⭐';
+  left: 58%;
+  bottom: 6px;
+  animation-delay: -2.1s;
+}
+
+@keyframes confetti-bob {
+  0%, 100% { transform: translateY(0) rotate(-8deg); }
+  50% { transform: translateY(-5px) rotate(8deg); }
+}
+
+/* pills & filters that carry a little face */
+.name-pill.with-face,
+.filter-btn.with-face {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.name-pill.with-face .avatar-svg,
+.filter-btn.with-face .avatar-svg {
+  border-radius: 50%;
+  border-width: 1px;
+}
+
+/* modals rounder */
+.modal {
+  border-radius: 20px;
+}
+
+/* pick-of-day label as a tilted sticker */
+.pick-label {
+  display: inline-block;
+  transform: rotate(-2deg);
+  background: var(--accent);
+  color: #fff;
+  padding: 3px 12px;
+  border-radius: 999px;
+  box-shadow: 0 3px 8px color-mix(in srgb, var(--accent) 40%, transparent);
+}

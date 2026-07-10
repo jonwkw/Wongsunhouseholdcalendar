@@ -1,7 +1,15 @@
 import type { AvatarSpec, AvatarAge, Member } from '../types'
 
-// Parametric SVG avatars. Everything is drawn in a 100×100 viewBox and
-// composed from option lists indexed by AvatarSpec.
+// Parametric SVG avatars, drawn in a 100×100 viewBox.
+//
+// Redesigned hair system: every style is composed from ONE shared "dome"
+// (a hair shell slightly larger than the skull, with a choice of hairline
+// edge) plus optional back shapes (bobs, ponytails, buns…). Because every
+// piece is derived from the same head constants, hair always fits the head
+// with a little natural volume — no per-style alignment tweaking.
+//
+// Head constants: face ellipse cx 50, cy 55, rx 22.5 (top y≈28).
+// Hair dome: rx 26 / ry 30 around the same centre (top y=25, sides x 24/76).
 
 export const SKIN_TONES = ['#ffe3c8', '#f6d0a7', '#eebe8e', '#dcae7e', '#c78f5f']
 
@@ -51,58 +59,104 @@ export const HAIRSTYLE_NAMES = [
   'Light buzz', 'Light buzz (widow\'s peak)',
 ]
 
-/** Hair drawn behind the face (long styles) — returns SVG elements */
+// ---- the shared hair dome -------------------------------------------------
+
+/** Hairline edges: each draws from (76,55) back to (24,55) across the forehead */
+const EDGES = {
+  flat: 'Q50 36 24 55',
+  blunt: 'L75 43 L25 43 L24 55',
+  sweep: 'Q66 33 42 42 Q28 46 24 55',
+  part: 'Q68 38 54 39 L50 34 L46 39 Q32 38 24 55',
+  spiky: 'L73 40 L65 46 L57 38 L50 46 L43 38 L35 46 L27 40 L24 55',
+  wavy: 'Q70 46 63 41 Q56 37 50 43 Q44 37 37 41 Q30 46 24 55',
+  peak: 'Q62 40 53 40 L50 46 L47 40 Q38 40 24 55',
+} as const
+
+function dome(edge: keyof typeof EDGES, c: string, opacity?: number) {
+  return <path d={`M24 55 A26 30 0 1 1 76 55 ${EDGES[edge]} Z`} fill={c} opacity={opacity} />
+}
+
+/** Back shapes drawn behind the face */
+const BACKS = {
+  nape: 'M23 52 Q23 68 32 68 L68 68 Q77 68 77 52 Q77 24 50 24 Q23 24 23 52Z',
+  bob: 'M22 50 Q20 78 31 78 L69 78 Q80 78 78 50 Q78 23 50 23 Q22 23 22 50Z',
+  long: 'M22 48 Q17 90 29 90 L71 90 Q83 90 78 48 Q78 22 50 22 Q22 22 22 48Z',
+} as const
+
+function back(kind: keyof typeof BACKS, c: string) {
+  return <path d={BACKS[kind]} fill={c} />
+}
+
+/** Chain of shrinking circles — braids and curly strands */
+function chain(c: string, pts: [number, number, number][]) {
+  return (
+    <g fill={c}>
+      {pts.map(([x, y, r], i) => (
+        <circle key={i} cx={x} cy={y} r={r} />
+      ))}
+    </g>
+  )
+}
+
+/** Hair behind the face */
 function hairBack(style: number, c: string) {
   switch (style) {
+    case 2: // short & neat
+    case 3: // side part
+    case 6: // short curls
+    case 12: // top bun
+    case 20: // man bun
+    case 23: // hairband
+      return back('nape', c)
     case 8: // bob
-      return <path d="M22 50 Q20 84 32 84 L68 84 Q80 84 78 50 Q78 24 50 24 Q22 24 22 50Z" fill={c} />
+      return back('bob', c)
     case 9: // long straight
-      return <path d="M22 48 Q18 92 30 92 L70 92 Q82 92 78 48 Q78 22 50 22 Q22 22 22 48Z" fill={c} />
-    case 14: // long braid
+    case 15: // fringe & long
+      return back('long', c)
+    case 7: // big curls
       return (
-        <g fill={c}>
-          <path d="M24 48 Q22 30 50 24 Q78 30 76 48 Z" />
-          <circle cx="76" cy="56" r="6" />
-          <circle cx="78" cy="67" r="5.5" />
-          <circle cx="79" cy="77" r="5" />
-          <circle cx="80" cy="86" r="4.5" />
+        <g>
+          {back('nape', c)}
+          {chain(c, [[22, 42, 9], [78, 42, 9], [21, 55, 8], [79, 55, 8]])}
         </g>
       )
-    case 15: // fringe & long
-      return <path d="M23 48 Q19 90 31 90 L69 90 Q81 90 77 48 Q77 22 50 22 Q23 22 23 48Z" fill={c} />
-    case 16: // wavy
+    case 10: // ponytail
+      return (
+        <g fill={c}>
+          {back('nape', c)}
+          <circle cx="75" cy="28" r="6.5" />
+          <path d="M75 28 Q85 46 78 66 Q72 62 71 46 Q71 36 75 28Z" />
+        </g>
+      )
+    case 11: // pigtails
+      return (
+        <g fill={c}>
+          {back('nape', c)}
+          <circle cx="20" cy="48" r="8" />
+          <circle cx="80" cy="48" r="8" />
+          <path d="M20 48 Q14 64 20 76 Q26 71 24 58Z" />
+          <path d="M80 48 Q86 64 80 76 Q74 71 76 58Z" />
+        </g>
+      )
+    case 14: // long braid (one, over the shoulder)
+      return (
+        <g>
+          {back('nape', c)}
+          {chain(c, [[76, 56, 6], [78, 67, 5.5], [79, 77, 5], [80, 86, 4.5]])}
+        </g>
+      )
+    case 16: // wavy long
       return (
         <path
           d="M22 46 Q16 70 24 88 Q30 78 28 66 Q34 84 40 90 Q40 76 38 66 Q50 84 62 90 Q60 76 60 66 Q68 84 76 88 Q84 70 78 46 Q76 22 50 22 Q24 22 22 46Z"
           fill={c}
         />
       )
-    case 10: // ponytail (tail behind)
+    case 22: // twin braids
       return (
-        <g fill={c}>
-          <circle cx="76" cy="34" r="7" />
-          <path d="M76 34 Q86 52 78 70 Q73 68 72 52 Q72 42 76 34Z" />
-        </g>
-      )
-    case 11: // pigtails
-      return (
-        <g fill={c}>
-          <circle cx="20" cy="46" r="8" />
-          <circle cx="80" cy="46" r="8" />
-          <path d="M20 46 Q14 62 20 74 Q26 70 24 56Z" />
-          <path d="M80 46 Q86 62 80 74 Q74 70 76 56Z" />
-        </g>
-      )
-    case 22: // twin braids (behind, both sides)
-      return (
-        <g fill={c}>
-          <path d="M24 48 Q22 30 50 24 Q78 30 76 48 Z" />
-          <circle cx="24" cy="56" r="5.5" />
-          <circle cx="23" cy="66" r="5" />
-          <circle cx="22" cy="75" r="4.5" />
-          <circle cx="76" cy="56" r="5.5" />
-          <circle cx="77" cy="66" r="5" />
-          <circle cx="78" cy="75" r="4.5" />
+        <g>
+          {back('nape', c)}
+          {chain(c, [[23, 56, 5.5], [22, 66, 5], [21, 75, 4.5], [77, 56, 5.5], [78, 66, 5], [79, 75, 4.5]])}
         </g>
       )
     case 24: // shaggy
@@ -114,24 +168,19 @@ function hairBack(style: number, c: string) {
       )
     case 25: // long curly
       return (
-        <g fill={c}>
-          <path d="M24 46 Q20 26 50 22 Q80 26 76 46Z" />
-          <circle cx="24" cy="52" r="8" />
-          <circle cx="21" cy="64" r="8" />
-          <circle cx="24" cy="76" r="8" />
-          <circle cx="76" cy="52" r="8" />
-          <circle cx="79" cy="64" r="8" />
-          <circle cx="76" cy="76" r="8" />
+        <g>
+          {back('nape', c)}
+          {chain(c, [[23, 50, 8], [20, 62, 8], [23, 74, 8], [77, 50, 8], [80, 62, 8], [77, 74, 8]])}
         </g>
       )
     case 27: // low pigtails
       return (
         <g fill={c}>
-          <path d="M24 48 Q22 28 50 23 Q78 28 76 48Z" />
-          <circle cx="24" cy="70" r="7" />
-          <circle cx="76" cy="70" r="7" />
-          <path d="M24 70 Q20 82 26 88 Q30 82 28 74Z" />
-          <path d="M76 70 Q80 82 74 88 Q70 82 72 74Z" />
+          {back('nape', c)}
+          <circle cx="23" cy="68" r="7" />
+          <circle cx="77" cy="68" r="7" />
+          <path d="M23 68 Q19 82 25 88 Q29 82 27 72Z" />
+          <path d="M77 68 Q81 82 75 88 Q71 82 73 72Z" />
         </g>
       )
     default:
@@ -139,84 +188,63 @@ function hairBack(style: number, c: string) {
   }
 }
 
-/** Styles that get the crown base (everything except bald / mohawk / comb-over / tuft) */
-const NO_CROWN = new Set([0, 17, 18, 19])
-
-/** Crown of hair over the top of the head — slightly larger than the skull so
- * every style has a little volume instead of looking painted on */
-export function crownPath() {
-  return 'M24.5 52 A25.5 30 0 1 1 75.5 52 Q50 38 24.5 52 Z'
-}
-
-/** Hair drawn over the face (caps, bangs, buns) */
-function hairFront(style: number, c: string) {
+/** Hair over the face: the dome (with the right hairline) plus style extras */
+function hairTop(style: number, c: string) {
   switch (style) {
     case 0: // bald
       return null
-    case 1: // buzz — the crown base IS the style
-      return null
+    case 1: // buzz
+      return dome('flat', c, 0.55)
     case 2: // short & neat
-      return <path d="M25 44 Q25 20 50 20 Q75 20 75 44 Q73 32 62 32 Q52 32 46 28 Q38 34 27 35 Q25 38 25 44Z" fill={c} />
+    case 8: // bob
+    case 10: // ponytail
+    case 14: // long braid
+      return dome('flat', c)
     case 3: // side part
-      return <path d="M25 44 Q24 20 52 20 Q76 22 75 46 Q74 30 58 33 Q40 36 33 32 Q27 36 25 44Z" fill={c} />
+    case 26: // swept fringe
+      return dome('sweep', c)
     case 4: // spiky
       return (
-        <path
-          d="M25 42 L28 28 L33 36 L38 22 L43 33 L50 19 L57 33 L62 22 L67 36 L72 28 L75 42 Q72 30 50 29 Q28 30 25 42Z"
-          fill={c}
-        />
+        <g>
+          {dome('spiky', c)}
+          <path d="M32 27 L36 16 L41 25 M45 23 L50 12 L55 23 M59 25 L64 16 L68 27" stroke={c} strokeWidth="5" strokeLinejoin="round" fill={c} />
+        </g>
       )
     case 5: // bowl
-      return <path d="M23 48 Q23 19 50 19 Q77 19 77 48 L71 48 Q71 34 50 34 Q29 34 29 48Z" fill={c} />
+      return dome('blunt', c)
     case 6: // short curls
       return (
-        <g fill={c}>
-          <circle cx="30" cy="36" r="8" />
-          <circle cx="40" cy="29" r="8" />
-          <circle cx="51" cy="27" r="8" />
-          <circle cx="62" cy="29" r="8" />
-          <circle cx="71" cy="36" r="8" />
+        <g>
+          {dome('flat', c)}
+          {chain(c, [[28, 37, 7], [37, 29, 7], [50, 26, 7.5], [63, 29, 7], [72, 37, 7]])}
         </g>
       )
     case 7: // big curls
       return (
-        <g fill={c}>
-          <circle cx="50" cy="27" r="15" />
-          <circle cx="31" cy="35" r="11" />
-          <circle cx="69" cy="35" r="11" />
-          <circle cx="24" cy="48" r="8" />
-          <circle cx="76" cy="48" r="8" />
+        <g>
+          {dome('flat', c)}
+          {chain(c, [[50, 24, 12], [33, 29, 10], [67, 29, 10]])}
         </g>
       )
-    case 8: // bob bangs
-    case 9: // long straight bangs
-      return <path d="M26 42 Q26 21 50 21 Q74 21 74 42 Q70 30 50 30 Q30 30 26 42Z" fill={c} />
-    case 10: // ponytail cap
-      return <path d="M25 44 Q25 20 50 20 Q75 20 76 40 Q70 30 50 30 Q30 30 25 44Z" fill={c} />
-    case 11: // pigtails cap with middle part
-      return <path d="M26 42 Q26 21 50 21 Q74 21 74 42 Q70 30 52 30 L52 26 L48 26 L48 30 Q30 30 26 42Z" fill={c} />
+    case 9: // long straight
+    case 15: // fringe & long
+      return dome('blunt', c)
+    case 11: // pigtails
+    case 13: // double buns
+    case 22: // twin braids
+      return dome('part', c)
     case 12: // top bun
       return (
-        <g fill={c}>
-          <circle cx="50" cy="16" r="9" />
-          <path d="M26 42 Q26 21 50 21 Q74 21 74 42 Q70 30 50 30 Q30 30 26 42Z" />
+        <g>
+          {dome('flat', c)}
+          <circle cx="50" cy="16" r="9" fill={c} />
+          <path d="M42 22 Q50 18 58 22" stroke="#00000022" strokeWidth="2" fill="none" />
         </g>
       )
-    case 13: // double buns
-      return (
-        <g fill={c}>
-          <circle cx="32" cy="19" r="8" />
-          <circle cx="68" cy="19" r="8" />
-          <path d="M26 42 Q26 21 50 21 Q74 21 74 42 Q70 30 50 30 Q30 30 26 42Z" />
-        </g>
-      )
-    case 14: // braid front
-    case 15: // fringe
-      return <path d="M26 40 Q26 21 50 21 Q74 21 74 40 L70 40 Q70 32 50 32 Q30 32 30 40Z" fill={c} />
-    case 16: // wavy bangs
-      return <path d="M26 40 Q26 21 50 21 Q74 21 74 40 Q68 30 58 34 Q50 26 42 34 Q32 30 26 40Z" fill={c} />
+    case 16: // wavy
+      return dome('wavy', c)
     case 17: // mohawk
-      return <path d="M44 30 L46 14 L50 26 L54 12 L56 30 Q50 26 44 30Z" fill={c} />
+      return <path d="M43 30 L45 12 L50 24 L55 10 L57 30 Q50 25 43 30Z" fill={c} />
     case 18: // comb-over (sparse)
       return (
         <g stroke={c} strokeWidth="3" strokeLinecap="round" fill="none">
@@ -228,41 +256,50 @@ function hairFront(style: number, c: string) {
       return <path d="M48 33 Q45 21 55 18 Q49 25 54 30 Q51 34 48 33Z" fill={c} />
     case 20: // man bun
       return (
-        <g fill={c}>
-          <circle cx="50" cy="14" r="7" />
-          <path d="M27 42 Q28 22 50 21 Q72 22 73 42 Q72 32 50 30 Q28 32 27 42Z" />
+        <g>
+          {dome('sweep', c)}
+          <circle cx="50" cy="15" r="6.5" fill={c} />
         </g>
       )
     case 21: // flat top
-      return <path d="M26 40 L26 24 L74 24 L74 40 Q70 30 50 30 Q30 30 26 40Z" fill={c} />
-    case 22: // twin braids cap with middle part
-      return <path d="M26 42 Q26 21 50 21 Q74 21 74 42 Q70 30 52 30 L52 26 L48 26 L48 30 Q30 30 26 42Z" fill={c} />
+      return <path d="M27 46 L27 25 Q27 19 34 19 L66 19 Q73 19 73 25 L73 46 Q50 36 27 46Z" fill={c} />
     case 23: // hairband
       return (
         <g>
-          <path d="M25 44 Q25 20 50 20 Q75 20 75 44 Q73 30 50 29 Q27 30 25 44Z" fill={c} />
-          <path d="M28 34 Q50 24 72 34 L71 38 Q50 29 29 38Z" fill="#e05d7e" />
+          {dome('flat', c)}
+          <path d="M25.5 44 Q50 30 74.5 44 L73 48.5 Q50 35 27 48.5Z" fill="#e05d7e" />
         </g>
       )
-    case 24: // shaggy bangs
-      return <path d="M26 42 Q26 21 50 21 Q74 21 74 42 L70 36 L64 42 L58 34 L50 42 L42 34 L36 42 L30 36 Z" fill={c} />
-    case 25: // long curly bangs
+    case 24: // shaggy
+      return dome('spiky', c)
+    case 25: // long curly
+      return (
+        <g>
+          {dome('wavy', c)}
+          {chain(c, [[32, 30, 7], [46, 25, 7], [60, 26, 7], [70, 33, 6]])}
+        </g>
+      )
+    case 27: // low pigtails
+      return dome('flat', c)
+    case 28: // light buzz
+      return dome('flat', c, 0.3)
+    case 29: // light buzz with widow's peak — one path, one tint
+      return dome('peak', c, 0.3)
+    default:
+      return dome('flat', c)
+  }
+}
+
+/** Extras that must sit ABOVE the dome but are part of the style */
+function hairOrnaments(style: number, c: string) {
+  switch (style) {
+    case 13: // double buns
       return (
         <g fill={c}>
-          <circle cx="34" cy="30" r="8" />
-          <circle cx="46" cy="26" r="8" />
-          <circle cx="58" cy="27" r="8" />
-          <circle cx="68" cy="32" r="7" />
+          <circle cx="29" cy="19" r="8" />
+          <circle cx="71" cy="19" r="8" />
         </g>
       )
-    case 26: // swept fringe
-      return <path d="M25 44 Q24 19 52 19 Q77 21 75 44 Q75 28 64 36 Q48 44 36 34 Q28 32 25 44Z" fill={c} />
-    case 27: // low pigtails cap
-      return <path d="M26 42 Q26 21 50 21 Q74 21 74 42 Q70 30 50 30 Q30 30 26 42Z" fill={c} />
-    case 28: // light buzz — crown base only
-      return null
-    case 29: // light buzz with widow's peak — same tint as the buzz crown
-      return <path d="M46 38 L50 46 L54 38 Q50 36 46 38Z" fill={c} opacity="0.32" />
     default:
       return null
   }
@@ -438,17 +475,17 @@ export function AvatarSvg({ spec, ring, size = 40 }: { spec: AvatarSpec; ring?: 
   const shirt = SHIRT_COLORS[spec.shirt ?? 5] ?? SHIRT_COLORS[5]
   return (
     <svg viewBox="0 0 100 100" width={size} height={size} className="avatar-svg" style={ring ? { background: ring + '22', borderColor: ring } : undefined}>
-      <g transform="matrix(0.97,0,0,1,1.5,0.5)">{hairBack(spec.hair, hc)}</g>
+      {hairBack(spec.hair, hc)}
       {/* shirt / shoulders */}
       <path d="M18 100 Q20 82 34 79 L50 84 L66 79 Q80 82 82 100 Z" fill={shirt} />
       <path d="M43 82 L50 90 L57 82 L50 84 Z" fill="#ffffff" opacity="0.35" />
       {/* neck */}
       <rect x="44" y="74" width="12" height="9" rx="4" fill={skin} />
       {/* ears */}
-      <circle cx="26.5" cy="56" r="4.6" fill={skin} />
-      <circle cx="73.5" cy="56" r="4.6" fill={skin} />
+      <circle cx="26.5" cy="57" r="4.6" fill={skin} />
+      <circle cx="73.5" cy="57" r="4.6" fill={skin} />
       <g transform="translate(1.5 0)">{earringsFor(spec.earrings ?? 0)}</g>
-      {/* face — slightly slim for a cooler look */}
+      {/* face */}
       <ellipse cx="50" cy="55" rx="22.5" ry={geo.ry} fill={skin} />
       {/* eyebrows — softer for the female style */}
       <g stroke={hc} strokeWidth={spec.gender === 'female' ? 1.6 : 2.4} fill="none" strokeLinecap="round" opacity="0.85">
@@ -484,15 +521,9 @@ export function AvatarSvg({ spec, ring, size = 40 }: { spec: AvatarSpec; ring?: 
           <path d="M54 45 Q60 42 66 45" />
         </g>
       )}
-      <g transform="matrix(0.95,0,0,1,2.5,0)">{facialHair(spec.facialHair, hc)}</g>
-      {!NO_CROWN.has(spec.hair) && (
-        <path
-          d={crownPath()}
-          fill={hc}
-          opacity={spec.hair === 1 ? 0.85 : spec.hair === 28 || spec.hair === 29 ? 0.32 : 1}
-        />
-      )}
-      <g transform="matrix(0.93,0,0,1,3.5,1)">{hairFront(spec.hair, hc)}</g>
+      {facialHair(spec.facialHair, hc)}
+      {hairTop(spec.hair, hc)}
+      {hairOrnaments(spec.hair, hc)}
       {accessoryFor(spec.accessory ?? 0)}
       {glassesFor(spec.glasses ?? 0)}
     </svg>

@@ -51,7 +51,8 @@ export function MemberChips({
   return (
     <span className="member-chips">
       {members.map((m) => (
-        <span key={m.id} className="name-pill" style={{ borderColor: m.color, background: m.color + '1e', color: m.color }}>
+        <span key={m.id} className="name-pill with-face" style={{ borderColor: m.color, background: m.color + '1e', color: m.color }}>
+          <MemberFace member={m} size={16} />
           {m.name}
         </span>
       ))}
