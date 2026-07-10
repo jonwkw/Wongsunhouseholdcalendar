@@ -1,3 +1,4 @@
+import { useId } from 'react'
 import type { AvatarSpec, AvatarAge, Member } from '../types'
 
 // Parametric SVG avatars, drawn in a 100×100 viewBox.
@@ -468,13 +469,26 @@ function facialHair(kind: number, c: string) {
   }
 }
 
+/** Semi-transparent buzz styles must hug the skull exactly — any dome volume
+ * shows as a floating halo through the transparency (worst on a baby's
+ * shorter head), so these are clipped to the face itself. */
+const BUZZ_STYLES = new Set([1, 28, 29])
+
 export function AvatarSvg({ spec, ring, size = 40 }: { spec: AvatarSpec; ring?: string; size?: number }) {
   const geo = AGE_GEO[spec.age]
   const skin = SKIN_TONES[spec.skin] ?? SKIN_TONES[1]
   const hc = HAIR_COLORS[spec.hairColor] ?? HAIR_COLORS[0]
   const shirt = SHIRT_COLORS[spec.shirt ?? 5] ?? SHIRT_COLORS[5]
+  const skullClip = useId()
   return (
     <svg viewBox="0 0 100 100" width={size} height={size} className="avatar-svg" style={ring ? { background: ring + '22', borderColor: ring } : undefined}>
+      {BUZZ_STYLES.has(spec.hair) && (
+        <defs>
+          <clipPath id={skullClip}>
+            <ellipse cx="50" cy="55" rx="22.5" ry={geo.ry} />
+          </clipPath>
+        </defs>
+      )}
       {hairBack(spec.hair, hc)}
       {/* shirt / shoulders */}
       <path d="M18 100 Q20 82 34 79 L50 84 L66 79 Q80 82 82 100 Z" fill={shirt} />
@@ -522,7 +536,11 @@ export function AvatarSvg({ spec, ring, size = 40 }: { spec: AvatarSpec; ring?: 
         </g>
       )}
       {facialHair(spec.facialHair, hc)}
-      {hairTop(spec.hair, hc)}
+      {BUZZ_STYLES.has(spec.hair) ? (
+        <g clipPath={`url(#${skullClip})`}>{hairTop(spec.hair, hc)}</g>
+      ) : (
+        hairTop(spec.hair, hc)
+      )}
       {hairOrnaments(spec.hair, hc)}
       {accessoryFor(spec.accessory ?? 0)}
       {glassesFor(spec.glasses ?? 0)}

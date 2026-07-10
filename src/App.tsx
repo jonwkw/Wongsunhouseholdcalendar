@@ -8,6 +8,7 @@ import { KidCorner } from './components/KidCorner'
 import { ProfilePage } from './components/ProfilePage'
 import { ExplorePage } from './components/ExplorePage'
 import { Modal } from './components/shared'
+import { MemberFace } from './components/avatars'
 
 const THEMES = [
   { id: 'cream', dot: '#f3e2c4' },
@@ -94,6 +95,11 @@ function Shell() {
             <span className="brand-sub">{t('appSub')}</span>
           </div>
         </div>
+        <button className="header-family" onClick={() => setTab('family')} title={t('tabFamily')}>
+          {data.members.map((m) => (
+            <MemberFace key={m.id} member={m} size={36} />
+          ))}
+        </button>
         <div className="header-actions">
           <div className="theme-dots" title={t('themeLabel')}>
             {THEMES.map((th) => (
