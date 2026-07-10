@@ -142,9 +142,10 @@ function hairBack(style: number, c: string) {
 /** Styles that get the crown base (everything except bald / mohawk / comb-over / tuft) */
 const NO_CROWN = new Set([0, 17, 18, 19])
 
-/** Crown of hair that exactly hugs the top of the head — the base under every style */
+/** Crown of hair over the top of the head — slightly larger than the skull so
+ * every style has a little volume instead of looking painted on */
 export function crownPath() {
-  return 'M26.5 51 A23.5 27 0 1 1 73.5 51 Q50 37 26.5 51 Z'
+  return 'M24.5 52 A25.5 30 0 1 1 75.5 52 Q50 38 24.5 52 Z'
 }
 
 /** Hair drawn over the face (caps, bangs, buns) */
@@ -260,8 +261,8 @@ function hairFront(style: number, c: string) {
       return <path d="M26 42 Q26 21 50 21 Q74 21 74 42 Q70 30 50 30 Q30 30 26 42Z" fill={c} />
     case 28: // light buzz — crown base only
       return null
-    case 29: // light buzz with widow's peak
-      return <path d="M46 38 L50 46 L54 38 Q50 36 46 38Z" fill={c} opacity="0.5" />
+    case 29: // light buzz with widow's peak — same tint as the buzz crown
+      return <path d="M46 38 L50 46 L54 38 Q50 36 46 38Z" fill={c} opacity="0.32" />
     default:
       return null
   }

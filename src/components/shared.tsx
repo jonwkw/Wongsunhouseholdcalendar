@@ -156,6 +156,8 @@ export function TimeSelect({ value, onChange }: { value: string; onChange: (v: s
       options.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`)
     }
   }
+  // start the list at 6am so daytime slots don't need a long scroll
+  const ordered = [...options.slice(24), ...options.slice(0, 24)]
   const pretty = (v: string) => {
     const [h, m] = v.split(':').map(Number)
     const suffix = h < 12 ? 'am' : 'pm'
@@ -165,7 +167,7 @@ export function TimeSelect({ value, onChange }: { value: string; onChange: (v: s
   return (
     <select value={value} onChange={(e) => onChange(e.target.value)}>
       <option value="">{t('noTime')}</option>
-      {options.map((v) => (
+      {ordered.map((v) => (
         <option key={v} value={v}>
           {pretty(v)}
         </option>

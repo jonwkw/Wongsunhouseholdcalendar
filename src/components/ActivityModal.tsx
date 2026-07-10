@@ -21,7 +21,8 @@ export function ActivityModal({ activity, date, prefill, onClose }: Props) {
   const [title, setTitle] = useState(src?.title ?? '')
   const [emoji, setEmoji] = useState(src?.emoji ?? '🗓️')
   const [memberIds, setMemberIds] = useState<string[]>(src?.memberIds ?? [])
-  const [time, setTime] = useState(src?.time ?? '')
+  // brand-new activities start from a sensible 9am rather than "no time"
+  const [time, setTime] = useState(src?.time ?? (activity ? '' : '09:00'))
   const [endTime, setEndTime] = useState(src?.endTime ?? '')
   const [location, setLocation] = useState(src?.location ?? '')
   const [notes, setNotes] = useState(activity?.notes ?? '')

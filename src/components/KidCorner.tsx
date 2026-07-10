@@ -288,10 +288,9 @@ export function KidCorner() {
         <div className="kid-card math">
           <h3>{t('mathOfDay')}</h3>
           <p className="kid-question">{lang === 'zh' ? math.questionZh : math.question}</p>
+          {showAnswer && <div className="kid-answer">{t('answerIs', { n: math.answer })}</div>}
           <div className="kid-btn-row">
-            {showAnswer ? (
-              <div className="kid-answer">{t('answerIs', { n: math.answer })}</div>
-            ) : (
+            {!showAnswer && (
               <button className="btn primary" onClick={() => setShowAnswer(true)}>
                 {t('showAnswer')}
               </button>

@@ -137,7 +137,7 @@ export function TodayView({ goTo }: { goTo: (tab: string) => void }) {
             </h3>
             {!locked && (
               <div className="day-add-btns">
-                <button className="btn subtle" onClick={() => setEditing({ activity: null, date })}>
+                <button className="btn primary" onClick={() => setEditing({ activity: null, date })}>
                   {t('addActivityBtn')}
                 </button>
               </div>
@@ -195,7 +195,16 @@ export function TodayView({ goTo }: { goTo: (tab: string) => void }) {
             </div>
           )}
 
-          {acts.length === 0 && <p className="hint big-hint">{t('nothingPlanned')} 🎈</p>}
+          {acts.length === 0 && (
+            <div className="empty-day">
+              <p className="hint big-hint">{t('nothingPlanned')} 🎈</p>
+              {!locked && (
+                <button className="btn subtle" onClick={() => setEditing({ activity: null, date })}>
+                  {t('addActivityBtn')}
+                </button>
+              )}
+            </div>
+          )}
           {everyoneActs.length > 0 && (
             <div className="person-section" style={{ borderColor: EVERYONE_COLOR }}>
               <div className="person-head">
