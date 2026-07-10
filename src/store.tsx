@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { AppData, Member } from './types'
-import { seedData, DEFAULT_CHECKLIST } from './data/seed'
+import { seedData, DEFAULT_CHECKLIST, SAMPLE_DISHES } from './data/seed'
 
 // Stage 1 persistence: localStorage on this device.
 // Stage 2 swaps `load`/`persist` for a synced backend without touching the UI.
@@ -25,13 +25,30 @@ function load(): AppData {
 
 /** Backfill fields added since the data was saved */
 function migrate(data: AppData): AppData {
+  // v3: top up the dish library once with samples across cuisines/food types,
+  // and backfill type/cuisine on early dishes saved before those fields existed
+  const version = data.version ?? 2
+  let dishes = (data.dishes ?? []).map((dish) => {
+    const sample = SAMPLE_DISHES.find((s) => s.id === dish.id)
+    return sample ? { ...dish, foodType: dish.foodType ?? sample.foodType, cuisine: dish.cuisine ?? sample.cuisine } : dish
+  })
+  if (version < 3) {
+    const have = new Set(dishes.map((d) => d.name.toLowerCase()))
+    dishes = [...dishes, ...SAMPLE_DISHES.filter((s) => !have.has(s.name.toLowerCase()))]
+  }
   return {
     ...data,
+    version: Math.max(version, 3),
+    dishes,
     // snack rows retired — the menu is back to three meals
     menuEntries: (data.menuEntries ?? [])
       .map((m) => ({ ...m, memberIds: m.memberIds ?? [] }))
       .filter((m) => !(m.slot as string).startsWith('snack')),
-    kidChecklist: data.kidChecklist ?? DEFAULT_CHECKLIST,
+    // backfill Chinese text on checklist items stored before it existed
+    kidChecklist: (data.kidChecklist ?? DEFAULT_CHECKLIST).map((c) => ({
+      ...c,
+      textZh: c.textZh ?? DEFAULT_CHECKLIST.find((d) => d.id === c.id)?.textZh,
+    })),
     kidChecks: data.kidChecks ?? {},
     starDays: data.starDays ?? [],
     // school timetable cancelled (holidays) — remove the seeded series everywhere

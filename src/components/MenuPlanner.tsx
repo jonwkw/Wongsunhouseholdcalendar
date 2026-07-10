@@ -10,7 +10,7 @@ import { MemberFace } from './avatars'
 import { setDragPayload, getDragPayload, leavesTarget } from '../utils/dnd'
 
 const FOOD_TYPES = ['meat', 'veg', 'carb', 'soup', 'fruit', 'other']
-const CUISINES = ['chinese', 'malay', 'indian', 'western', 'japanese', 'other']
+const CUISINES = ['chinese', 'malay', 'indian', 'western', 'japanese', 'korean', 'thai', 'italian', 'peranakan', 'vietnamese', 'other']
 
 const SLOTS: MealSlot[] = ['breakfast', 'lunch', 'dinner']
 
@@ -32,6 +32,8 @@ export function MenuPlanner() {
   const [placingDish, setPlacingDish] = useState<Dish | null>(null)
   const [showDishForm, setShowDishForm] = useState(false)
   const [groupBy, setGroupBy] = useState<'none' | 'type' | 'cuisine'>('none')
+  // narrow the library to one type/cuisine ('all' = show every group)
+  const [filterVal, setFilterVal] = useState('all')
 
   /** Most recent date (up to today) a dish appeared on the menu */
   const lastServed = (dishName: string): string | null => {
@@ -74,10 +76,14 @@ export function MenuPlanner() {
     return t('daysAgo', { n: since })
   }
 
+  const groupKeys = (groupBy === 'type' ? FOOD_TYPES : CUISINES).filter((key) =>
+    data.dishes.some((d) => (groupBy === 'type' ? d.foodType ?? 'other' : d.cuisine ?? 'other') === key),
+  )
   const groups: { label: string; dishes: Dish[] }[] =
     groupBy === 'none'
       ? [{ label: '', dishes: data.dishes }]
-      : (groupBy === 'type' ? FOOD_TYPES : CUISINES)
+      : groupKeys
+          .filter((key) => filterVal === 'all' || key === filterVal)
           .map((key) => ({
             label: t((groupBy === 'type' ? `ft_${key}` : `cu_${key}`) as TKey),
             dishes: data.dishes.filter((d) => (groupBy === 'type' ? d.foodType ?? 'other' : d.cuisine ?? 'other') === key),
@@ -137,11 +143,35 @@ export function MenuPlanner() {
 
         <div className="group-toggle">
           {(['none', 'type', 'cuisine'] as const).map((g) => (
-            <button key={g} className={`filter-btn ${groupBy === g ? 'on' : ''}`} onClick={() => setGroupBy(g)}>
+            <button
+              key={g}
+              className={`filter-btn ${groupBy === g ? 'on' : ''}`}
+              onClick={() => {
+                setGroupBy(g)
+                setFilterVal('all')
+              }}
+            >
               {t(g === 'none' ? 'groupNone' : g === 'type' ? 'groupType' : 'groupCuisine')}
             </button>
           ))}
         </div>
+
+        {groupBy !== 'none' && (
+          <div className="group-toggle value-filter">
+            <button className={`filter-btn ${filterVal === 'all' ? 'on' : ''}`} onClick={() => setFilterVal('all')}>
+              {t('cat_all')}
+            </button>
+            {groupKeys.map((key) => (
+              <button
+                key={key}
+                className={`filter-btn ${filterVal === key ? 'on' : ''}`}
+                onClick={() => setFilterVal(key)}
+              >
+                {t((groupBy === 'type' ? `ft_${key}` : `cu_${key}`) as TKey)}
+              </button>
+            ))}
+          </div>
+        )}
 
         {groups.map((g) => (
           <div key={g.label || 'all'}>
@@ -345,12 +375,12 @@ function MenuRow(props: RowProps) {
                 <div className="menu-entry-top">
                   <span>{entry.emoji}</span>
                   <span className="menu-entry-name">{displayDishName(entry.dishName, data.dishes)}</span>
-                  {entry.ratings && Object.keys(entry.ratings).length > 0 && (
-                    <span className="dish-stars">
-                      ★{(Object.values(entry.ratings).reduce((a, b) => a + b, 0) / Object.values(entry.ratings).length).toFixed(1)}
-                    </span>
-                  )}
                 </div>
+                {entry.ratings && Object.keys(entry.ratings).length > 0 && (
+                  <div className="menu-entry-stars dish-stars">
+                    ★ {(Object.values(entry.ratings).reduce((a, b) => a + b, 0) / Object.values(entry.ratings).length).toFixed(1)}
+                  </div>
+                )}
                 {entry.memberIds.length > 0 && (
                   <div className="menu-entry-tags">
                     <MemberChips memberIds={entry.memberIds} />

@@ -15,13 +15,25 @@ import { FamilyBoard } from './FamilyBoard'
 const PERIOD_KEYS = ['morning', 'afternoon', 'evening', 'overnight']
 const DAYS_AHEAD = 7
 
-function ActivityRow({ a, members, onEdit }: { a: Activity; members: Member[]; onEdit?: () => void }) {
+function ActivityRow({ a, members, onEdit, onDelete }: { a: Activity; members: Member[]; onEdit?: () => void; onDelete?: () => void }) {
   return (
     <div
       className={`today-activity v2 ${onEdit ? 'editable' : ''}`}
       style={{ borderLeft: `4px solid ${tagColor(a.memberIds, members)}` }}
       onClick={onEdit}
     >
+      {onDelete && (
+        <button
+          className="icon-btn tiny act-x"
+          title={t('remove')}
+          onClick={(e) => {
+            e.stopPropagation()
+            onDelete()
+          }}
+        >
+          ✕
+        </button>
+      )}
       {a.time && (
         <div className="time-big">
           {prettyTime(a.time)}
@@ -44,7 +56,7 @@ function ActivityRow({ a, members, onEdit }: { a: Activity; members: Member[]; o
 
 /** Landing view: one big day at a time — swipe or tap chips to move between days. */
 export function TodayView({ goTo }: { goTo: (tab: string) => void }) {
-  const { data, memberById, locked } = useApp()
+  const { data, update, memberById, locked } = useApp()
   const { days: forecast, error, loading, refresh } = useForecast()
   const today = todayKey()
   const [offset, setOffset] = useState(0)
@@ -63,6 +75,16 @@ export function TodayView({ goTo }: { goTo: (tab: string) => void }) {
   const memberActs = data.members
     .map((m) => ({ member: m, list: acts.filter((a) => a.memberIds.includes(m.id)) }))
     .filter((x) => x.list.length > 0)
+
+  // ✕ on a card: one-offs are deleted; recurring activities just skip this day
+  const removeFromDay = (a: Activity) => {
+    update((d) => ({
+      ...d,
+      activities: a.recurrence
+        ? d.activities.map((x) => (x.id === a.id ? { ...x, exceptions: [...x.exceptions, date] } : x))
+        : d.activities.filter((x) => x.id !== a.id),
+    }))
+  }
 
   const swipeStart = (x: number) => {
     touchX.current = x
@@ -149,7 +171,10 @@ export function TodayView({ goTo }: { goTo: (tab: string) => void }) {
               )}
             </div>
           )}
-          {!forecast && offset === 0 && (
+          {!dayForecast && offset >= 3 && (
+            <div className="weather-strip-note">{t('wxNotYet')}</div>
+          )}
+          {!forecast && offset < 3 && (
             <div className="weather-strip-note">
               {loading ? (
                 t('loadingWeather')
@@ -183,6 +208,7 @@ export function TodayView({ goTo }: { goTo: (tab: string) => void }) {
                   a={a}
                   members={data.members}
                   onEdit={locked ? undefined : () => setEditing({ activity: a, date })}
+                  onDelete={locked ? undefined : () => removeFromDay(a)}
                 />
               ))}
             </div>
@@ -199,6 +225,7 @@ export function TodayView({ goTo }: { goTo: (tab: string) => void }) {
                   a={a}
                   members={data.members}
                   onEdit={locked ? undefined : () => setEditing({ activity: a, date })}
+                  onDelete={locked ? undefined : () => removeFromDay(a)}
                 />
               ))}
             </div>

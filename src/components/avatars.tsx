@@ -139,13 +139,21 @@ function hairBack(style: number, c: string) {
   }
 }
 
+/** Styles that get the crown base (everything except bald / mohawk / comb-over / tuft) */
+const NO_CROWN = new Set([0, 17, 18, 19])
+
+/** Crown of hair that exactly hugs the top of the head — the base under every style */
+export function crownPath() {
+  return 'M26.5 51 A23.5 27 0 1 1 73.5 51 Q50 37 26.5 51 Z'
+}
+
 /** Hair drawn over the face (caps, bangs, buns) */
 function hairFront(style: number, c: string) {
   switch (style) {
     case 0: // bald
       return null
-    case 1: // buzz
-      return <path d="M27 42 Q28 22 50 21 Q72 22 73 42 Q72 32 50 30 Q28 32 27 42Z" fill={c} opacity="0.85" />
+    case 1: // buzz — the crown base IS the style
+      return null
     case 2: // short & neat
       return <path d="M25 44 Q25 20 50 20 Q75 20 75 44 Q73 32 62 32 Q52 32 46 28 Q38 34 27 35 Q25 38 25 44Z" fill={c} />
     case 3: // side part
@@ -250,15 +258,10 @@ function hairFront(style: number, c: string) {
       return <path d="M25 44 Q24 19 52 19 Q77 21 75 44 Q75 28 64 36 Q48 44 36 34 Q28 32 25 44Z" fill={c} />
     case 27: // low pigtails cap
       return <path d="M26 42 Q26 21 50 21 Q74 21 74 42 Q70 30 50 30 Q30 30 26 42Z" fill={c} />
-    case 28: // light buzz
-      return <path d="M27 42 Q28 22 50 21 Q72 22 73 42 Q72 32 50 30 Q28 32 27 42Z" fill={c} opacity="0.35" />
+    case 28: // light buzz — crown base only
+      return null
     case 29: // light buzz with widow's peak
-      return (
-        <g fill={c} opacity="0.35">
-          <path d="M27 42 Q28 22 50 21 Q72 22 73 42 Q72 32 50 30 Q28 32 27 42Z" />
-          <path d="M46 30 L50 38 L54 30 Q50 28 46 30Z" opacity="1" />
-        </g>
-      )
+      return <path d="M46 38 L50 46 L54 38 Q50 36 46 38Z" fill={c} opacity="0.5" />
     default:
       return null
   }
@@ -481,6 +484,13 @@ export function AvatarSvg({ spec, ring, size = 40 }: { spec: AvatarSpec; ring?: 
         </g>
       )}
       <g transform="matrix(0.95,0,0,1,2.5,0)">{facialHair(spec.facialHair, hc)}</g>
+      {!NO_CROWN.has(spec.hair) && (
+        <path
+          d={crownPath()}
+          fill={hc}
+          opacity={spec.hair === 1 ? 0.85 : spec.hair === 28 || spec.hair === 29 ? 0.32 : 1}
+        />
+      )}
       <g transform="matrix(0.93,0,0,1,3.5,1)">{hairFront(spec.hair, hc)}</g>
       {accessoryFor(spec.accessory ?? 0)}
       {glassesFor(spec.glasses ?? 0)}

@@ -51,6 +51,49 @@ export const WORDS: WordOfDay[] = [
   { word: 'polite', phonetic: 'puh-LYT', meaning: 'saying please and thank you', sentence: 'It is polite to say thank you to Auntie.' },
 ]
 
+// Primary 1 level Chinese: everyday characters/words with pinyin,
+// a simple Chinese explanation for the audio, and a short sentence.
+export interface ChineseWordOfDay {
+  hanzi: string
+  pinyin: string
+  meaning: string
+  meaningZh: string
+  sentence: string
+}
+
+export const CHINESE_WORDS: ChineseWordOfDay[] = [
+  { hanzi: '水', pinyin: 'shuǐ', meaning: 'water', meaningZh: '我们每天都要喝的东西', sentence: '我口渴了，要喝水。' },
+  { hanzi: '大', pinyin: 'dà', meaning: 'big', meaningZh: '很大很大，不是小的', sentence: '大象很大。' },
+  { hanzi: '小', pinyin: 'xiǎo', meaning: 'small', meaningZh: '很小很小，不是大的', sentence: '小鸟很小。' },
+  { hanzi: '山', pinyin: 'shān', meaning: 'mountain', meaningZh: '很高很高的地方', sentence: '我们去爬山。' },
+  { hanzi: '人', pinyin: 'rén', meaning: 'person', meaningZh: '你、我、他都是人', sentence: '公园里有很多人。' },
+  { hanzi: '手', pinyin: 'shǒu', meaning: 'hand', meaningZh: '我们用来拿东西的', sentence: '吃饭前要洗手。' },
+  { hanzi: '口', pinyin: 'kǒu', meaning: 'mouth', meaningZh: '我们用来吃饭和说话的', sentence: '张开口，啊——' },
+  { hanzi: '上', pinyin: 'shàng', meaning: 'up / above', meaningZh: '在高的地方', sentence: '小猫在桌子上。' },
+  { hanzi: '下', pinyin: 'xià', meaning: 'down / below', meaningZh: '在低的地方', sentence: '皮球在椅子下。' },
+  { hanzi: '天', pinyin: 'tiān', meaning: 'sky / day', meaningZh: '抬头看到的地方', sentence: '今天天很蓝。' },
+  { hanzi: '月', pinyin: 'yuè', meaning: 'moon / month', meaningZh: '晚上挂在天上的', sentence: '晚上的月亮很亮。' },
+  { hanzi: '日', pinyin: 'rì', meaning: 'sun / day', meaningZh: '白天挂在天上的太阳', sentence: '生日快乐！' },
+  { hanzi: '火', pinyin: 'huǒ', meaning: 'fire', meaningZh: '很烫很烫，会发光的', sentence: '火很烫，不可以摸。' },
+  { hanzi: '门', pinyin: 'mén', meaning: 'door', meaningZh: '进出房间要经过的', sentence: '请帮我开门。' },
+  { hanzi: '开心', pinyin: 'kāi xīn', meaning: 'happy', meaningZh: '心里很快乐，想笑', sentence: '今天我很开心。' },
+  { hanzi: '朋友', pinyin: 'péng yǒu', meaning: 'friend', meaningZh: '喜欢和你一起玩的人', sentence: '他是我的好朋友。' },
+  { hanzi: '学校', pinyin: 'xué xiào', meaning: 'school', meaningZh: '我们去上课的地方', sentence: '我喜欢去学校。' },
+  { hanzi: '老师', pinyin: 'lǎo shī', meaning: 'teacher', meaningZh: '在学校教我们的人', sentence: '老师教我们写字。' },
+  { hanzi: '吃', pinyin: 'chī', meaning: 'to eat', meaningZh: '把东西放进嘴里', sentence: '我们一起吃饭。' },
+  { hanzi: '喝', pinyin: 'hē', meaning: 'to drink', meaningZh: '把水喝进肚子里', sentence: '弟弟在喝牛奶。' },
+  { hanzi: '看', pinyin: 'kàn', meaning: 'to look', meaningZh: '用眼睛去看东西', sentence: '我在看书。' },
+  { hanzi: '听', pinyin: 'tīng', meaning: 'to listen', meaningZh: '用耳朵去听声音', sentence: '请认真听老师说话。' },
+  { hanzi: '说', pinyin: 'shuō', meaning: 'to speak', meaningZh: '用嘴巴讲话', sentence: '妹妹会说很多话了。' },
+  { hanzi: '走', pinyin: 'zǒu', meaning: 'to walk', meaningZh: '用脚一步一步地移动', sentence: '我们慢慢走。' },
+  { hanzi: '跑', pinyin: 'pǎo', meaning: 'to run', meaningZh: '走得很快很快', sentence: '他跑得真快！' },
+  { hanzi: '笑', pinyin: 'xiào', meaning: 'to laugh / smile', meaningZh: '开心的时候脸上的样子', sentence: '宝宝笑了。' },
+  { hanzi: '红色', pinyin: 'hóng sè', meaning: 'red', meaningZh: '苹果和草莓的颜色', sentence: '我的书包是红色的。' },
+  { hanzi: '妈妈', pinyin: 'mā ma', meaning: 'mummy', meaningZh: '最爱你的家人', sentence: '妈妈抱着我。' },
+  { hanzi: '爸爸', pinyin: 'bà ba', meaning: 'daddy', meaningZh: '最爱你的家人', sentence: '爸爸带我去公园。' },
+  { hanzi: '家', pinyin: 'jiā', meaning: 'home / family', meaningZh: '我们一起住的地方', sentence: '我爱我的家。' },
+]
+
 export const MISSIONS: string[] = [
   'Say thank you to whoever cooked your dinner tonight 🍽️',
   'Help set the table for one meal today 🥢',
@@ -75,11 +118,38 @@ export const MISSIONS: string[] = [
   'Say one thing you are thankful for at dinner 🙏',
 ]
 
+
+export const MISSIONS_ZH: string[] = [
+  '晚餐后谢谢做饭的人 🍽️',
+  '今天帮忙摆一次餐具 🥢',
+  '画你最喜欢的动物给大家看 🎨',
+  '教弟弟一个新词 🗣️',
+  '睡前收好5个玩具 🧸',
+  '做10个开合跳——大声数出来！⭐',
+  '在家里找出3样红色的东西 🔴',
+  '给家里每个人一个大大的拥抱 🤗',
+  '今天帮忙浇一盆植物 🪴',
+  '笑眯眯地跟外婆说早安 🌞',
+  '数一数家里有多少把椅子 🪑',
+  '编一个友善小龙的故事 🐉',
+  '把你的名字写3遍 ✏️',
+  '帮忙叠一件衣服 👕',
+  '找出3样以字母S开头的东西 🔎',
+  '问问爸爸或妈妈今天过得怎么样，认真听 👂',
+  '今天和别人分享一样你的东西 💛',
+  '给家人唱你最喜欢的歌 🎤',
+  '尝一口没吃过的食物 🥦',
+  '从20倒数到0 🔢',
+  '晚餐时说一件感恩的事 🙏',
+]
+
 export interface MathProblem {
   question: string
+  questionZh: string
   answer: string
   /** Kid-friendly spoken walkthrough for the audio explainer */
   explain: string
+  explainZh: string
 }
 
 function dayOfYear(d: Date): number {
@@ -101,8 +171,10 @@ export function mathProblemFor(d: Date): MathProblem {
     const b = (day % 4) + 1
     return {
       question: `What is ${a} + ${b}?`,
+      questionZh: `${a} + ${b} 等于多少？`,
       answer: String(a + b),
       explain: `Let's solve ${a} plus ${b} together! Hold up ${a} fingers. Now count up ${b} more: ${countUp(a, b)}. That's it — ${a} plus ${b} is ${a + b}! Great job!`,
+      explainZh: `我们一起算 ${a} 加 ${b}！先伸出 ${a} 根手指，再往上数 ${b} 个：${countUp(a, b)}。所以 ${a} 加 ${b} 等于 ${a + b}！你真棒！`,
     }
   }
   if (kind === 1) {
@@ -110,8 +182,10 @@ export function mathProblemFor(d: Date): MathProblem {
     const b = (day % 4) + 1
     return {
       question: `What is ${a} − ${b}?`,
+      questionZh: `${a} − ${b} 等于多少？`,
       answer: String(a - b),
       explain: `Let's solve ${a} take away ${b}! Start at ${a} and count down ${b} steps: ${countDown(a, b)}. So ${a} take away ${b} is ${a - b}! You did it!`,
+      explainZh: `我们来算 ${a} 减 ${b}！从 ${a} 开始往下数 ${b} 个：${countDown(a, b)}。所以 ${a} 减 ${b} 等于 ${a - b}！做得好！`,
     }
   }
   if (kind === 2) {
@@ -119,16 +193,20 @@ export function mathProblemFor(d: Date): MathProblem {
     const start = step
     return {
       question: `Count on: ${start}, ${start + step}, ${start + 2 * step}, … what comes next?`,
+      questionZh: `接着数：${start}、${start + step}、${start + 2 * step}……下一个是多少？`,
       answer: String(start + 3 * step),
       explain: `We are counting in jumps of ${step}! Every number is ${step} more than the one before. After ${start + 2 * step}, jump ${step} more, and you land on ${start + 3 * step}!`,
+      explainZh: `我们在按 ${step} 跳着数！每个数都比前一个多 ${step}。${start + 2 * step} 之后再跳 ${step}，就是 ${start + 3 * step}！`,
     }
   }
   const a = (n % 4) + 2
   const b = (day % 3) + 1
   return {
     question: `You have ${a} stickers. Papa gives you ${b} more. How many stickers do you have now?`,
+    questionZh: `你有 ${a} 张贴纸，爸爸再给你 ${b} 张。现在一共有多少张？`,
     answer: String(a + b),
     explain: `You start with ${a} stickers. Papa gives you ${b} more, so count up from ${a}: ${countUp(a, b)}. Now you have ${a + b} stickers! Hooray!`,
+    explainZh: `你先有 ${a} 张贴纸，爸爸再给你 ${b} 张，从 ${a} 往上数：${countUp(a, b)}。现在一共有 ${a + b} 张！好耶！`,
   }
 }
 
@@ -136,8 +214,13 @@ export function wordFor(d: Date): WordOfDay {
   return WORDS[dayOfYear(d) % WORDS.length]
 }
 
-export function missionFor(d: Date): string {
-  return MISSIONS[dayOfYear(d) % MISSIONS.length]
+export function cnWordFor(d: Date): ChineseWordOfDay {
+  return CHINESE_WORDS[dayOfYear(d) % CHINESE_WORDS.length]
+}
+
+export function missionFor(d: Date, lang: 'en' | 'zh' = 'en'): string {
+  const i = dayOfYear(d) % MISSIONS.length
+  return lang === 'zh' ? MISSIONS_ZH[i] ?? MISSIONS[i] : MISSIONS[i]
 }
 
 /** 10 increasingly cool rockets — a new one unlocks after every launch */

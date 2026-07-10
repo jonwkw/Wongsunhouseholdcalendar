@@ -5,7 +5,7 @@
 export interface ExploreIdea {
   name: string
   emoji: string
-  category: 'play' | 'nature' | 'indoor' | 'eat'
+  category: 'play' | 'nature' | 'indoor' | 'eat' | 'new'
   area: string
   desc: string
   free?: boolean
@@ -45,6 +45,14 @@ export const EXPLORE_IDEAS: ExploreIdea[] = [
   { name: 'Trapizza', emoji: '🍕', category: 'eat', area: 'Siloso Beach, Sentosa', source: 'Honeykids Asia', desc: 'Beachside pizza where kids build their own bentos, with a play gym steps away.' },
   { name: 'Fusion Spoon', emoji: '🥄', category: 'eat', area: 'Botanic Gardens', source: 'Little Day Out', desc: 'Indoor AND outdoor play areas, right by the Gardens — easy pre-nap lunch stop.' },
   { name: 'Canopy Garden Dining', emoji: '🌿', category: 'eat', area: 'HortPark / Changi Village / Jurong Lake', source: 'Little Day Out', desc: 'Leafy all-day dining with playgrounds beside every outlet — three locations island-wide.' },
+
+  // ---- Newly opened (last ~3 months) ----
+  { name: 'Park Side', emoji: '🌸', category: 'new', area: 'Botanic Gardens', source: 'Honeycombers', desc: 'New all-day cafe from the PS.Cafe group inside the Botanic Gardens — lots of space for kids (and pets), Asian flavours with a twist.' },
+  { name: 'Wildseed Cafe @ The Garage', emoji: '🌼', category: 'new', area: 'Botanic Gardens', source: 'City Nomads', desc: 'Wildseed\'s new fourth outpost in the Gardens — built for slow mornings and long family brunches.' },
+  { name: 'Torikizoku', emoji: '🍢', category: 'new', area: 'VivoCity', source: 'TheSmartLocal', desc: 'Japan\'s famous yakitori chain lands in Singapore (Jun 2026): everything a flat $3.90++, 174 seats, very family-casual.' },
+  { name: 'Mary Grace', emoji: '🧁', category: 'new', area: 'Tras Street', source: 'DanielFoodDiary', desc: 'The Philippines\' beloved bakery-cafe debuts in Singapore — wallet-friendly bakes with familiar local flavours.' },
+  { name: 'Sio Pasta', emoji: '🍝', category: 'new', area: 'Raffles City', source: 'HungryGoWhere', desc: 'Casual Japanese-Italian pastas and pizzas from a Michelin-rated Tokyo chef — easy with kids.' },
+  { name: 'Gourmet Park OFC', emoji: '🚚', category: 'new', area: 'Raffles Place', source: 'City Nomads', desc: 'Pop-up food-truck park (May–Jul 2026): burgers, jerk chicken, tacos and deli sandwiches under one covered plaza.' },
 ]
 
 /** Deterministic pick-of-the-day so every device shows the same suggestion */

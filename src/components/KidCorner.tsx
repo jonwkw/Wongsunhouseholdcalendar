@@ -3,10 +3,10 @@ import { useApp, uid } from '../store'
 import { activitiesOn, addDays, prettyDate, prettyTime, relativeLabel, todayKey, fromKey, weekdayName } from '../utils/dates'
 import { useForecast } from '../utils/useForecast'
 import { weatherEmoji } from '../utils/weather'
-import { mathProblemFor, missionFor, wordFor, rocketFor, ROCKETS } from '../data/kidContent'
+import { mathProblemFor, missionFor, wordFor, cnWordFor, rocketFor, ROCKETS } from '../data/kidContent'
 import { RocketShip } from './RocketShip'
 import { t, getLang } from '../i18n'
-import { speak } from '../utils/speech'
+import { speak, stopSpeak } from '../utils/speech'
 import { Modal } from './shared'
 
 const MISSION_EMOJI = ['✅', '🪥', '🥣', '🎒', '📖', '🧸', '🌙', '🧦', '🚿', '🐟', '💪', '🎹', '✏️', '🧹', '💧', '🙏']
@@ -38,8 +38,10 @@ export function KidCorner() {
 
   const now = fromKey(today)
   const word = wordFor(now)
+  const cnWord = cnWordFor(now)
   const math = mathProblemFor(now)
-  const mission = missionFor(now)
+  const lang = getLang()
+  const mission = missionFor(now, lang)
 
   /** Tasks that apply on a given day: daily ones + one-offs for that date */
   const itemsFor = (date: string) => data.kidChecklist.filter((i) => !i.date || i.date === date)
@@ -61,7 +63,7 @@ export function KidCorner() {
       : todayItems.filter((i) => todayChecked.includes(i.id)).length / todayItems.length
 
   const toggleCheck = (itemId: string) => {
-    if (isFuture) return
+    if (isFuture || !canEdit) return
     update((d) => {
       const cur = d.kidChecks[selectedDay] ?? []
       const next = cur.includes(itemId) ? cur.filter((x) => x !== itemId) : [...cur, itemId]
@@ -134,25 +136,26 @@ export function KidCorner() {
               </button>
             )}
           </div>
-          {canEdit ? (
+          {canEdit && (
             <button className="icon-btn" onClick={() => setEditList((v) => !v)}>
               {editList ? t('doneBtn') : '✏️'}
-            </button>
-          ) : (
-            <button className="icon-btn" onClick={() => setShowKidUnlock(true)}>
-              🔒
             </button>
           )}
         </div>
 
+        {!canEdit && (
+          <button className="btn primary rosco-unlock" onClick={() => setShowKidUnlock(true)}>
+            {t('roscoUnlock', { name: kid.name })}
+          </button>
+        )}
         {isFuture && <p className="future-note">{t('futureLocked', { name: kid.name })}</p>}
 
         {items.map((item) => (
-          <label key={item.id} className={`checklist-item ${checked.includes(item.id) ? 'done' : ''} ${isFuture ? 'locked' : ''}`}>
+          <label key={item.id} className={`checklist-item ${checked.includes(item.id) ? 'done' : ''} ${isFuture || !canEdit ? 'locked' : ''}`}>
             <input
               type="checkbox"
               checked={checked.includes(item.id)}
-              disabled={isFuture}
+              disabled={isFuture || !canEdit}
               onChange={() => toggleCheck(item.id)}
             />
             <span className="checklist-emoji">{item.emoji}</span>
@@ -241,21 +244,50 @@ export function KidCorner() {
           <div className="kid-phonetic">🔤 {word.phonetic}</div>
           <p className="kid-meaning">{word.meaning}</p>
           <p className="kid-sentence">“{word.sentence}”</p>
-          <button
-            className="btn primary speak-btn"
-            onClick={() =>
-              speak(
-                `The word of the day is: ${word.word}. ${word.word}! It means: ${word.meaning}. For example: ${word.sentence} Can you say ${word.word}?`,
-              )
-            }
-          >
-            {t('listen')}
-          </button>
+          <div className="kid-btn-row">
+            <button
+              className="btn primary speak-btn"
+              onClick={() =>
+                speak(
+                  `The word of the day is: ${word.word}. It means: ${word.meaning}. For example: ${word.sentence} Can you say it?`,
+                )
+              }
+            >
+              {t('listen')}
+            </button>
+            <button className="btn subtle speak-btn" onClick={stopSpeak}>
+              {t('stopBtn')}
+            </button>
+          </div>
+        </div>
+
+        <div className="kid-card cnword">
+          <h3>{t('cnWordOfDay')}</h3>
+          <div className="kid-word hanzi">{cnWord.hanzi}</div>
+          <div className="kid-phonetic">🔤 {cnWord.pinyin} · {cnWord.meaning}</div>
+          <p className="kid-meaning">{cnWord.meaningZh}</p>
+          <p className="kid-sentence">“{cnWord.sentence}”</p>
+          <div className="kid-btn-row">
+            <button
+              className="btn primary speak-btn"
+              onClick={() =>
+                speak(
+                  `今天的中文字是：${cnWord.hanzi}。${cnWord.hanzi}，就是${cnWord.meaningZh}。听一听这个句子：${cnWord.sentence} 你也来念一念吧！`,
+                  'zh',
+                )
+              }
+            >
+              {t('listen')}
+            </button>
+            <button className="btn subtle speak-btn" onClick={stopSpeak}>
+              {t('stopBtn')}
+            </button>
+          </div>
         </div>
 
         <div className="kid-card math">
           <h3>{t('mathOfDay')}</h3>
-          <p className="kid-question">{math.question}</p>
+          <p className="kid-question">{lang === 'zh' ? math.questionZh : math.question}</p>
           <div className="kid-btn-row">
             {showAnswer ? (
               <div className="kid-answer">{t('answerIs', { n: math.answer })}</div>
@@ -264,8 +296,11 @@ export function KidCorner() {
                 {t('showAnswer')}
               </button>
             )}
-            <button className="btn subtle speak-btn" onClick={() => speak(math.explain)}>
+            <button className="btn subtle speak-btn" onClick={() => speak(lang === 'zh' ? math.explainZh : math.explain, lang)}>
               {t('explainBtn')}
+            </button>
+            <button className="btn subtle speak-btn" onClick={stopSpeak}>
+              {t('stopBtn')}
             </button>
           </div>
         </div>
@@ -273,16 +308,24 @@ export function KidCorner() {
         <div className="kid-card mission">
           <h3>{t('missionOfDay')}</h3>
           <p className="kid-question">{mission}</p>
-          <button
-            className="btn primary speak-btn"
-            onClick={() =>
-              speak(
-                `Today's special mission is: ${mission.replace(/[^\w\s.,!?'-]/g, '')}. This mission is fun because you get to be a big helper and make everyone smile. I know you can do it!`,
-              )
-            }
-          >
-            {t('listenMission')}
-          </button>
+          <div className="kid-btn-row">
+            <button
+              className="btn primary speak-btn"
+              onClick={() =>
+                speak(
+                  lang === 'zh'
+                    ? `今天的特别任务是：${mission.replace(/[^\u4e00-\u9fff\w\s.,!?！？：、0-9-]/g, '')}。这个任务很好玩，因为你可以当小帮手，让大家都开心。你一定可以做到！`
+                    : `Today's special mission is: ${mission.replace(/[^\w\s.,!?'-]/g, '')}. This mission is fun because you get to be a big helper and make everyone smile. I know you can do it!`,
+                  lang,
+                )
+              }
+            >
+              {t('listenMission')}
+            </button>
+            <button className="btn subtle speak-btn" onClick={stopSpeak}>
+              {t('stopBtn')}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -327,6 +370,7 @@ export function KidCorner() {
 
       {showKidUnlock && (
         <SimpleUnlockModal
+          kidName={kid.name}
           onUnlock={() => {
             setKidUnlocked(true)
             setShowKidUnlock(false)
@@ -339,7 +383,7 @@ export function KidCorner() {
 }
 
 /** Easier unlock just for this page — a grown-up shoulder-check, not a fortress */
-function SimpleUnlockModal({ onUnlock, onClose }: { onUnlock: () => void; onClose: () => void }) {
+function SimpleUnlockModal({ kidName, onUnlock, onClose }: { kidName: string; onUnlock: () => void; onClose: () => void }) {
   const [answer, setAnswer] = useState('')
   const [q] = useState(() => {
     const a = 11 + Math.floor(Math.random() * 8)
@@ -351,7 +395,7 @@ function SimpleUnlockModal({ onUnlock, onClose }: { onUnlock: () => void; onClos
     else setAnswer('')
   }
   return (
-    <Modal title={t('kidUnlockHint')} onClose={onClose}>
+    <Modal title={t('kidUnlockTitle', { name: kidName })} onClose={onClose}>
       <div className="form">
         <label>
           {t('simpleUnlockQ', { a: q.a, b: q.b })}

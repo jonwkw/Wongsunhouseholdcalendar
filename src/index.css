@@ -49,13 +49,11 @@
 body {
   margin: 0;
   font-family: 'Segoe UI', system-ui, -apple-system, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
-  background:
-    radial-gradient(circle at 12% 8%, color-mix(in srgb, var(--accent) 10%, transparent) 0 26%, transparent 27%),
-    radial-gradient(circle at 88% 90%, color-mix(in srgb, var(--accent) 9%, transparent) 0 22%, transparent 23%),
-    radial-gradient(color-mix(in srgb, var(--accent) 9%, transparent) 1.2px, transparent 1.3px),
-    var(--bg);
-  background-size: auto, auto, 26px 26px, auto;
-  background-attachment: fixed;
+  /* one flat colour + a repeating dot texture — no large gradients, so the
+     backdrop stays identical from the top of the page to the bottom */
+  background-color: var(--bg);
+  background-image: radial-gradient(color-mix(in srgb, var(--accent) 9%, transparent) 1.2px, transparent 1.3px);
+  background-size: 26px 26px;
   color: var(--ink);
   font-size: 15px;
 }
@@ -918,12 +916,24 @@ textarea:focus {
 
 .today-activity.v2 {
   display: block;
+  position: relative;
   border-bottom: none;
   background: #fff;
   border-radius: 10px;
-  padding: 9px 10px;
+  padding: 9px 26px 9px 10px;
   margin-bottom: 8px;
   box-shadow: 0 1px 4px rgba(70, 50, 15, 0.08);
+}
+
+.today-activity.v2 .act-x {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  color: var(--muted);
+}
+
+.today-activity.v2 .act-x:hover {
+  color: #c0392b;
 }
 
 .today-activity.v2 .today-activity-main {
@@ -1251,6 +1261,11 @@ textarea:focus {
   border-color: #9dbede;
 }
 
+.kid-card.cnword {
+  background: #fdf0ee;
+  border-color: #e5a99a;
+}
+
 .kid-card.math {
   background: #eaf6f0;
   border-color: #93cdb6;
@@ -1265,6 +1280,12 @@ textarea:focus {
   font-size: 30px;
   font-weight: 800;
   text-transform: lowercase;
+}
+
+.kid-word.hanzi {
+  font-size: 42px;
+  text-transform: none;
+  line-height: 1.2;
 }
 
 .kid-meaning {
@@ -2224,6 +2245,12 @@ textarea:focus {
   padding: 4px 9px;
 }
 
+.group-toggle.value-filter {
+  padding: 6px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent) 7%, #fff);
+}
+
 .group-label {
   font-weight: 800;
   font-size: 12px;
@@ -2377,8 +2404,7 @@ textarea:focus {
 }
 
 .today-single .today-col.single {
-  max-width: 860px;
-  margin: 0 auto;
+  width: 100%;
 }
 
 .today-col.single:not(.is-today) {
@@ -2551,3 +2577,19 @@ textarea:focus {
   font-size: 11.5px;
   font-style: italic;
 }
+
+.rosco-unlock {
+  width: 100%;
+  font-size: 16px;
+  padding: 12px;
+  border-radius: 12px;
+  margin-bottom: 10px;
+  animation: counter-pop 1s ease-in-out infinite alternate;
+}
+
+.menu-entry-stars {
+  font-size: 11.5px;
+  margin-top: 1px;
+}
+
+.explore-card.cat-new { border-left: 5px solid #3b82c4; }

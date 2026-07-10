@@ -4,8 +4,8 @@ import type { ExploreIdea } from '../data/explore'
 import { t } from '../i18n'
 import type { TKey } from '../i18n'
 
-const CATS = ['all', 'play', 'nature', 'indoor', 'eat'] as const
-const CAT_EMOJI: Record<string, string> = { all: '🌈', play: '🛝', nature: '🌳', indoor: '🎨', eat: '🍽️' }
+const CATS = ['all', 'play', 'nature', 'indoor', 'eat', 'new'] as const
+const CAT_EMOJI: Record<string, string> = { all: '🌈', play: '🛝', nature: '🌳', indoor: '🎨', eat: '🍽️', new: '🆕' }
 
 /** Curated Singapore family ideas: playgrounds, outings, rainy-day spots and kid-friendly eats. */
 export function ExplorePage() {
