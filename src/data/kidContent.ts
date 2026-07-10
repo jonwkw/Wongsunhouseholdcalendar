@@ -78,6 +78,8 @@ export const MISSIONS: string[] = [
 export interface MathProblem {
   question: string
   answer: string
+  /** Kid-friendly spoken walkthrough for the audio explainer */
+  explain: string
 }
 
 function dayOfYear(d: Date): number {
@@ -88,16 +90,29 @@ function dayOfYear(d: Date): number {
 export function mathProblemFor(d: Date): MathProblem {
   const n = dayOfYear(d)
   const day = d.getDate()
+  const countUp = (from: number, steps: number) =>
+    Array.from({ length: steps }, (_, i) => from + i + 1).join(', ')
+  const countDown = (from: number, steps: number) =>
+    Array.from({ length: steps }, (_, i) => from - i - 1).join(', ')
+
   const kind = n % 4
   if (kind === 0) {
     const a = (n % 4) + 2
     const b = (day % 4) + 1
-    return { question: `What is ${a} + ${b}?`, answer: String(a + b) }
+    return {
+      question: `What is ${a} + ${b}?`,
+      answer: String(a + b),
+      explain: `Let's solve ${a} plus ${b} together! Hold up ${a} fingers. Now count up ${b} more: ${countUp(a, b)}. That's it — ${a} plus ${b} is ${a + b}! Great job!`,
+    }
   }
   if (kind === 1) {
     const a = (n % 5) + 5
     const b = (day % 4) + 1
-    return { question: `What is ${a} − ${b}?`, answer: String(a - b) }
+    return {
+      question: `What is ${a} − ${b}?`,
+      answer: String(a - b),
+      explain: `Let's solve ${a} take away ${b}! Start at ${a} and count down ${b} steps: ${countDown(a, b)}. So ${a} take away ${b} is ${a - b}! You did it!`,
+    }
   }
   if (kind === 2) {
     const step = [2, 10][n % 2]
@@ -105,6 +120,7 @@ export function mathProblemFor(d: Date): MathProblem {
     return {
       question: `Count on: ${start}, ${start + step}, ${start + 2 * step}, … what comes next?`,
       answer: String(start + 3 * step),
+      explain: `We are counting in jumps of ${step}! Every number is ${step} more than the one before. After ${start + 2 * step}, jump ${step} more, and you land on ${start + 3 * step}!`,
     }
   }
   const a = (n % 4) + 2
@@ -112,6 +128,7 @@ export function mathProblemFor(d: Date): MathProblem {
   return {
     question: `You have ${a} stickers. Papa gives you ${b} more. How many stickers do you have now?`,
     answer: String(a + b),
+    explain: `You start with ${a} stickers. Papa gives you ${b} more, so count up from ${a}: ${countUp(a, b)}. Now you have ${a + b} stickers! Hooray!`,
   }
 }
 

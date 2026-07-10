@@ -78,6 +78,8 @@ export interface DayNote {
 export interface Dish {
   id: string
   name: string
+  /** Optional Chinese name shown when the app is in Chinese */
+  nameZh?: string
   emoji: string
   slot: 'breakfast' | 'lunch' | 'dinner' | 'snack' | 'any'
   description?: string
@@ -119,6 +121,8 @@ export interface ChecklistItem {
   id: string
   emoji: string
   text: string
+  /** Optional Chinese text shown when the app is in Chinese */
+  textZh?: string
   date?: string
 }
 

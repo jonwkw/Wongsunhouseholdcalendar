@@ -2,12 +2,12 @@ import type { AppData, ChecklistItem } from '../types'
 import { todayKey } from '../utils/dates'
 
 export const DEFAULT_CHECKLIST: ChecklistItem[] = [
-  { id: 'c-teeth-am', emoji: '🪥', text: 'Brush teeth in the morning' },
-  { id: 'c-breakfast', emoji: '🥣', text: 'Eat a good breakfast' },
-  { id: 'c-bag', emoji: '🎒', text: 'Pack your school bag' },
-  { id: 'c-read', emoji: '📖', text: 'Read for 15 minutes' },
-  { id: 'c-tidy', emoji: '🧸', text: 'Tidy up your toys' },
-  { id: 'c-teeth-pm', emoji: '🌙', text: 'Brush teeth before bed' },
+  { id: 'c-teeth-am', emoji: '🪥', text: 'Brush teeth in the morning', textZh: '早上刷牙' },
+  { id: 'c-breakfast', emoji: '🥣', text: 'Eat a good breakfast', textZh: '好好吃早餐' },
+  { id: 'c-bag', emoji: '🎒', text: 'Pack your school bag', textZh: '收拾书包' },
+  { id: 'c-read', emoji: '📖', text: 'Read for 15 minutes', textZh: '阅读15分钟' },
+  { id: 'c-tidy', emoji: '🧸', text: 'Tidy up your toys', textZh: '收好玩具' },
+  { id: 'c-teeth-pm', emoji: '🌙', text: 'Brush teeth before bed', textZh: '睡前刷牙' },
 ]
 
 // Minimal starter data: one example of each thing so the logic is easy to verify.
@@ -28,11 +28,11 @@ export function seedData(): AppData {
     activityTemplates: [],
     dayNotes: [],
     dishes: [
-      { id: 'd-1', name: 'Chicken rice', emoji: '🍗', slot: 'lunch' },
-      { id: 'd-2', name: 'Fish porridge', emoji: '🐟', slot: 'dinner' },
-      { id: 'd-3', name: 'Stir-fried veggies', emoji: '🥬', slot: 'any' },
-      { id: 'd-4', name: 'Noodle soup', emoji: '🍜', slot: 'lunch' },
-      { id: 'd-5', name: 'Fruit platter', emoji: '🍉', slot: 'snack' },
+      { id: 'd-1', name: 'Chicken rice', nameZh: '海南鸡饭', emoji: '🍗', slot: 'lunch', foodType: 'meat', cuisine: 'chinese' },
+      { id: 'd-2', name: 'Fish porridge', nameZh: '鱼片粥', emoji: '🐟', slot: 'dinner', foodType: 'soup', cuisine: 'chinese' },
+      { id: 'd-3', name: 'Stir-fried veggies', nameZh: '炒青菜', emoji: '🥬', slot: 'any', foodType: 'veg', cuisine: 'chinese' },
+      { id: 'd-4', name: 'Noodle soup', nameZh: '汤面', emoji: '🍜', slot: 'lunch', foodType: 'carb', cuisine: 'chinese' },
+      { id: 'd-5', name: 'Fruit platter', nameZh: '水果拼盘', emoji: '🍉', slot: 'snack', foodType: 'fruit', cuisine: 'other' },
     ],
     menuEntries: [
       { id: 'm-1', date: today, slot: 'dinner', dishName: 'Fish porridge', emoji: '🐟', memberIds: [] },

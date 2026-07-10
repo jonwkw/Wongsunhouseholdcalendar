@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { Activity } from '../types'
 import { useApp, uid } from '../store'
-import { Modal, MemberToggle, EmojiPicker } from './shared'
+import { Modal, MemberToggle, EmojiPicker, TimeSelect } from './shared'
 import { prettyDate, todayKey } from '../utils/dates'
 import { t, dayShort } from '../i18n'
 
@@ -99,11 +99,11 @@ export function ActivityModal({ activity, date, prefill, onClose }: Props) {
         <div className="form-row">
           <label>
             {t('starts')}
-            <input type="time" step={900} value={time} onChange={(e) => setTime(e.target.value)} />
+            <TimeSelect value={time} onChange={setTime} />
           </label>
           <label>
             {t('ends')}
-            <input type="time" step={900} value={endTime} onChange={(e) => setEndTime(e.target.value)} />
+            <TimeSelect value={endTime} onChange={setEndTime} />
           </label>
         </div>
 

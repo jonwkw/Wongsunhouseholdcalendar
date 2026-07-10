@@ -6,6 +6,7 @@ import { Timetable } from './components/Timetable'
 import { MenuPlanner } from './components/MenuPlanner'
 import { KidCorner } from './components/KidCorner'
 import { ProfilePage } from './components/ProfilePage'
+import { ExplorePage } from './components/ExplorePage'
 import { Modal } from './components/shared'
 
 const THEMES = [
@@ -79,6 +80,7 @@ function Shell() {
     { id: 'timetable', label: t('tabTimetable') },
     { id: 'menu', label: t('tabMenu') },
     ...(kid ? [{ id: 'kid', label: `🚀 ${kid.name}` }] : []),
+    { id: 'explore', label: t('tabExplore') },
     { id: 'family', label: t('tabFamily') },
   ]
 
@@ -133,6 +135,7 @@ function Shell() {
         {tab === 'timetable' && <Timetable />}
         {tab === 'menu' && <MenuPlanner />}
         {tab === 'kid' && <KidCorner />}
+        {tab === 'explore' && <ExplorePage />}
         {tab === 'family' && <ProfilePage />}
       </main>
 

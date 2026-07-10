@@ -3,9 +3,9 @@ import type { DragEvent } from 'react'
 import type { Dish, MealSlot, MenuEntry } from '../types'
 import { useApp, uid } from '../store'
 import { addDays, fromKey, mondayOf, prettyDate, todayKey, weekDays } from '../utils/dates'
-import { t, dayShort } from '../i18n'
+import { t, dayShort, getLang } from '../i18n'
 import type { TKey } from '../i18n'
-import { MemberChips, MemberToggle, Modal, tagColor } from './shared'
+import { LockedBanner, MemberChips, MemberToggle, Modal, tagColor } from './shared'
 import { MemberFace } from './avatars'
 import { setDragPayload, getDragPayload, leavesTarget } from '../utils/dnd'
 
@@ -13,11 +13,20 @@ const FOOD_TYPES = ['meat', 'veg', 'carb', 'soup', 'fruit', 'other']
 const CUISINES = ['chinese', 'malay', 'indian', 'western', 'japanese', 'other']
 
 const SLOTS: MealSlot[] = ['breakfast', 'lunch', 'dinner']
+
+/** Show the Chinese name (when set) while the app is in Chinese */
+function displayDishName(name: string, dishes: Dish[]): string {
+  if (getLang() !== 'zh') return name
+  const dish = dishes.find((x) => x.name === name)
+  return dish?.nameZh || name
+}
 const slotLabel = (s: MealSlot): string =>
   s === 'breakfast' ? t('breakfast') : s === 'lunch' ? t('lunch') : t('dinner')
 
 export function MenuPlanner() {
   const { data, update, locked } = useApp()
+
+
   const today = todayKey()
   const [monday, setMonday] = useState(() => mondayOf(today))
   const [placingDish, setPlacingDish] = useState<Dish | null>(null)
@@ -120,7 +129,7 @@ export function MenuPlanner() {
             <div className="rec-title">{t('recommended')}</div>
             {recommended.map((dish) => (
               <button key={dish.id} className="rec-chip" onClick={() => !locked && setPlacingDish(dish)}>
-                {dish.emoji} {dish.name}
+                {dish.emoji} {getLang() === 'zh' && dish.nameZh ? dish.nameZh : dish.name}
               </button>
             ))}
           </div>
@@ -149,7 +158,7 @@ export function MenuPlanner() {
                 >
                   <div className="dish-top">
                     <span className="card-emoji">{dish.emoji}</span>
-                    <span className="card-title">{dish.name}</span>
+                    <span className="card-title">{getLang() === 'zh' && dish.nameZh ? dish.nameZh : dish.name}</span>
                     {!locked && (
                       <button
                         className="icon-btn tiny"
@@ -180,6 +189,7 @@ export function MenuPlanner() {
       </aside>
 
       <div className="timetable-main">
+        <LockedBanner />
         <div className="week-nav">
           <button className="btn subtle" onClick={() => setMonday((m) => addDays(m, -7))}>{t('prevShort')}</button>
           <button className="btn subtle" onClick={() => setMonday(mondayOf(today))}>{t('thisWeek')}</button>
@@ -334,7 +344,7 @@ function MenuRow(props: RowProps) {
               >
                 <div className="menu-entry-top">
                   <span>{entry.emoji}</span>
-                  <span className="menu-entry-name">{entry.dishName}</span>
+                  <span className="menu-entry-name">{displayDishName(entry.dishName, data.dishes)}</span>
                   {entry.ratings && Object.keys(entry.ratings).length > 0 && (
                     <span className="dish-stars">
                       ★{(Object.values(entry.ratings).reduce((a, b) => a + b, 0) / Object.values(entry.ratings).length).toFixed(1)}
@@ -454,6 +464,7 @@ function MealModal({ entry, onClose }: { entry: MenuEntry; onClose: () => void }
 function DishModal({ onClose }: { onClose: () => void }) {
   const { update } = useApp()
   const [name, setName] = useState('')
+  const [nameZh, setNameZh] = useState('')
   const [emoji, setEmoji] = useState('🍽️')
   const [slot, setSlot] = useState<Dish['slot']>('any')
   const [description, setDescription] = useState('')
@@ -468,7 +479,7 @@ function DishModal({ onClose }: { onClose: () => void }) {
       ...d,
       dishes: [
         ...d.dishes,
-        { id: uid('d'), name: name.trim(), emoji, slot, description: description.trim() || undefined, foodType, cuisine },
+        { id: uid('d'), name: name.trim(), nameZh: nameZh.trim() || undefined, emoji, slot, description: description.trim() || undefined, foodType, cuisine },
       ],
     }))
     onClose()
@@ -489,6 +500,10 @@ function DishModal({ onClose }: { onClose: () => void }) {
             </button>
           ))}
         </div>
+        <label>
+          {t('nameZhLabel')}
+          <input value={nameZh} onChange={(e) => setNameZh(e.target.value)} />
+        </label>
         <label>
           {t('description')}
           <input value={description} onChange={(e) => setDescription(e.target.value)} />

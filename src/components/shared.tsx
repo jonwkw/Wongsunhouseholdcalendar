@@ -148,6 +148,39 @@ export const COMMON_EMOJI = [
   '✈️', '🚗', '🏠', '⛪', '🕌', '🧧', '🎄', '🧹', '🐶', '💼', '💇', '🎾', '🥋', '🎻',
 ]
 
+/** 15-minute time dropdown — native time inputs ignore step in most browsers */
+export function TimeSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const options: string[] = []
+  for (let h = 0; h < 24; h++) {
+    for (const m of [0, 15, 30, 45]) {
+      options.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`)
+    }
+  }
+  const pretty = (v: string) => {
+    const [h, m] = v.split(':').map(Number)
+    const suffix = h < 12 ? 'am' : 'pm'
+    const hh = h % 12 === 0 ? 12 : h % 12
+    return `${hh}:${String(m).padStart(2, '0')}${suffix}`
+  }
+  return (
+    <select value={value} onChange={(e) => onChange(e.target.value)}>
+      <option value="">{t('noTime')}</option>
+      {options.map((v) => (
+        <option key={v} value={v}>
+          {pretty(v)}
+        </option>
+      ))}
+    </select>
+  )
+}
+
+/** Shown at the top of a page when kid-lock is on */
+export function LockedBanner() {
+  const { locked } = useApp()
+  if (!locked) return null
+  return <div className="locked-banner">{t('lockedBanner')}</div>
+}
+
 export function EmojiPicker({ value, onChange }: { value: string; onChange: (e: string) => void }) {
   return (
     <div className="emoji-picker">

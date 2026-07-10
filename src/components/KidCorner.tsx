@@ -5,7 +5,9 @@ import { useForecast } from '../utils/useForecast'
 import { weatherEmoji } from '../utils/weather'
 import { mathProblemFor, missionFor, wordFor, rocketFor, ROCKETS } from '../data/kidContent'
 import { RocketShip } from './RocketShip'
-import { t } from '../i18n'
+import { t, getLang } from '../i18n'
+import { speak } from '../utils/speech'
+import { Modal } from './shared'
 
 const MISSION_EMOJI = ['✅', '🪥', '🥣', '🎒', '📖', '🧸', '🌙', '🧦', '🚿', '🐟', '💪', '🎹', '✏️', '🧹', '💧', '🙏']
 
@@ -20,6 +22,9 @@ export function KidCorner() {
   const [newRepeat, setNewRepeat] = useState(true)
   const [launching, setLaunching] = useState(false)
   const [celebrateLevel, setCelebrateLevel] = useState<number | null>(null)
+  const [kidUnlocked, setKidUnlocked] = useState(false)
+  const [showKidUnlock, setShowKidUnlock] = useState(false)
+  const canEdit = !locked || kidUnlocked
   const launchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const kid = data.members.find((m) => m.isChild) ?? data.members[0]
@@ -123,10 +128,19 @@ export function KidCorner() {
               {relativeLabel(selectedDay)} · {weekdayName(selectedDay)}
             </button>
             <button className="icon-btn" onClick={() => setSelectedDay((d) => addDays(d, 1))}>▶</button>
+            {selectedDay !== today && (
+              <button className="btn subtle" onClick={() => setSelectedDay(today)}>
+                {t('jumpToday')}
+              </button>
+            )}
           </div>
-          {!locked && (
+          {canEdit ? (
             <button className="icon-btn" onClick={() => setEditList((v) => !v)}>
               {editList ? t('doneBtn') : '✏️'}
+            </button>
+          ) : (
+            <button className="icon-btn" onClick={() => setShowKidUnlock(true)}>
+              🔒
             </button>
           )}
         </div>
@@ -143,7 +157,7 @@ export function KidCorner() {
             />
             <span className="checklist-emoji">{item.emoji}</span>
             <span className="checklist-text">
-              {item.text}
+              {getLang() === 'zh' && item.textZh ? item.textZh : item.text}
               {item.date && <span className="oneoff-tag">📅 {prettyDate(item.date)}</span>}
             </span>
             {editList && (
@@ -227,23 +241,48 @@ export function KidCorner() {
           <div className="kid-phonetic">🔤 {word.phonetic}</div>
           <p className="kid-meaning">{word.meaning}</p>
           <p className="kid-sentence">“{word.sentence}”</p>
+          <button
+            className="btn primary speak-btn"
+            onClick={() =>
+              speak(
+                `The word of the day is: ${word.word}. ${word.word}! It means: ${word.meaning}. For example: ${word.sentence} Can you say ${word.word}?`,
+              )
+            }
+          >
+            {t('listen')}
+          </button>
         </div>
 
         <div className="kid-card math">
           <h3>{t('mathOfDay')}</h3>
           <p className="kid-question">{math.question}</p>
-          {showAnswer ? (
-            <div className="kid-answer">{t('answerIs', { n: math.answer })}</div>
-          ) : (
-            <button className="btn primary" onClick={() => setShowAnswer(true)}>
-              {t('showAnswer')}
+          <div className="kid-btn-row">
+            {showAnswer ? (
+              <div className="kid-answer">{t('answerIs', { n: math.answer })}</div>
+            ) : (
+              <button className="btn primary" onClick={() => setShowAnswer(true)}>
+                {t('showAnswer')}
+              </button>
+            )}
+            <button className="btn subtle speak-btn" onClick={() => speak(math.explain)}>
+              {t('explainBtn')}
             </button>
-          )}
+          </div>
         </div>
 
         <div className="kid-card mission">
           <h3>{t('missionOfDay')}</h3>
           <p className="kid-question">{mission}</p>
+          <button
+            className="btn primary speak-btn"
+            onClick={() =>
+              speak(
+                `Today's special mission is: ${mission.replace(/[^\w\s.,!?'-]/g, '')}. This mission is fun because you get to be a big helper and make everyone smile. I know you can do it!`,
+              )
+            }
+          >
+            {t('listenMission')}
+          </button>
         </div>
       </div>
 
@@ -271,8 +310,8 @@ export function KidCorner() {
                 <div key={a.id} className="kid-activity">
                   {a.emoji && <span className="kid-activity-emoji">{a.emoji}</span>}
                   <span>
+                    {a.time && <div className="time-big small">{prettyTime(a.time)}</div>}
                     <strong>{a.title}</strong>
-                    {a.time && <span className="card-time"> · {prettyTime(a.time)}</span>}
                   </span>
                 </div>
               ))}
@@ -285,6 +324,52 @@ export function KidCorner() {
           )
         })}
       </div>
+
+      {showKidUnlock && (
+        <SimpleUnlockModal
+          onUnlock={() => {
+            setKidUnlocked(true)
+            setShowKidUnlock(false)
+          }}
+          onClose={() => setShowKidUnlock(false)}
+        />
+      )}
     </div>
+  )
+}
+
+/** Easier unlock just for this page — a grown-up shoulder-check, not a fortress */
+function SimpleUnlockModal({ onUnlock, onClose }: { onUnlock: () => void; onClose: () => void }) {
+  const [answer, setAnswer] = useState('')
+  const [q] = useState(() => {
+    const a = 11 + Math.floor(Math.random() * 8)
+    const b = 12 + Math.floor(Math.random() * 7)
+    return { a, b, answer: a + b }
+  })
+  const check = () => {
+    if (Number(answer.trim()) === q.answer) onUnlock()
+    else setAnswer('')
+  }
+  return (
+    <Modal title={t('kidUnlockHint')} onClose={onClose}>
+      <div className="form">
+        <label>
+          {t('simpleUnlockQ', { a: q.a, b: q.b })}
+          <input
+            autoFocus
+            inputMode="numeric"
+            value={answer}
+            onChange={(e) => setAnswer(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && check()}
+          />
+        </label>
+        <div className="form-actions">
+          <span className="spacer" />
+          <button className="btn primary" onClick={check} disabled={!answer.trim()}>
+            {t('unlock')}
+          </button>
+        </div>
+      </div>
+    </Modal>
   )
 }

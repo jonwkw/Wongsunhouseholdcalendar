@@ -15,7 +15,7 @@ export const SHIRT_COLORS = [
 ] as const
 
 export const GLASSES = ['none', 'round', 'square', 'sunglasses'] as const
-export const ACCESSORIES = ['none', 'bow', 'flower', 'cap', 'crown', 'headband', 'star'] as const
+export const ACCESSORIES = ['none', 'bow', 'flower', 'cap', 'crown', 'headband', 'star', 'partyhat', 'beanie', 'flowercrown', 'headphones', 'tiara'] as const
 export const EARRINGS = ['none', 'studs', 'hoops'] as const
 
 export const AGES: { key: AvatarAge; emoji: string }[] = [
@@ -339,6 +339,48 @@ function accessoryFor(kind: number) {
       return (
         <path d="M70 20 L72 25 L77 25 L73 28.5 L74.5 33.5 L70 30.5 L65.5 33.5 L67 28.5 L63 25 L68 25 Z" fill="#e3b93e" />
       )
+    case 7: // party hat
+      return (
+        <g>
+          <path d="M50 -2 L38 26 Q50 20 62 26 Z" fill="#d4477f" />
+          <path d="M44 12 L58 8" stroke="#ffd76e" strokeWidth="3" />
+          <circle cx="50" cy="-2" r="4" fill="#ffd76e" />
+        </g>
+      )
+    case 8: // beanie
+      return (
+        <g fill="#2f9e77">
+          <path d="M26 36 Q26 12 50 12 Q74 12 74 36 Q74 30 50 28 Q26 30 26 36Z" />
+          <rect x="26" y="31" width="48" height="7" rx="3.5" fill="#1c6b4e" />
+          <circle cx="50" cy="10" r="4.5" fill="#a8dcc3" />
+        </g>
+      )
+    case 9: // flower crown
+      return (
+        <g>
+          {[32, 41, 50, 59, 68].map((x, i) => (
+            <g key={i}>
+              <circle cx={x} cy={26 - (i === 2 ? 3 : 0)} r="3.6" fill={i % 2 ? '#f2a1c2' : '#ffd76e'} />
+              <circle cx={x} cy={26 - (i === 2 ? 3 : 0)} r="1.5" fill="#fff" />
+            </g>
+          ))}
+        </g>
+      )
+    case 10: // headphones
+      return (
+        <g>
+          <path d="M27 52 Q27 20 50 20 Q73 20 73 52" stroke="#33302b" strokeWidth="4" fill="none" />
+          <rect x="22" y="48" width="9" height="14" rx="4" fill="#d4477f" />
+          <rect x="69" y="48" width="9" height="14" rx="4" fill="#d4477f" />
+        </g>
+      )
+    case 11: // tiara
+      return (
+        <g>
+          <path d="M38 26 L42 17 L47 24 L50 13 L53 24 L58 17 L62 26 Q50 21 38 26Z" fill="#b9e2f5" stroke="#7ab6d4" strokeWidth="1.4" />
+          <circle cx="50" cy="15" r="2.2" fill="#f2a1c2" />
+        </g>
+      )
     default:
       return null
   }
@@ -392,18 +434,18 @@ export function AvatarSvg({ spec, ring, size = 40 }: { spec: AvatarSpec; ring?: 
   const shirt = SHIRT_COLORS[spec.shirt ?? 5] ?? SHIRT_COLORS[5]
   return (
     <svg viewBox="0 0 100 100" width={size} height={size} className="avatar-svg" style={ring ? { background: ring + '22', borderColor: ring } : undefined}>
-      {hairBack(spec.hair, hc)}
+      <g transform="matrix(0.97,0,0,1,1.5,0.5)">{hairBack(spec.hair, hc)}</g>
       {/* shirt / shoulders */}
       <path d="M18 100 Q20 82 34 79 L50 84 L66 79 Q80 82 82 100 Z" fill={shirt} />
       <path d="M43 82 L50 90 L57 82 L50 84 Z" fill="#ffffff" opacity="0.35" />
       {/* neck */}
       <rect x="44" y="74" width="12" height="9" rx="4" fill={skin} />
       {/* ears */}
-      <circle cx="25" cy="56" r="5" fill={skin} />
-      <circle cx="75" cy="56" r="5" fill={skin} />
-      {earringsFor(spec.earrings ?? 0)}
-      {/* face */}
-      <ellipse cx="50" cy="55" rx="25" ry={geo.ry} fill={skin} />
+      <circle cx="26.5" cy="56" r="4.6" fill={skin} />
+      <circle cx="73.5" cy="56" r="4.6" fill={skin} />
+      <g transform="translate(1.5 0)">{earringsFor(spec.earrings ?? 0)}</g>
+      {/* face — slightly slim for a cooler look */}
+      <ellipse cx="50" cy="55" rx="22.5" ry={geo.ry} fill={skin} />
       {/* eyebrows — softer for the female style */}
       <g stroke={hc} strokeWidth={spec.gender === 'female' ? 1.6 : 2.4} fill="none" strokeLinecap="round" opacity="0.85">
         <path d="M34.5 46.5 Q40 44 45.5 46.5" />
@@ -428,8 +470,8 @@ export function AvatarSvg({ spec, ring, size = 40 }: { spec: AvatarSpec; ring?: 
       <path d="M42 66 Q50 73 58 66" stroke={spec.gender === 'female' ? '#cf6a80' : '#8a5a3a'} strokeWidth={spec.gender === 'female' ? 3 : 2.4} fill="none" strokeLinecap="round" />
       {geo.cheeks && (
         <g fill="#f2a19b" opacity="0.55">
-          <circle cx="34" cy="62" r="4.5" />
-          <circle cx="66" cy="62" r="4.5" />
+          <circle cx="36" cy="62" r="4.2" />
+          <circle cx="64" cy="62" r="4.2" />
         </g>
       )}
       {geo.wrinkles && (
@@ -438,8 +480,8 @@ export function AvatarSvg({ spec, ring, size = 40 }: { spec: AvatarSpec; ring?: 
           <path d="M54 45 Q60 42 66 45" />
         </g>
       )}
-      {facialHair(spec.facialHair, hc)}
-      {hairFront(spec.hair, hc)}
+      <g transform="matrix(0.95,0,0,1,2.5,0)">{facialHair(spec.facialHair, hc)}</g>
+      <g transform="matrix(0.93,0,0,1,3.5,1)">{hairFront(spec.hair, hc)}</g>
       {accessoryFor(spec.accessory ?? 0)}
       {glassesFor(spec.glasses ?? 0)}
     </svg>

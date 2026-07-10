@@ -6,7 +6,7 @@ import {
   activitiesOn, addDays, mondayOf, prettyTime, todayKey, weekDays, fromKey, weekRangeLabel,
 } from '../utils/dates'
 import { t, dayShort } from '../i18n'
-import { Legend, MemberChips, Modal, tagColor } from './shared'
+import { Legend, LockedBanner, MemberChips, Modal, tagColor } from './shared'
 import { ActivityModal } from './ActivityModal'
 import { setDragPayload, getDragPayload, leavesTarget } from '../utils/dnd'
 
@@ -47,6 +47,7 @@ export function Timetable() {
   return (
     <div className="timetable-page">
       <div className="timetable-main">
+        <LockedBanner />
         <div className="week-nav">
           <div className="view-toggle">
             <button className={`btn ${view === 'week' ? 'primary' : 'subtle'}`} onClick={() => setView('week')}>
@@ -148,7 +149,7 @@ export function Timetable() {
                         >
                           {a.time && (
                             <div className="card-time-top">
-                              🕐 {prettyTime(a.time)}
+                              {prettyTime(a.time)}
                               {a.endTime ? ` – ${prettyTime(a.endTime)}` : ''}
                             </div>
                           )}
