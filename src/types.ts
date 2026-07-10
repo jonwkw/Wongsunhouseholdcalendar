@@ -14,6 +14,8 @@ export interface AvatarSpec {
   glasses?: number
   shirt?: number
   earrings?: number
+  gender?: 'male' | 'female'
+  accessory?: number
 }
 
 export interface Member {
@@ -78,6 +80,11 @@ export interface Dish {
   name: string
   emoji: string
   slot: 'breakfast' | 'lunch' | 'dinner' | 'snack' | 'any'
+  description?: string
+  /** meat / veg / carb / soup / fruit / other */
+  foodType?: string
+  /** chinese / malay / indian / western / japanese / other */
+  cuisine?: string
 }
 
 export interface MenuEntry {
@@ -89,6 +96,8 @@ export interface MenuEntry {
   /** Who the meal is for; empty array = everyone */
   memberIds: string[]
   note?: string
+  /** 1–5 stars per family member */
+  ratings?: Record<string, number>
 }
 
 export interface BoardItem {

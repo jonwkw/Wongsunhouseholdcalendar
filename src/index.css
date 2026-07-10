@@ -48,8 +48,12 @@
 
 body {
   margin: 0;
-  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-  background: var(--bg);
+  font-family: 'Segoe UI', system-ui, -apple-system, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  background:
+    radial-gradient(circle at 12% 8%, color-mix(in srgb, var(--accent) 7%, transparent) 0 26%, transparent 27%),
+    radial-gradient(circle at 88% 90%, color-mix(in srgb, var(--accent) 6%, transparent) 0 22%, transparent 23%),
+    var(--bg);
+  background-attachment: fixed;
   color: var(--ink);
   font-size: 15px;
 }
@@ -92,7 +96,17 @@ textarea:focus {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 8px 0 12px;
+  padding: 12px 18px;
+  margin-bottom: 12px;
+  border-radius: 18px;
+  background: linear-gradient(120deg, color-mix(in srgb, var(--accent) 22%, #fff) 0%, color-mix(in srgb, var(--accent) 8%, #fff) 60%, #fff 100%);
+  border: 1.5px solid color-mix(in srgb, var(--accent) 35%, #fff);
+  box-shadow: 0 3px 14px color-mix(in srgb, var(--accent) 16%, transparent);
+}
+
+.brand-emoji {
+  display: inline-block;
+  animation: rocket-bob 3.4s ease-in-out infinite;
 }
 
 .brand {
@@ -146,35 +160,35 @@ textarea:focus {
 /* ---------- tabs ---------- */
 .tabs {
   display: flex;
-  gap: 6px;
-  border-bottom: 2px solid var(--line);
+  gap: 8px;
   margin-bottom: 16px;
   overflow-x: auto;
+  padding: 2px;
 }
 
 .tab {
-  padding: 10px 16px;
+  padding: 9px 18px;
   font-size: 15px;
-  border: none;
-  background: transparent;
-  border-radius: 10px 10px 0 0;
+  border: 2px solid var(--line);
+  background: var(--card);
+  border-radius: 999px;
   color: var(--muted);
   white-space: nowrap;
+  font-weight: 600;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
 
 .tab:hover {
-  background: #f1ead9;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(60, 40, 10, 0.12);
   color: var(--ink);
 }
 
 .tab.on {
-  background: var(--card);
-  color: var(--ink);
-  font-weight: 600;
-  box-shadow: var(--shadow);
-  border: 2px solid var(--line);
-  border-bottom-color: var(--card);
-  margin-bottom: -2px;
+  background: linear-gradient(120deg, var(--accent), color-mix(in srgb, var(--accent) 70%, #d9541f));
+  border-color: var(--accent);
+  color: #fff;
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 45%, transparent);
 }
 
 /* ---------- buttons ---------- */
@@ -336,12 +350,7 @@ textarea:focus {
   white-space: nowrap;
 }
 
-.activity-meta .card-time,
-.today-activity .card-time:first-of-type {
-  font-weight: 800;
-  color: var(--accent-ink);
-  font-size: 12.5px;
-}
+
 
 .timetable-main {
   flex: 1;
@@ -393,12 +402,13 @@ textarea:focus {
 .day-col {
   background: var(--card);
   border: 1px solid var(--line);
-  border-radius: var(--radius);
-  padding: 8px;
+  border-radius: 14px;
+  padding: 9px;
   min-height: 220px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 7px;
+  box-shadow: 0 2px 6px rgba(70, 50, 15, 0.06);
 }
 
 .day-col.today {
@@ -445,8 +455,27 @@ textarea:focus {
   background: #fdf9f0;
   border: 1px solid var(--line);
   border-radius: 10px;
-  padding: 6px 8px;
+  padding: 8px 9px;
   cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.activity-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(70, 50, 15, 0.12);
+}
+
+.card-time-top {
+  font-weight: 800;
+  font-size: 13px;
+  color: var(--accent-ink);
+  background: color-mix(in srgb, var(--accent) 12%, #fff);
+  border-radius: 6px;
+  padding: 2px 7px;
+  align-self: flex-start;
 }
 
 .activity-card:hover {
@@ -845,13 +874,78 @@ textarea:focus {
 .today-col {
   background: var(--card);
   border: 1px solid var(--line);
-  border-radius: var(--radius);
-  padding: 12px;
+  border-radius: 16px;
+  padding: 14px;
+  box-shadow: 0 2px 8px rgba(70, 50, 15, 0.07);
 }
 
 .today-col.primary {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px #f3cf9f;
+  border: 2px solid var(--accent);
+  background: linear-gradient(165deg, color-mix(in srgb, var(--accent) 13%, #fff) 0%, color-mix(in srgb, var(--accent) 4%, #fff) 45%, #fff 100%);
+  box-shadow: 0 6px 20px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+.today-col.primary > .today-col-head h3 {
+  font-size: 24px;
+}
+
+.today-col.mini {
+  background: var(--card);
+}
+
+.time-big {
+  font-weight: 900;
+  font-size: 17px;
+  color: var(--accent-ink);
+  letter-spacing: 0.01em;
+}
+
+.time-big.small {
+  font-size: 13.5px;
+}
+
+.today-activity.v2 {
+  display: block;
+  border-bottom: none;
+  background: #fff;
+  border-radius: 10px;
+  padding: 9px 10px;
+  margin-bottom: 8px;
+  box-shadow: 0 1px 4px rgba(70, 50, 15, 0.08);
+}
+
+.today-activity.v2 .today-activity-main {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 16.5px;
+  margin-top: 2px;
+}
+
+.today-activity.editable {
+  cursor: pointer;
+}
+
+.today-activity.editable:hover {
+  outline: 2px solid color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+.today-activity-extra {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  color: var(--muted);
+  font-size: 13px;
+  margin-top: 3px;
+}
+
+.today-section.notes-top {
+  margin: 0 0 10px;
+}
+
+.today-section.notes-top .note-chip {
+  font-size: 14.5px;
+  padding: 8px 10px;
 }
 
 .today-col-head {
@@ -2052,4 +2146,179 @@ textarea:focus {
   .today-columns {
     grid-template-columns: 1fr;
   }
+}
+
+/* ---------- lock ---------- */
+.lock-btn.locked {
+  border-color: var(--danger);
+  background: #fbeeee;
+}
+
+.lock-question {
+  font-size: 26px;
+  font-weight: 900;
+  text-align: center;
+  margin: 8px 0;
+  color: var(--accent-ink);
+}
+
+.lock-wrong {
+  color: var(--danger);
+  font-weight: 700;
+  margin: 0;
+}
+
+/* ---------- menu library extras ---------- */
+.rec-box {
+  background: linear-gradient(135deg, #fff8e0, #fdefc8);
+  border: 1.5px solid #eccf7c;
+  border-radius: 12px;
+  padding: 8px 10px;
+  margin-bottom: 10px;
+}
+
+.rec-title {
+  font-weight: 800;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+.rec-chip {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: #fff;
+  border: 1px solid #eccf7c;
+  border-radius: 8px;
+  padding: 6px 8px;
+  margin-bottom: 4px;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.rec-chip:hover {
+  border-color: var(--accent);
+}
+
+.group-toggle {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.group-toggle .filter-btn {
+  font-size: 12px;
+  padding: 4px 9px;
+}
+
+.group-label {
+  font-weight: 800;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  margin: 8px 0 4px;
+}
+
+.library-card.dish {
+  display: block;
+}
+
+.dish-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dish-desc {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 3px;
+}
+
+.dish-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+.dish-stars {
+  color: #d98f1b;
+  font-weight: 800;
+}
+
+.rating-faces {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.rating-face {
+  position: relative;
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  padding: 4px;
+}
+
+.rating-face.on {
+  border-width: 2.5px;
+}
+
+.rating-mini {
+  position: absolute;
+  bottom: -6px;
+  right: -6px;
+  background: #ffd76e;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 1px 5px;
+  color: #6b4a05;
+}
+
+.star-row {
+  display: flex;
+  gap: 4px;
+}
+
+.star-btn {
+  font-size: 28px;
+  border: none;
+  background: none;
+  color: #d8cfbd;
+  padding: 0 2px;
+  transition: transform 0.1s ease;
+}
+
+.star-btn:hover {
+  transform: scale(1.15);
+}
+
+.star-btn.on {
+  color: #f0a835;
+}
+
+/* pretty extras */
+.today-col-head h3 {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.person-section {
+  box-shadow: 0 1px 5px rgba(70, 50, 15, 0.07);
+}
+
+.btn.primary {
+  background: linear-gradient(120deg, var(--primary), color-mix(in srgb, var(--primary) 70%, #1c6b4e));
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--primary) 30%, transparent);
+}
+
+.week-block-label {
+  font-size: 15px;
 }

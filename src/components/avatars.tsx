@@ -15,6 +15,7 @@ export const SHIRT_COLORS = [
 ] as const
 
 export const GLASSES = ['none', 'round', 'square', 'sunglasses'] as const
+export const ACCESSORIES = ['none', 'bow', 'flower', 'cap', 'crown', 'headband', 'star'] as const
 export const EARRINGS = ['none', 'studs', 'hoops'] as const
 
 export const AGES: { key: AvatarAge; emoji: string }[] = [
@@ -35,8 +36,8 @@ interface AgeGeo {
 }
 
 const AGE_GEO: Record<AvatarAge, AgeGeo> = {
-  baby: { ry: 24, eye: 3.4, cheeks: true, wrinkles: false },
-  toddler: { ry: 25, eye: 3.1, cheeks: true, wrinkles: false },
+  baby: { ry: 25.5, eye: 3.4, cheeks: true, wrinkles: false },
+  toddler: { ry: 26, eye: 3.1, cheeks: true, wrinkles: false },
   kid: { ry: 26, eye: 2.8, cheeks: false, wrinkles: false },
   adult: { ry: 27, eye: 2.5, cheeks: false, wrinkles: false },
   grandparent: { ry: 27, eye: 2.5, cheeks: false, wrinkles: true },
@@ -47,6 +48,7 @@ export const HAIRSTYLE_NAMES = [
   'Big curls', 'Bob', 'Long straight', 'Ponytail', 'Pigtails', 'Top bun', 'Double buns',
   'Long braid', 'Fringe & long', 'Wavy', 'Mohawk', 'Comb-over', 'Baby tuft',
   'Man bun', 'Flat top', 'Twin braids', 'Hairband', 'Shaggy', 'Long curly', 'Swept fringe', 'Low pigtails',
+  'Light buzz', 'Light buzz (widow\'s peak)',
 ]
 
 /** Hair drawn behind the face (long styles) — returns SVG elements */
@@ -214,7 +216,7 @@ function hairFront(style: number, c: string) {
         </g>
       )
     case 19: // baby tuft
-      return <path d="M48 22 Q46 12 54 10 Q50 16 54 20 Q51 23 48 22Z" fill={c} />
+      return <path d="M48 33 Q45 21 55 18 Q49 25 54 30 Q51 34 48 33Z" fill={c} />
     case 20: // man bun
       return (
         <g fill={c}>
@@ -248,6 +250,15 @@ function hairFront(style: number, c: string) {
       return <path d="M25 44 Q24 19 52 19 Q77 21 75 44 Q75 28 64 36 Q48 44 36 34 Q28 32 25 44Z" fill={c} />
     case 27: // low pigtails cap
       return <path d="M26 42 Q26 21 50 21 Q74 21 74 42 Q70 30 50 30 Q30 30 26 42Z" fill={c} />
+    case 28: // light buzz
+      return <path d="M27 42 Q28 22 50 21 Q72 22 73 42 Q72 32 50 30 Q28 32 27 42Z" fill={c} opacity="0.35" />
+    case 29: // light buzz with widow's peak
+      return (
+        <g fill={c} opacity="0.35">
+          <path d="M27 42 Q28 22 50 21 Q72 22 73 42 Q72 32 50 30 Q28 32 27 42Z" />
+          <path d="M46 30 L50 38 L54 30 Q50 28 46 30Z" opacity="1" />
+        </g>
+      )
     default:
       return null
   }
@@ -282,6 +293,51 @@ function glassesFor(kind: number) {
           <rect x="53" y="47" width="15" height="11" rx="4" fill="#33302b" />
           <path d="M47 52 L53 52 M32 51 L27 49 M68 51 L73 49" stroke="#33302b" strokeWidth="2.2" fill="none" />
         </g>
+      )
+    default:
+      return null
+  }
+}
+
+function accessoryFor(kind: number) {
+  switch (kind) {
+    case 1: // bow
+      return (
+        <g fill="#e05d7e">
+          <path d="M62 24 L72 19 L72 30 Z" />
+          <path d="M82 24 L72 19 L72 30 Z" transform="translate(-1 0)" />
+          <circle cx="71" cy="24.5" r="3" fill="#c23a60" />
+        </g>
+      )
+    case 2: // flower
+      return (
+        <g>
+          <g fill="#f2a1c2">
+            <circle cx="70" cy="22" r="3.4" />
+            <circle cx="76" cy="24" r="3.4" />
+            <circle cx="74" cy="30" r="3.4" />
+            <circle cx="68" cy="28" r="3.4" />
+          </g>
+          <circle cx="72" cy="26" r="2.6" fill="#e3b93e" />
+        </g>
+      )
+    case 3: // cap
+      return (
+        <g fill="#3b82c4">
+          <path d="M28 34 Q30 14 50 14 Q70 14 72 34 Q60 26 40 26 Q32 28 28 34Z" />
+          <path d="M66 30 Q84 28 88 34 Q80 38 68 36Z" opacity="0.9" />
+          <circle cx="50" cy="16" r="2.6" fill="#235a92" />
+        </g>
+      )
+    case 4: // crown
+      return (
+        <path d="M36 28 L40 16 L47 24 L53 13 L59 24 L66 16 L70 28 Q50 22 36 28Z" fill="#ffd76e" stroke="#d98f1b" strokeWidth="1.6" />
+      )
+    case 5: // headband (sporty)
+      return <path d="M27 36 Q50 24 73 36 L72 41 Q50 30 28 41Z" fill="#2f9e77" />
+    case 6: // star clip
+      return (
+        <path d="M70 20 L72 25 L77 25 L73 28.5 L74.5 33.5 L70 30.5 L65.5 33.5 L67 28.5 L63 25 L68 25 Z" fill="#e3b93e" />
       )
     default:
       return null
@@ -348,8 +404,8 @@ export function AvatarSvg({ spec, ring, size = 40 }: { spec: AvatarSpec; ring?: 
       {earringsFor(spec.earrings ?? 0)}
       {/* face */}
       <ellipse cx="50" cy="55" rx="25" ry={geo.ry} fill={skin} />
-      {/* eyebrows */}
-      <g stroke={hc} strokeWidth="2.2" fill="none" strokeLinecap="round" opacity="0.85">
+      {/* eyebrows — softer for the female style */}
+      <g stroke={hc} strokeWidth={spec.gender === 'female' ? 1.6 : 2.4} fill="none" strokeLinecap="round" opacity="0.85">
         <path d="M34.5 46.5 Q40 44 45.5 46.5" />
         <path d="M54.5 46.5 Q60 44 65.5 46.5" />
       </g>
@@ -358,10 +414,18 @@ export function AvatarSvg({ spec, ring, size = 40 }: { spec: AvatarSpec; ring?: 
       <circle cx="60" cy="53" r={geo.eye} fill="#33302b" />
       <circle cx={41} cy={52} r={geo.eye * 0.32} fill="#fff" />
       <circle cx={61} cy={52} r={geo.eye * 0.32} fill="#fff" />
+      {spec.gender === 'female' && (
+        <g stroke="#33302b" strokeWidth="1.3" strokeLinecap="round">
+          <path d="M35.5 50.5 L33.5 49" />
+          <path d="M36.5 49 L35 47" />
+          <path d="M64.5 50.5 L66.5 49" />
+          <path d="M63.5 49 L65 47" />
+        </g>
+      )}
       {/* nose */}
       <path d="M48 58 Q50 61 52 58" stroke="#c99a72" strokeWidth="1.8" fill="none" strokeLinecap="round" />
-      {/* smile */}
-      <path d="M42 66 Q50 73 58 66" stroke="#8a5a3a" strokeWidth="2.4" fill="none" strokeLinecap="round" />
+      {/* smile — a touch of colour for the female style */}
+      <path d="M42 66 Q50 73 58 66" stroke={spec.gender === 'female' ? '#cf6a80' : '#8a5a3a'} strokeWidth={spec.gender === 'female' ? 3 : 2.4} fill="none" strokeLinecap="round" />
       {geo.cheeks && (
         <g fill="#f2a19b" opacity="0.55">
           <circle cx="34" cy="62" r="4.5" />
@@ -376,6 +440,7 @@ export function AvatarSvg({ spec, ring, size = 40 }: { spec: AvatarSpec; ring?: 
       )}
       {facialHair(spec.facialHair, hc)}
       {hairFront(spec.hair, hc)}
+      {accessoryFor(spec.accessory ?? 0)}
       {glassesFor(spec.glasses ?? 0)}
     </svg>
   )

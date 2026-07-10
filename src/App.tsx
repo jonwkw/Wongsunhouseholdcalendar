@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { StoreProvider, useApp } from './store'
 import { LangProvider, useLang, t } from './i18n'
 import { TodayView } from './components/TodayView'
@@ -6,6 +6,7 @@ import { Timetable } from './components/Timetable'
 import { MenuPlanner } from './components/MenuPlanner'
 import { KidCorner } from './components/KidCorner'
 import { ProfilePage } from './components/ProfilePage'
+import { Modal } from './components/shared'
 
 const THEMES = [
   { id: 'cream', dot: '#f3e2c4' },
@@ -15,11 +16,57 @@ const THEMES = [
   { id: 'lavender', dot: '#c7b6e8' },
 ]
 
+function LockModal({ onUnlock, onClose }: { onUnlock: () => void; onClose: () => void }) {
+  const [answer, setAnswer] = useState('')
+  const [wrong, setWrong] = useState(false)
+  // Simple for a grown-up, hard for a 6-year-old
+  const q = useMemo(() => {
+    const a = 6 + Math.floor(Math.random() * 4)
+    const b = 6 + Math.floor(Math.random() * 4)
+    const c = 2 + Math.floor(Math.random() * 8)
+    return { text: `${a} × ${b} + ${c}`, answer: a * b + c }
+  }, [])
+
+  const check = () => {
+    if (Number(answer.trim()) === q.answer) onUnlock()
+    else {
+      setWrong(true)
+      setAnswer('')
+    }
+  }
+
+  return (
+    <Modal title={t('lockTitle')} onClose={onClose}>
+      <div className="form">
+        <label>
+          {t('lockQuestion')}
+          <div className="lock-question">{q.text} = ?</div>
+          <input
+            autoFocus
+            inputMode="numeric"
+            value={answer}
+            onChange={(e) => setAnswer(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && check()}
+          />
+        </label>
+        {wrong && <p className="lock-wrong">{t('wrongAnswer')}</p>}
+        <div className="form-actions">
+          <span className="spacer" />
+          <button className="btn primary" onClick={check} disabled={!answer.trim()}>
+            {t('unlock')}
+          </button>
+        </div>
+      </div>
+    </Modal>
+  )
+}
+
 function Shell() {
-  const { data } = useApp()
+  const { data, locked, setLocked } = useApp()
   const { lang, setLang } = useLang()
   const [tab, setTab] = useState('today')
   const [theme, setTheme] = useState(() => localStorage.getItem('wongsun-theme') ?? 'cream')
+  const [showUnlock, setShowUnlock] = useState(false)
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
@@ -63,6 +110,13 @@ function Shell() {
           >
             {lang === 'en' ? '🇨🇳 中文' : '🇬🇧 English'}
           </button>
+          <button
+            className={`btn subtle lock-btn ${locked ? 'locked' : ''}`}
+            title={t('lockTitle')}
+            onClick={() => (locked ? setShowUnlock(true) : setLocked(true))}
+          >
+            {locked ? '🔒' : '🔓'}
+          </button>
         </div>
       </header>
 
@@ -81,6 +135,16 @@ function Shell() {
         {tab === 'kid' && <KidCorner />}
         {tab === 'family' && <ProfilePage />}
       </main>
+
+      {showUnlock && (
+        <LockModal
+          onUnlock={() => {
+            setLocked(false)
+            setShowUnlock(false)
+          }}
+          onClose={() => setShowUnlock(false)}
+        />
+      )}
     </div>
   )
 }

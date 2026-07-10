@@ -13,7 +13,7 @@ import { setDragPayload, getDragPayload, leavesTarget } from '../utils/dnd'
 type DragPayload = { type: 'activity'; id: string }
 
 export function Timetable() {
-  const { data, update } = useApp()
+  const { data, update, locked } = useApp()
   const today = todayKey()
   const [monday, setMonday] = useState(() => mondayOf(today))
   const [filterMember, setFilterMember] = useState<string>('all')
@@ -56,7 +56,7 @@ export function Timetable() {
               {t('month')}
             </button>
           </div>
-          <button className="btn subtle" onClick={() => setMonday((m) => addDays(m, -28))} title="Back 4 weeks">
+          <button className="btn subtle" onClick={() => setMonday((m) => addDays(m, -28))}>
             ⏪
           </button>
           <button className="btn subtle" onClick={() => setMonday((m) => addDays(m, -7))}>
@@ -70,12 +70,11 @@ export function Timetable() {
             className="jump-date"
             value={weeks[0][0]}
             onChange={(e) => e.target.value && setMonday(mondayOf(e.target.value))}
-            title="Jump to any date, past or future"
           />
           <button className="btn subtle" onClick={() => setMonday((m) => addDays(m, 7))}>
             {t('nextWeek')}
           </button>
-          <button className="btn subtle" onClick={() => setMonday((m) => addDays(m, 28))} title="Forward 4 weeks">
+          <button className="btn subtle" onClick={() => setMonday((m) => addDays(m, 28))}>
             ⏩
           </button>
         </div>
@@ -137,28 +136,27 @@ export function Timetable() {
                           key={a.id}
                           className="activity-card"
                           style={{ borderLeft: `4px solid ${tagColor(a.memberIds, data.members)}` }}
-                          draggable={Boolean(a.date)}
-                          title={a.date ? 'Click to edit · drag to another day' : 'Click to edit'}
+                          draggable={Boolean(a.date) && !locked}
                           onDragStart={(e) => {
                             e.stopPropagation()
                             setDragPayload(e, { type: 'activity', id: a.id })
                           }}
                           onClick={(e) => {
                             e.stopPropagation()
-                            setEditing({ activity: a, date })
+                            if (!locked) setEditing({ activity: a, date })
                           }}
                         >
+                          {a.time && (
+                            <div className="card-time-top">
+                              🕐 {prettyTime(a.time)}
+                              {a.endTime ? ` – ${prettyTime(a.endTime)}` : ''}
+                            </div>
+                          )}
                           <div className="activity-top">
                             {a.emoji && <span className="card-emoji">{a.emoji}</span>}
                             <span className="card-title">{a.title}</span>
                           </div>
                           <div className="activity-meta">
-                            {a.time && (
-                              <span className="card-time">
-                                {prettyTime(a.time)}
-                                {a.endTime ? `–${prettyTime(a.endTime)}` : ''}
-                              </span>
-                            )}
                             <MemberChips memberIds={a.memberIds} everyone />
                           </div>
                           {a.location && <div className="activity-loc">📍 {a.location}</div>}
@@ -170,14 +168,16 @@ export function Timetable() {
                         <NoteChip key={n.id} note={n} />
                       ))}
 
-                      <div className="day-actions">
-                        <button className="btn ghost" onClick={() => setEditing({ activity: null, date })}>
-                          {t('addActivityBtn')}
-                        </button>
-                        <button className="btn ghost" onClick={() => setNoteDay(date)}>
-                          {t('addNoteBtn')}
-                        </button>
-                      </div>
+                      {!locked && (
+                        <div className="day-actions">
+                          <button className="btn ghost" onClick={() => setEditing({ activity: null, date })}>
+                            {t('addActivityBtn')}
+                          </button>
+                          <button className="btn ghost" onClick={() => setNoteDay(date)}>
+                            {t('addNoteBtn')}
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )
                 })}
@@ -201,36 +201,25 @@ export function Timetable() {
 }
 
 export function NoteChip({ note }: { note: DayNote }) {
-  const { update, memberById } = useApp()
+  const { update, memberById, locked } = useApp()
   const member = memberById(note.memberId)
   return (
-    <div className={`note-chip ${note.kind} ${note.done ? 'done' : ''}`}>
-      {note.kind === 'reminder' ? (
-        <input
-          type="checkbox"
-          checked={note.done}
-          onChange={() =>
-            update((d) => ({
-              ...d,
-              dayNotes: d.dayNotes.map((n) => (n.id === note.id ? { ...n, done: !n.done } : n)),
-            }))
-          }
-        />
-      ) : (
-        <span>💬</span>
-      )}
+    <div className="note-chip note">
+      <span>💬</span>
       <span className="note-text">{note.text}</span>
       {member && (
         <span className="name-pill" style={{ borderColor: member.color, background: member.color + '1e', color: member.color }}>
           {member.name}
         </span>
       )}
-      <button
-        className="icon-btn tiny"
-        onClick={() => update((d) => ({ ...d, dayNotes: d.dayNotes.filter((n) => n.id !== note.id) }))}
-      >
-        ✕
-      </button>
+      {!locked && (
+        <button
+          className="icon-btn tiny"
+          onClick={() => update((d) => ({ ...d, dayNotes: d.dayNotes.filter((n) => n.id !== note.id) }))}
+        >
+          ✕
+        </button>
+      )}
     </div>
   )
 }
@@ -238,7 +227,6 @@ export function NoteChip({ note }: { note: DayNote }) {
 function NoteModal({ date, onClose }: { date: string; onClose: () => void }) {
   const { data, update } = useApp()
   const [text, setText] = useState('')
-  const [kind, setKind] = useState<'note' | 'reminder'>('reminder')
   const [when, setWhen] = useState(date)
   const [memberId, setMemberId] = useState('')
 
@@ -248,7 +236,7 @@ function NoteModal({ date, onClose }: { date: string; onClose: () => void }) {
       ...d,
       dayNotes: [
         ...d.dayNotes,
-        { id: uid('n'), date: when, text: text.trim(), kind, memberId: memberId || undefined, done: false },
+        { id: uid('n'), date: when, text: text.trim(), kind: 'note', memberId: memberId || undefined, done: false },
       ],
     }))
     onClose()
@@ -257,21 +245,13 @@ function NoteModal({ date, onClose }: { date: string; onClose: () => void }) {
   return (
     <Modal title={t('addNoteTitle')} onClose={onClose}>
       <div className="form">
-        <div className="kind-toggle">
-          <button className={`btn ${kind === 'reminder' ? 'primary' : 'subtle'}`} onClick={() => setKind('reminder')}>
-            {t('reminderBtn')}
-          </button>
-          <button className={`btn ${kind === 'note' ? 'primary' : 'subtle'}`} onClick={() => setKind('note')}>
-            {t('noteBtn')}
-          </button>
-        </div>
         <label>
-          {kind === 'reminder' ? t('whatRemember') : t('whatSay')}
+          {t('whatSay')}
           <input
             autoFocus
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder={kind === 'reminder' ? t('remExample') : t('noteExample')}
+            placeholder={t('noteExample')}
             onKeyDown={(e) => e.key === 'Enter' && save()}
           />
         </label>

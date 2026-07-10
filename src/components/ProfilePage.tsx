@@ -4,14 +4,14 @@ import { useApp, uid } from '../store'
 import { t } from '../i18n'
 import {
   AvatarSvg, MemberFace, SKIN_TONES, HAIR_COLORS, HAIRSTYLE_NAMES, AGES, FACIAL_HAIR,
-  GLASSES, EARRINGS, SHIRT_COLORS, DEFAULT_SPEC,
+  GLASSES, EARRINGS, ACCESSORIES, SHIRT_COLORS, DEFAULT_SPEC,
 } from './avatars'
 
 const COLORS = ['#3b82c4', '#c45b9d', '#8a6bbf', '#2f9e77', '#e08a2e', '#d95d5d', '#4a9ba8', '#7d8c3f']
 
 /** Family page: everyone picks their own avatar, used across the whole app. */
 export function ProfilePage() {
-  const { data, update } = useApp()
+  const { data, update, locked } = useApp()
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [newName, setNewName] = useState('')
 
@@ -60,7 +60,7 @@ export function ProfilePage() {
             <span className="profile-name">{m.name}</span>
           </button>
         ))}
-        <div className="profile-card add">
+        {!locked && <div className="profile-card add">
           <input
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
@@ -70,10 +70,10 @@ export function ProfilePage() {
           <button className="btn primary" onClick={addMember} disabled={!newName.trim()}>
             {t('add')}
           </button>
-        </div>
+        </div>}
       </div>
 
-      {selected && (
+      {selected && !locked && (
         <div className="builder" style={{ borderColor: selected.color }}>
           <div className="builder-preview">
             <AvatarSvg spec={selected.avatar ?? DEFAULT_SPEC} ring={selected.color} size={140} />
@@ -113,6 +113,19 @@ export function ProfilePage() {
                   }}
                 >
                   {a.emoji} {t(`age_${a.key}` as Parameters<typeof t>[0])}
+                </button>
+              ))}
+            </div>
+
+            <label>{t('gender')}</label>
+            <div className="option-row">
+              {(['male', 'female'] as const).map((g) => (
+                <button
+                  key={g}
+                  className={`option-chip ${((selected.avatar ?? DEFAULT_SPEC).gender ?? 'male') === g ? 'on' : ''}`}
+                  onClick={() => patchSpec(selected, { gender: g })}
+                >
+                  {g === 'male' ? '👦' : '👧'} {t(g === 'male' ? 'gender_male' : 'gender_female')}
                 </button>
               ))}
             </div>
@@ -194,6 +207,19 @@ export function ProfilePage() {
               ))}
             </div>
 
+            <label>{t('accessory')}</label>
+            <div className="option-row">
+              {ACCESSORIES.map((k, i) => (
+                <button
+                  key={k}
+                  className={`hair-option ${((selected.avatar ?? DEFAULT_SPEC).accessory ?? 0) === i ? 'on' : ''}`}
+                  onClick={() => patchSpec(selected, { accessory: i })}
+                >
+                  <AvatarSvg spec={{ ...(selected.avatar ?? DEFAULT_SPEC), accessory: i }} size={44} />
+                </button>
+              ))}
+            </div>
+
             <label>{t('shirt')}</label>
             <div className="swatch-row">
               {SHIRT_COLORS.map((c, i) => (
@@ -208,7 +234,8 @@ export function ProfilePage() {
           </div>
         </div>
       )}
-      {!selected && <p className="hint center">{t('pickProfileHint')}</p>}
+      {locked && <p className="hint center">{t('lockedHint')}</p>}
+      {!selected && !locked && <p className="hint center">{t('pickProfileHint')}</p>}
     </div>
   )
 }

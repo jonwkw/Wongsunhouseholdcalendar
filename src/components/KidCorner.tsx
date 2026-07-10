@@ -11,7 +11,7 @@ const MISSION_EMOJI = ['✅', '🪥', '🥣', '🎒', '📖', '🧸', '🌙', '�
 
 /** Mission Control: rocket fuelled by daily missions, plus daily word / maths / mission. */
 export function KidCorner() {
-  const { data, update } = useApp()
+  const { data, update, locked } = useApp()
   const { days: forecast } = useForecast()
   const [showAnswer, setShowAnswer] = useState(false)
   const [editList, setEditList] = useState(false)
@@ -19,6 +19,7 @@ export function KidCorner() {
   const [newEmoji, setNewEmoji] = useState('✅')
   const [newRepeat, setNewRepeat] = useState(true)
   const [launching, setLaunching] = useState(false)
+  const [celebrateLevel, setCelebrateLevel] = useState<number | null>(null)
   const launchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const kid = data.members.find((m) => m.isChild) ?? data.members[0]
@@ -65,11 +66,16 @@ export function KidCorner() {
       const starDays = done
         ? wasDone ? d.starDays : [...d.starDays, selectedDay]
         : d.starDays.filter((x) => x !== selectedDay)
-      // a launch happens when the 5th fuel cell fills
+      // a launch happens when the 5th fuel cell fills: the CURRENT rocket
+      // (with its full tank) takes off, and only afterwards the new one appears
       if (Math.floor(starDays.length / 5) > Math.floor(d.starDays.length / 5)) {
         setLaunching(true)
+        setCelebrateLevel(Math.min(Math.floor(d.starDays.length / 5), ROCKETS.length - 1))
         if (launchTimer.current) clearTimeout(launchTimer.current)
-        launchTimer.current = setTimeout(() => setLaunching(false), 3000)
+        launchTimer.current = setTimeout(() => {
+          setLaunching(false)
+          setCelebrateLevel(null)
+        }, 3200)
       }
       return { ...d, kidChecks: { ...d.kidChecks, [selectedDay]: next }, starDays }
     })
@@ -118,9 +124,11 @@ export function KidCorner() {
             </button>
             <button className="icon-btn" onClick={() => setSelectedDay((d) => addDays(d, 1))}>▶</button>
           </div>
-          <button className="icon-btn" onClick={() => setEditList((v) => !v)}>
-            {editList ? t('doneBtn') : '✏️'}
-          </button>
+          {!locked && (
+            <button className="icon-btn" onClick={() => setEditList((v) => !v)}>
+              {editList ? t('doneBtn') : '✏️'}
+            </button>
+          )}
         </div>
 
         {isFuture && <p className="future-note">{t('futureLocked', { name: kid.name })}</p>}
@@ -186,21 +194,24 @@ export function KidCorner() {
         <span className="kid-hero-star s3">✦</span>
         <span className="kid-hero-star s5">✦</span>
         <div className="rocket-stage">
-          <RocketShip level={level} size={150} launching={launching} />
+          <RocketShip level={celebrateLevel ?? level} size={150} launching={launching} />
           {launching && <div className="liftoff-banner">{t('liftoff')}</div>}
         </div>
         <div className="rocket-name">
-          {rocket.name}
-          <span className="rocket-level"> · {t('levelLabel')} {level + 1}/{ROCKETS.length}</span>
+          {(celebrateLevel != null ? ROCKETS[celebrateLevel] : rocket).name}
+          <span className="rocket-level"> · {t('levelLabel')} {(celebrateLevel ?? level) + 1}/{ROCKETS.length}</span>
         </div>
         <div className="fuel-cells" title={t('fuelTank')}>
-          {Array.from({ length: 5 }, (_, i) => (
-            <div key={i} className={`fuel-cell ${i < tank ? 'full' : ''}`}>
-              {i < tank ? '⛽' : i === tank && todayFraction > 0 ? (
-                <div className="fuel-cell-partial" style={{ height: `${Math.round(todayFraction * 100)}%` }} />
-              ) : null}
-            </div>
-          ))}
+          {Array.from({ length: 5 }, (_, i) => {
+            const shownTank = celebrateLevel != null ? 5 : tank
+            return (
+              <div key={i} className={`fuel-cell ${i < shownTank ? 'full' : ''}`}>
+                {i < shownTank ? '⛽' : i === shownTank && todayFraction > 0 ? (
+                  <div className="fuel-cell-partial" style={{ height: `${Math.round(todayFraction * 100)}%` }} />
+                ) : null}
+              </div>
+            )
+          })}
         </div>
         <div className="rocket-caption">
           {t('daysToLaunch', { n: 5 - tank })}

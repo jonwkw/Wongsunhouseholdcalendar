@@ -90,25 +90,25 @@ export function mathProblemFor(d: Date): MathProblem {
   const day = d.getDate()
   const kind = n % 4
   if (kind === 0) {
-    const a = (n % 8) + 3
-    const b = (day % 9) + 2
+    const a = (n % 4) + 2
+    const b = (day % 4) + 1
     return { question: `What is ${a} + ${b}?`, answer: String(a + b) }
   }
   if (kind === 1) {
-    const a = (n % 10) + 9
-    const b = (day % 7) + 2
+    const a = (n % 5) + 5
+    const b = (day % 4) + 1
     return { question: `What is ${a} − ${b}?`, answer: String(a - b) }
   }
   if (kind === 2) {
-    const step = [2, 5, 10][n % 3]
-    const start = step * ((day % 3) + 1)
+    const step = [2, 10][n % 2]
+    const start = step
     return {
       question: `Count on: ${start}, ${start + step}, ${start + 2 * step}, … what comes next?`,
       answer: String(start + 3 * step),
     }
   }
-  const a = (n % 6) + 4
-  const b = (day % 5) + 2
+  const a = (n % 4) + 2
+  const b = (day % 3) + 1
   return {
     question: `You have ${a} stickers. Papa gives you ${b} more. How many stickers do you have now?`,
     answer: String(a + b),

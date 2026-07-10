@@ -154,7 +154,6 @@ export function EmojiPicker({ value, onChange }: { value: string; onChange: (e: 
       <button
         type="button"
         className={`emoji-opt none ${value === '' ? 'on' : ''}`}
-        title="No emoji"
         onClick={() => onChange('')}
       >
         ∅

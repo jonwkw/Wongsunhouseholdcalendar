@@ -99,11 +99,11 @@ export function ActivityModal({ activity, date, prefill, onClose }: Props) {
         <div className="form-row">
           <label>
             {t('starts')}
-            <input type="time" value={time} onChange={(e) => setTime(e.target.value)} />
+            <input type="time" step={900} value={time} onChange={(e) => setTime(e.target.value)} />
           </label>
           <label>
             {t('ends')}
-            <input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
+            <input type="time" step={900} value={endTime} onChange={(e) => setEndTime(e.target.value)} />
           </label>
         </div>
 

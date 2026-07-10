@@ -18,9 +18,9 @@ export function seedData(): AppData {
     version: 2,
     members: [
       { id: 'jonathan', name: 'Jonathan', emoji: '👨', color: '#3b82c4', avatar: { age: 'adult', skin: 1, hair: 2, hairColor: 0, facialHair: 0 } },
-      { id: 'lilian', name: 'Lilian', emoji: '👩', color: '#c45b9d', avatar: { age: 'adult', skin: 0, hair: 9, hairColor: 0, facialHair: 0 } },
-      { id: 'jenny', name: 'Jenny', emoji: '🧑‍🍳', color: '#2f9e77', avatar: { age: 'adult', skin: 2, hair: 10, hairColor: 0, facialHair: 0 } },
-      { id: 'waipo', name: 'Waipo', emoji: '👵', color: '#8a6bbf', avatar: { age: 'grandparent', skin: 1, hair: 8, hairColor: 3, facialHair: 0 } },
+      { id: 'lilian', name: 'Lilian', emoji: '👩', color: '#c45b9d', avatar: { age: 'adult', skin: 0, hair: 9, hairColor: 0, facialHair: 0, gender: 'female' } },
+      { id: 'jenny', name: 'Jenny', emoji: '🧑‍🍳', color: '#2f9e77', avatar: { age: 'adult', skin: 2, hair: 10, hairColor: 0, facialHair: 0, gender: 'female' } },
+      { id: 'waipo', name: 'Waipo', emoji: '👵', color: '#8a6bbf', avatar: { age: 'grandparent', skin: 1, hair: 8, hairColor: 3, facialHair: 0, gender: 'female' } },
       { id: 'rosco', name: 'Rosco', emoji: '🧒', color: '#e08a2e', isChild: true, avatar: { age: 'kid', skin: 1, hair: 4, hairColor: 0, facialHair: 0 } },
       { id: 'casper', name: 'Casper', emoji: '👶', color: '#d95d5d', isChild: true, avatar: { age: 'baby', skin: 0, hair: 19, hairColor: 0, facialHair: 0 } },
     ],

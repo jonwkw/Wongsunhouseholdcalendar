@@ -7,6 +7,7 @@ import { seedData, DEFAULT_CHECKLIST } from './data/seed'
 // Stage 2 swaps `load`/`persist` for a synced backend without touching the UI.
 // v2: fresh start with the real family names and minimal sample data.
 const STORAGE_KEY = 'wongsun-household-v2'
+const LOCK_KEY = 'wongsun-locked'
 
 export function uid(prefix: string): string {
   return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`
@@ -37,6 +38,8 @@ function migrate(data: AppData): AppData {
     activities: (data.activities ?? []).filter((a) => a.id !== 'a-school'),
     // requests retired — everything on the board is a reminder now
     boardItems: (data.boardItems ?? []).map((b) => ({ ...b, kind: 'reminder' as const })),
+    // day reminders retired — plain notes only (reminders live on the board)
+    dayNotes: (data.dayNotes ?? []).map((n) => ({ ...n, kind: 'note' as const })),
   }
 }
 
@@ -50,12 +53,21 @@ interface AppStore {
   update: (fn: (data: AppData) => AppData) => void
   memberById: (id?: string) => Member | undefined
   resetAll: () => void
+  /** Kid lock: when true, editing UI is hidden across the app */
+  locked: boolean
+  setLocked: (v: boolean) => void
 }
 
 const StoreContext = createContext<AppStore | null>(null)
 
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<AppData>(load)
+  const [locked, setLockedState] = useState(() => localStorage.getItem(LOCK_KEY) === '1')
+
+  const setLocked = useCallback((v: boolean) => {
+    localStorage.setItem(LOCK_KEY, v ? '1' : '0')
+    setLockedState(v)
+  }, [])
 
   useEffect(() => persist(data), [data])
 
@@ -73,8 +85,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       update,
       memberById: (id) => data.members.find((m) => m.id === id),
       resetAll,
+      locked,
+      setLocked,
     }),
-    [data, update, resetAll],
+    [data, update, resetAll, locked, setLocked],
   )
 
   return <StoreContext.Provider value={store}>{children}</StoreContext.Provider>

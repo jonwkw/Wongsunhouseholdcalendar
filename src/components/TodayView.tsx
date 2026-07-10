@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useApp } from '../store'
 import type { Activity, Member } from '../types'
 import { activitiesOn, addDays, longDate, prettyTime, relativeLabel, todayKey, weekdayName } from '../utils/dates'
@@ -8,33 +9,45 @@ import type { TKey } from '../i18n'
 import { MemberChips, tagColor, EVERYONE_COLOR } from './shared'
 import { MemberFace } from './avatars'
 import { NoteChip } from './Timetable'
+import { ActivityModal } from './ActivityModal'
 import { FamilyBoard } from './FamilyBoard'
 
 const PERIOD_KEYS = ['morning', 'afternoon', 'evening', 'overnight']
 
-function ActivityRow({ a, members }: { a: Activity; members: Member[] }) {
+function ActivityRow({ a, members, onEdit }: { a: Activity; members: Member[]; onEdit?: () => void }) {
   return (
-    <div className="today-activity" style={{ borderLeft: `4px solid ${tagColor(a.memberIds, members)}`, paddingLeft: 8 }}>
-      {a.emoji && <span className="card-emoji">{a.emoji}</span>}
-      <div className="today-activity-body">
+    <div
+      className={`today-activity v2 ${onEdit ? 'editable' : ''}`}
+      style={{ borderLeft: `4px solid ${tagColor(a.memberIds, members)}` }}
+      onClick={onEdit}
+    >
+      {a.time && (
+        <div className="time-big">
+          {prettyTime(a.time)}
+          {a.endTime ? ` – ${prettyTime(a.endTime)}` : ''}
+        </div>
+      )}
+      <div className="today-activity-main">
+        {a.emoji && <span className="card-emoji">{a.emoji}</span>}
         <span className="card-title">{a.title}</span>
-        <span className="card-time">
-          {a.time ? prettyTime(a.time) : ''}
-          {a.endTime ? `–${prettyTime(a.endTime)}` : ''}
-          {a.location ? ` · 📍 ${a.location}` : ''}
-        </span>
-        {a.notes && <span className="card-time">📝 {a.notes}</span>}
       </div>
+      {(a.location || a.notes) && (
+        <div className="today-activity-extra">
+          {a.location && <span>📍 {a.location}</span>}
+          {a.notes && <span>📝 {a.notes}</span>}
+        </div>
+      )}
     </div>
   )
 }
 
 /** Default landing view: weather, a big Today, smaller next two days, and reminders. */
 export function TodayView({ goTo }: { goTo: (tab: string) => void }) {
-  const { data, memberById } = useApp()
+  const { data, memberById, locked } = useApp()
   const { days: forecast, error, loading, refresh } = useForecast()
   const today = todayKey()
   const daySpan = [today, addDays(today, 1), addDays(today, 2)]
+  const [editing, setEditing] = useState<{ activity: Activity; date: string } | null>(null)
 
   return (
     <div className="today-page">
@@ -105,6 +118,14 @@ export function TodayView({ goTo }: { goTo: (tab: string) => void }) {
                 </h3>
               </div>
 
+              {notes.length > 0 && (
+                <div className="today-section notes-top">
+                  {notes.map((n) => (
+                    <NoteChip key={n.id} note={n} />
+                  ))}
+                </div>
+              )}
+
               {isMain ? (
                 <>
                   {acts.length === 0 && <p className="hint">{t('nothingPlanned')} 🎈</p>}
@@ -115,7 +136,7 @@ export function TodayView({ goTo }: { goTo: (tab: string) => void }) {
                         <strong>{t('everyone')}</strong>
                       </div>
                       {everyoneActs.map((a) => (
-                        <ActivityRow key={a.id} a={a} members={data.members} />
+                        <ActivityRow key={a.id} a={a} members={data.members} onEdit={locked ? undefined : () => setEditing({ activity: a, date })} />
                       ))}
                     </div>
                   )}
@@ -126,7 +147,7 @@ export function TodayView({ goTo }: { goTo: (tab: string) => void }) {
                         <strong>{member.name}</strong>
                       </div>
                       {list.map((a) => (
-                        <ActivityRow key={a.id} a={a} members={data.members} />
+                        <ActivityRow key={a.id} a={a} members={data.members} onEdit={locked ? undefined : () => setEditing({ activity: a, date })} />
                       ))}
                     </div>
                   ))}
@@ -135,23 +156,20 @@ export function TodayView({ goTo }: { goTo: (tab: string) => void }) {
                 <>
                   {acts.length === 0 && <p className="hint">{t('nothingPlanned')}</p>}
                   {acts.map((a) => (
-                    <div key={a.id} className="today-activity mini" style={{ borderLeft: `4px solid ${tagColor(a.memberIds, data.members)}`, paddingLeft: 8 }}>
-                      {a.emoji && <span>{a.emoji}</span>}
+                    <div
+                      key={a.id}
+                      className={`today-activity mini ${locked ? '' : 'editable'}`}
+                      style={{ borderLeft: `4px solid ${tagColor(a.memberIds, data.members)}`, paddingLeft: 8 }}
+                      onClick={locked ? undefined : () => setEditing({ activity: a, date })}
+                    >
+                      {a.time && <div className="time-big small">{prettyTime(a.time)}</div>}
                       <div className="today-activity-body">
-                        <span className="card-title">{a.title}</span>
+                        <span className="card-title">{a.emoji ? `${a.emoji} ` : ''}{a.title}</span>
                         <MemberChips memberIds={a.memberIds} everyone />
                       </div>
                     </div>
                   ))}
                 </>
-              )}
-
-              {notes.length > 0 && (
-                <div className="today-section">
-                  {notes.map((n) => (
-                    <NoteChip key={n.id} note={n} />
-                  ))}
-                </div>
               )}
 
               <div className="today-section">
@@ -195,6 +213,10 @@ export function TodayView({ goTo }: { goTo: (tab: string) => void }) {
       <div className="today-board">
         <FamilyBoard />
       </div>
+
+      {editing && (
+        <ActivityModal activity={editing.activity} date={editing.date} onClose={() => setEditing(null)} />
+      )}
     </div>
   )
 }

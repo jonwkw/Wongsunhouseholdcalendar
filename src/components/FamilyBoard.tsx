@@ -6,7 +6,7 @@ import { t } from '../i18n'
 
 /** Family reminders: one shared list with added-by / assigned-to and undoable delete. */
 export function FamilyBoard() {
-  const { data, update, memberById } = useApp()
+  const { data, update, memberById, locked } = useApp()
   const [text, setText] = useState('')
   const [forDate, setForDate] = useState('')
   const [byMemberId, setByMemberId] = useState('')
@@ -82,7 +82,7 @@ export function FamilyBoard() {
         </label>
       </div>
 
-      <div className="board-form">
+      {!locked && <div className="board-form">
         <input
           value={text}
           onChange={(e) => setText(e.target.value)}
@@ -109,7 +109,7 @@ export function FamilyBoard() {
         <button className="btn primary" onClick={add} disabled={!text.trim()}>
           {t('post')}
         </button>
-      </div>
+      </div>}
 
       {lastDeleted && (
         <div className="undo-bar">
@@ -137,7 +137,7 @@ export function FamilyBoard() {
                 {b.forDate && <span className="board-date">📅 {prettyDate(b.forDate)}</span>}
               </div>
             </div>
-            <button className="icon-btn tiny" onClick={() => remove(b)}>✕</button>
+            {!locked && <button className="icon-btn tiny" onClick={() => remove(b)}>✕</button>}
           </div>
         ))}
       </div>
