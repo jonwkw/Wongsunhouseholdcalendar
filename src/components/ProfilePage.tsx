@@ -3,7 +3,8 @@ import type { AvatarAge, AvatarSpec, Member } from '../types'
 import { useApp, uid } from '../store'
 import { t } from '../i18n'
 import {
-  AvatarSvg, MemberFace, SKIN_TONES, HAIR_COLORS, HAIRSTYLE_NAMES, AGES, FACIAL_HAIR, DEFAULT_SPEC,
+  AvatarSvg, MemberFace, SKIN_TONES, HAIR_COLORS, HAIRSTYLE_NAMES, AGES, FACIAL_HAIR,
+  GLASSES, EARRINGS, SHIRT_COLORS, DEFAULT_SPEC,
 } from './avatars'
 
 const COLORS = ['#3b82c4', '#c45b9d', '#8a6bbf', '#2f9e77', '#e08a2e', '#d95d5d', '#4a9ba8', '#7d8c3f']
@@ -164,6 +165,44 @@ export function ProfilePage() {
                 >
                   <AvatarSvg spec={{ ...(selected.avatar ?? DEFAULT_SPEC), facialHair: i }} size={44} />
                 </button>
+              ))}
+            </div>
+
+            <label>{t('glasses')}</label>
+            <div className="option-row">
+              {GLASSES.map((k, i) => (
+                <button
+                  key={k}
+                  className={`hair-option ${((selected.avatar ?? DEFAULT_SPEC).glasses ?? 0) === i ? 'on' : ''}`}
+                  onClick={() => patchSpec(selected, { glasses: i })}
+                >
+                  <AvatarSvg spec={{ ...(selected.avatar ?? DEFAULT_SPEC), glasses: i }} size={44} />
+                </button>
+              ))}
+            </div>
+
+            <label>{t('earrings')}</label>
+            <div className="option-row">
+              {EARRINGS.map((k, i) => (
+                <button
+                  key={k}
+                  className={`hair-option ${((selected.avatar ?? DEFAULT_SPEC).earrings ?? 0) === i ? 'on' : ''}`}
+                  onClick={() => patchSpec(selected, { earrings: i })}
+                >
+                  <AvatarSvg spec={{ ...(selected.avatar ?? DEFAULT_SPEC), earrings: i }} size={44} />
+                </button>
+              ))}
+            </div>
+
+            <label>{t('shirt')}</label>
+            <div className="swatch-row">
+              {SHIRT_COLORS.map((c, i) => (
+                <button
+                  key={c}
+                  className={`swatch big ${((selected.avatar ?? DEFAULT_SPEC).shirt ?? 5) === i ? 'on' : ''}`}
+                  style={{ background: c }}
+                  onClick={() => patchSpec(selected, { shirt: i })}
+                />
               ))}
             </div>
           </div>

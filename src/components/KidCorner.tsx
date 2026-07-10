@@ -4,6 +4,7 @@ import { activitiesOn, addDays, prettyDate, prettyTime, relativeLabel, todayKey,
 import { useForecast } from '../utils/useForecast'
 import { weatherEmoji } from '../utils/weather'
 import { mathProblemFor, missionFor, wordFor, rocketFor, ROCKETS } from '../data/kidContent'
+import { RocketShip } from './RocketShip'
 import { t } from '../i18n'
 
 const MISSION_EMOJI = ['✅', '🪥', '🥣', '🎒', '📖', '🧸', '🌙', '🧦', '🚿', '🐟', '💪', '🎹', '✏️', '🧹', '💧', '🙏']
@@ -41,9 +42,17 @@ export function KidCorner() {
   const checked = data.kidChecks[selectedDay] ?? []
   const dayDone = items.length > 0 && items.every((i) => checked.includes(i.id))
 
-  const launches = data.starDays.length
+  const totalDays = data.starDays.length
+  const launches = Math.floor(totalDays / 5)
+  const tank = totalDays % 5
   const { rocket, level } = rocketFor(launches)
-  const fuelPct = items.length === 0 ? 0 : Math.round((items.filter((i) => checked.includes(i.id)).length / items.length) * 100)
+  const todayItems = itemsFor(today)
+  const todayChecked = data.kidChecks[today] ?? []
+  const todayFraction = data.starDays.includes(today)
+    ? 0
+    : todayItems.length === 0
+      ? 0
+      : todayItems.filter((i) => todayChecked.includes(i.id)).length / todayItems.length
 
   const toggleCheck = (itemId: string) => {
     if (isFuture) return
@@ -56,10 +65,11 @@ export function KidCorner() {
       const starDays = done
         ? wasDone ? d.starDays : [...d.starDays, selectedDay]
         : d.starDays.filter((x) => x !== selectedDay)
-      if (done && !wasDone) {
+      // a launch happens when the 5th fuel cell fills
+      if (Math.floor(starDays.length / 5) > Math.floor(d.starDays.length / 5)) {
         setLaunching(true)
         if (launchTimer.current) clearTimeout(launchTimer.current)
-        launchTimer.current = setTimeout(() => setLaunching(false), 2600)
+        launchTimer.current = setTimeout(() => setLaunching(false), 3000)
       }
       return { ...d, kidChecks: { ...d.kidChecks, [selectedDay]: next }, starDays }
     })
@@ -85,42 +95,16 @@ export function KidCorner() {
 
   return (
     <div className="kid-page">
-      <div className={`kid-hero ${launching ? 'launching' : ''}`}>
+      <div className="kid-hero slim">
         <span className="kid-hero-star s1">✦</span>
         <span className="kid-hero-star s2">✦</span>
         <span className="kid-hero-star s3">✦</span>
-        <span className="kid-hero-star s4">✦</span>
-        <span className="kid-hero-star s5">✦</span>
         <span className="kid-hero-planet">🪐</span>
         <span className="kid-hero-moon">🌙</span>
-
-        <div className="rocket-pad">
-          <div className={`rocket-art level-${level} ${launching ? 'takeoff' : ''}`}>{rocket.art}</div>
-          {launching && <div className="rocket-flames">🔥🔥</div>}
-          <div className="rocket-name">
-            {rocket.name} <span className="rocket-level">Lv.{level + 1}/{ROCKETS.length}</span>
-          </div>
-        </div>
-
-        <div className="kid-hero-text">
-          <h2 className="kid-title">{t('missionControl', { name: kid.name })}</h2>
-          <div className="fuel-gauge" title={t('fuelLabel')}>
-            <span className="fuel-icon">⛽</span>
-            <div className="fuel-bar">
-              <div className="fuel-fill" style={{ width: `${fuelPct}%` }} />
-            </div>
-            <span className="fuel-pct">{fuelPct}%</span>
-          </div>
-          {launching && <div className="liftoff-banner">{t('liftoff')}</div>}
-        </div>
-
-        <div className="launch-counter" title={t('launches')}>
-          <span className="launch-rocket">🚀</span>
-          <span className="launch-num">{launches}</span>
-          <span className="launch-label">{t('launches')}</span>
-        </div>
+        <h2 className="kid-title">{t('missionControl', { name: kid.name })}</h2>
       </div>
 
+      <div className="kid-main">
       <div className={`kid-card checklist ${dayDone ? 'complete' : ''}`}>
         <div className="checklist-head">
           <h3>🤖 {t('missionsTitle')}</h3>
@@ -192,7 +176,37 @@ export function KidCorner() {
             </div>
           </div>
         )}
-        {dayDone && !isFuture && <div className="checklist-star">{t('liftoff')}</div>}
+        {dayDone && !isFuture && tank !== 0 && (
+          <div className="checklist-star">⛽ {t('daysToLaunch', { n: 5 - tank })}</div>
+        )}
+      </div>
+
+      <div className={`rocket-panel ${launching ? 'launching' : ''}`}>
+        <span className="kid-hero-star s1">✦</span>
+        <span className="kid-hero-star s3">✦</span>
+        <span className="kid-hero-star s5">✦</span>
+        <div className="rocket-stage">
+          <RocketShip level={level} size={150} launching={launching} />
+          {launching && <div className="liftoff-banner">{t('liftoff')}</div>}
+        </div>
+        <div className="rocket-name">
+          {rocket.name}
+          <span className="rocket-level"> · {t('levelLabel')} {level + 1}/{ROCKETS.length}</span>
+        </div>
+        <div className="fuel-cells" title={t('fuelTank')}>
+          {Array.from({ length: 5 }, (_, i) => (
+            <div key={i} className={`fuel-cell ${i < tank ? 'full' : ''}`}>
+              {i < tank ? '⛽' : i === tank && todayFraction > 0 ? (
+                <div className="fuel-cell-partial" style={{ height: `${Math.round(todayFraction * 100)}%` }} />
+              ) : null}
+            </div>
+          ))}
+        </div>
+        <div className="rocket-caption">
+          {t('daysToLaunch', { n: 5 - tank })}
+        </div>
+        <div className="launch-count-mini">🚀 × {launches}</div>
+      </div>
       </div>
 
       <div className="kid-daily">
@@ -244,7 +258,7 @@ export function KidCorner() {
               {acts.length === 0 && <p className="kid-free">{t('freeDay')}</p>}
               {acts.map((a) => (
                 <div key={a.id} className="kid-activity">
-                  <span className="kid-activity-emoji">{a.emoji}</span>
+                  {a.emoji && <span className="kid-activity-emoji">{a.emoji}</span>}
                   <span>
                     <strong>{a.title}</strong>
                     {a.time && <span className="card-time"> · {prettyTime(a.time)}</span>}

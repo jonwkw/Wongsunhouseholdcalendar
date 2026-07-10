@@ -81,7 +81,7 @@ export function MemberToggle({
         style={selected.length === 0 ? { background: EVERYONE_COLOR + '2a', borderColor: EVERYONE_COLOR } : undefined}
         onClick={() => onChange([])}
       >
-        <span>👨‍👩‍👧‍👦</span> {t('everyone')}
+        <span>🌈</span> {t('everyone')}
       </button>
       {data.members.map((m) => (
         <button
@@ -111,7 +111,7 @@ export function Legend() {
       ))}
       <span className="legend-item">
         <span className="legend-dot" style={{ background: EVERYONE_COLOR }} />
-        👨‍👩‍👧‍👦 {t('everyone')}
+        🌈 {t('everyone')}
       </span>
     </div>
   )
@@ -151,6 +151,14 @@ export const COMMON_EMOJI = [
 export function EmojiPicker({ value, onChange }: { value: string; onChange: (e: string) => void }) {
   return (
     <div className="emoji-picker">
+      <button
+        type="button"
+        className={`emoji-opt none ${value === '' ? 'on' : ''}`}
+        title="No emoji"
+        onClick={() => onChange('')}
+      >
+        ∅
+      </button>
       {COMMON_EMOJI.map((e) => (
         <button
           key={e}

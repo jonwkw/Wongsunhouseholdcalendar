@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { StoreProvider, useApp } from './store'
 import { LangProvider, useLang, t } from './i18n'
 import { TodayView } from './components/TodayView'
@@ -7,10 +7,24 @@ import { MenuPlanner } from './components/MenuPlanner'
 import { KidCorner } from './components/KidCorner'
 import { ProfilePage } from './components/ProfilePage'
 
+const THEMES = [
+  { id: 'cream', dot: '#f3e2c4' },
+  { id: 'mint', dot: '#a8dcc3' },
+  { id: 'sky', dot: '#a9c9e8' },
+  { id: 'blush', dot: '#f0b9c8' },
+  { id: 'lavender', dot: '#c7b6e8' },
+]
+
 function Shell() {
   const { data } = useApp()
   const { lang, setLang } = useLang()
   const [tab, setTab] = useState('today')
+  const [theme, setTheme] = useState(() => localStorage.getItem('wongsun-theme') ?? 'cream')
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme
+    localStorage.setItem('wongsun-theme', theme)
+  }, [theme])
 
   const kid = data.members.find((m) => m.isChild)
   const tabs = [
@@ -32,6 +46,16 @@ function Shell() {
           </div>
         </div>
         <div className="header-actions">
+          <div className="theme-dots" title={t('themeLabel')}>
+            {THEMES.map((th) => (
+              <button
+                key={th.id}
+                className={`theme-dot ${theme === th.id ? 'on' : ''}`}
+                style={{ background: th.dot }}
+                onClick={() => setTheme(th.id)}
+              />
+            ))}
+          </div>
           <button
             className="btn subtle lang-toggle"
             title={lang === 'en' ? 'Switch to Chinese' : '切换到英文'}

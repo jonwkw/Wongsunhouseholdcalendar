@@ -15,7 +15,7 @@ const PERIOD_KEYS = ['morning', 'afternoon', 'evening', 'overnight']
 function ActivityRow({ a, members }: { a: Activity; members: Member[] }) {
   return (
     <div className="today-activity" style={{ borderLeft: `4px solid ${tagColor(a.memberIds, members)}`, paddingLeft: 8 }}>
-      <span className="card-emoji">{a.emoji}</span>
+      {a.emoji && <span className="card-emoji">{a.emoji}</span>}
       <div className="today-activity-body">
         <span className="card-title">{a.title}</span>
         <span className="card-time">
@@ -111,7 +111,7 @@ export function TodayView({ goTo }: { goTo: (tab: string) => void }) {
                   {everyoneActs.length > 0 && (
                     <div className="person-section" style={{ borderColor: EVERYONE_COLOR }}>
                       <div className="person-head">
-                        <span className="person-everyone">👨‍👩‍👧‍👦</span>
+                        <span className="person-everyone">🌈</span>
                         <strong>{t('everyone')}</strong>
                       </div>
                       {everyoneActs.map((a) => (
@@ -136,7 +136,7 @@ export function TodayView({ goTo }: { goTo: (tab: string) => void }) {
                   {acts.length === 0 && <p className="hint">{t('nothingPlanned')}</p>}
                   {acts.map((a) => (
                     <div key={a.id} className="today-activity mini" style={{ borderLeft: `4px solid ${tagColor(a.memberIds, data.members)}`, paddingLeft: 8 }}>
-                      <span>{a.emoji}</span>
+                      {a.emoji && <span>{a.emoji}</span>}
                       <div className="today-activity-body">
                         <span className="card-title">{a.title}</span>
                         <MemberChips memberIds={a.memberIds} everyone />

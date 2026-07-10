@@ -149,9 +149,8 @@ export function Timetable() {
                           }}
                         >
                           <div className="activity-top">
-                            <span className="card-emoji">{a.emoji}</span>
+                            {a.emoji && <span className="card-emoji">{a.emoji}</span>}
                             <span className="card-title">{a.title}</span>
-                            {a.recurrence && <span title={t('repeatsWeekly')}>🔁</span>}
                           </div>
                           <div className="activity-meta">
                             {a.time && (

@@ -11,6 +11,9 @@ export interface AvatarSpec {
   hair: number
   hairColor: number
   facialHair: number
+  glasses?: number
+  shirt?: number
+  earrings?: number
 }
 
 export interface Member {
