@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import type { Member } from '../types'
 import { useApp } from '../store'
 import { t } from '../i18n'
+import { MemberFace } from './avatars'
 
 /** Colour used when something is tagged to the whole family */
 export const EVERYONE_COLOR = '#b08b3e'
@@ -90,7 +91,7 @@ export function MemberToggle({
           style={selected.includes(m.id) ? { background: m.color + '2a', borderColor: m.color } : undefined}
           onClick={() => toggle(m.id)}
         >
-          <span>{m.emoji}</span> {m.name}
+          <MemberFace member={m} size={20} /> {m.name}
         </button>
       ))}
     </div>
@@ -98,25 +99,20 @@ export function MemberToggle({
 }
 
 /** Colour key mapping each family member (and Everyone) to their colour */
-export function Legend({ onEdit }: { onEdit?: () => void }) {
+export function Legend() {
   const { data } = useApp()
   return (
     <div className="legend">
       {data.members.map((m) => (
         <span key={m.id} className="legend-item">
           <span className="legend-dot" style={{ background: m.color }} />
-          {m.emoji} {m.name}
+          <MemberFace member={m} size={20} /> {m.name}
         </span>
       ))}
       <span className="legend-item">
         <span className="legend-dot" style={{ background: EVERYONE_COLOR }} />
         👨‍👩‍👧‍👦 {t('everyone')}
       </span>
-      {onEdit && (
-        <button className="icon-btn" title="Edit family" onClick={onEdit}>
-          ⚙️
-        </button>
-      )}
     </div>
   )
 }

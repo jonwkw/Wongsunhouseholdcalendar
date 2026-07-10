@@ -26,17 +26,17 @@ function load(): AppData {
 function migrate(data: AppData): AppData {
   return {
     ...data,
-    menuEntries: (data.menuEntries ?? []).map((m) => ({
-      ...m,
-      memberIds: m.memberIds ?? [],
-      // 'snack' split into snack-am / snack-pm rows
-      slot: (m.slot as string) === 'snack' ? 'snack-am' : m.slot,
-    })),
+    // snack rows retired — the menu is back to three meals
+    menuEntries: (data.menuEntries ?? [])
+      .map((m) => ({ ...m, memberIds: m.memberIds ?? [] }))
+      .filter((m) => !(m.slot as string).startsWith('snack')),
     kidChecklist: data.kidChecklist ?? DEFAULT_CHECKLIST,
     kidChecks: data.kidChecks ?? {},
     starDays: data.starDays ?? [],
     // school timetable cancelled (holidays) — remove the seeded series everywhere
     activities: (data.activities ?? []).filter((a) => a.id !== 'a-school'),
+    // requests retired — everything on the board is a reminder now
+    boardItems: (data.boardItems ?? []).map((b) => ({ ...b, kind: 'reminder' as const })),
   }
 }
 

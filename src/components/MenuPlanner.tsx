@@ -7,9 +7,9 @@ import { t, dayShort } from '../i18n'
 import { MemberChips, MemberToggle, Modal, tagColor } from './shared'
 import { setDragPayload, getDragPayload, leavesTarget } from '../utils/dnd'
 
-const SLOTS: MealSlot[] = ['breakfast', 'snack-am', 'lunch', 'snack-pm', 'dinner']
+const SLOTS: MealSlot[] = ['breakfast', 'lunch', 'dinner']
 const slotLabel = (s: MealSlot): string =>
-  s === 'breakfast' ? t('breakfast') : s === 'snack-am' ? t('snackAm') : s === 'lunch' ? t('lunch') : s === 'snack-pm' ? t('snackPm') : t('dinner')
+  s === 'breakfast' ? t('breakfast') : s === 'lunch' ? t('lunch') : t('dinner')
 
 export function MenuPlanner() {
   const { data, update } = useApp()
@@ -155,7 +155,7 @@ function PlaceDishModal({
   onClose: () => void
 }) {
   const [date, setDate] = useState(todayKey())
-  const [slot, setSlot] = useState<MealSlot>(dish.slot === 'breakfast' || dish.slot === 'lunch' || dish.slot === 'dinner' ? dish.slot : dish.slot === 'snack' ? 'snack-pm' : 'dinner')
+  const [slot, setSlot] = useState<MealSlot>(dish.slot === 'breakfast' || dish.slot === 'lunch' || dish.slot === 'dinner' ? dish.slot : 'dinner')
 
   return (
     <Modal title={t('addDishTitle', { dish: `${dish.emoji} ${dish.name}` })} onClose={onClose}>
@@ -356,7 +356,6 @@ function DishModal({ onClose }: { onClose: () => void }) {
             <option value="breakfast">{t('breakfastPlain')}</option>
             <option value="lunch">{t('lunchPlain')}</option>
             <option value="dinner">{t('dinnerPlain')}</option>
-            <option value="snack">{t('snackPlain')}</option>
           </select>
         </label>
         <div className="form-actions">

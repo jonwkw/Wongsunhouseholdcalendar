@@ -1,14 +1,14 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useApp, uid } from '../store'
-import { activitiesOn, addDays, prettyTime, relativeLabel, todayKey, fromKey, weekdayName } from '../utils/dates'
+import { activitiesOn, addDays, prettyDate, prettyTime, relativeLabel, todayKey, fromKey, weekdayName } from '../utils/dates'
 import { useForecast } from '../utils/useForecast'
 import { weatherEmoji } from '../utils/weather'
-import { mathProblemFor, missionFor, wordFor } from '../data/kidContent'
+import { mathProblemFor, missionFor, wordFor, rocketFor, ROCKETS } from '../data/kidContent'
 import { t } from '../i18n'
 
 const MISSION_EMOJI = ['✅', '🪥', '🥣', '🎒', '📖', '🧸', '🌙', '🧦', '🚿', '🐟', '💪', '🎹', '✏️', '🧹', '💧', '🙏']
 
-/** A page for the family's young reader: checklist, stars, schedule + daily word, maths, and mission. */
+/** Mission Control: rocket fuelled by daily missions, plus daily word / maths / mission. */
 export function KidCorner() {
   const { data, update } = useApp()
   const { days: forecast } = useForecast()
@@ -16,31 +16,52 @@ export function KidCorner() {
   const [editList, setEditList] = useState(false)
   const [newItem, setNewItem] = useState('')
   const [newEmoji, setNewEmoji] = useState('✅')
+  const [newRepeat, setNewRepeat] = useState(true)
+  const [launching, setLaunching] = useState(false)
+  const launchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const kid = data.members.find((m) => m.isChild) ?? data.members[0]
   const today = todayKey()
-  const daySpan = [today, addDays(today, 1), addDays(today, 2), addDays(today, 3)]
+  const [selectedDay, setSelectedDay] = useState(today)
+  const isFuture = selectedDay > today
+
+  useEffect(() => () => {
+    if (launchTimer.current) clearTimeout(launchTimer.current)
+  }, [])
+
   const now = fromKey(today)
   const word = wordFor(now)
   const math = mathProblemFor(now)
   const mission = missionFor(now)
 
-  const checkedToday = data.kidChecks[today] ?? []
-  const allDone = data.kidChecklist.length > 0 && data.kidChecklist.every((i) => checkedToday.includes(i.id))
-  const stars = data.starDays.length
-  const superStars = Math.floor(stars / 5)
-  const towardNext = stars % 5
+  /** Tasks that apply on a given day: daily ones + one-offs for that date */
+  const itemsFor = (date: string) => data.kidChecklist.filter((i) => !i.date || i.date === date)
 
-  /** Ticking the last item earns today's gold star; unticking gives it back */
+  const items = itemsFor(selectedDay)
+  const checked = data.kidChecks[selectedDay] ?? []
+  const dayDone = items.length > 0 && items.every((i) => checked.includes(i.id))
+
+  const launches = data.starDays.length
+  const { rocket, level } = rocketFor(launches)
+  const fuelPct = items.length === 0 ? 0 : Math.round((items.filter((i) => checked.includes(i.id)).length / items.length) * 100)
+
   const toggleCheck = (itemId: string) => {
+    if (isFuture) return
     update((d) => {
-      const cur = d.kidChecks[today] ?? []
+      const cur = d.kidChecks[selectedDay] ?? []
       const next = cur.includes(itemId) ? cur.filter((x) => x !== itemId) : [...cur, itemId]
-      const done = d.kidChecklist.length > 0 && d.kidChecklist.every((i) => next.includes(i.id))
+      const dayItems = d.kidChecklist.filter((i) => !i.date || i.date === selectedDay)
+      const done = dayItems.length > 0 && dayItems.every((i) => next.includes(i.id))
+      const wasDone = d.starDays.includes(selectedDay)
       const starDays = done
-        ? d.starDays.includes(today) ? d.starDays : [...d.starDays, today]
-        : d.starDays.filter((x) => x !== today)
-      return { ...d, kidChecks: { ...d.kidChecks, [today]: next }, starDays }
+        ? wasDone ? d.starDays : [...d.starDays, selectedDay]
+        : d.starDays.filter((x) => x !== selectedDay)
+      if (done && !wasDone) {
+        setLaunching(true)
+        if (launchTimer.current) clearTimeout(launchTimer.current)
+        launchTimer.current = setTimeout(() => setLaunching(false), 2600)
+      }
+      return { ...d, kidChecks: { ...d.kidChecks, [selectedDay]: next }, starDays }
     })
   }
 
@@ -48,10 +69,12 @@ export function KidCorner() {
     if (!newItem.trim()) return
     update((d) => ({
       ...d,
-      kidChecklist: [...d.kidChecklist, { id: uid('c'), emoji: newEmoji, text: newItem.trim() }],
+      kidChecklist: [
+        ...d.kidChecklist,
+        { id: uid('c'), emoji: newEmoji, text: newItem.trim(), date: newRepeat ? undefined : selectedDay },
+      ],
     }))
     setNewItem('')
-    setNewEmoji('✅')
   }
 
   const removeItem = (id: string) => {
@@ -62,63 +85,75 @@ export function KidCorner() {
 
   return (
     <div className="kid-page">
-      <div className="kid-hero">
+      <div className={`kid-hero ${launching ? 'launching' : ''}`}>
         <span className="kid-hero-star s1">✦</span>
         <span className="kid-hero-star s2">✦</span>
         <span className="kid-hero-star s3">✦</span>
         <span className="kid-hero-star s4">✦</span>
         <span className="kid-hero-star s5">✦</span>
         <span className="kid-hero-planet">🪐</span>
-        <span className="kid-hero-rocket">🚀</span>
+        <span className="kid-hero-moon">🌙</span>
+
+        <div className="rocket-pad">
+          <div className={`rocket-art level-${level} ${launching ? 'takeoff' : ''}`}>{rocket.art}</div>
+          {launching && <div className="rocket-flames">🔥🔥</div>}
+          <div className="rocket-name">
+            {rocket.name} <span className="rocket-level">Lv.{level + 1}/{ROCKETS.length}</span>
+          </div>
+        </div>
+
         <div className="kid-hero-text">
           <h2 className="kid-title">{t('missionControl', { name: kid.name })}</h2>
-          <p className="kid-hero-sub">{t('readyLiftoff', { name: kid.name })}</p>
+          <div className="fuel-gauge" title={t('fuelLabel')}>
+            <span className="fuel-icon">⛽</span>
+            <div className="fuel-bar">
+              <div className="fuel-fill" style={{ width: `${fuelPct}%` }} />
+            </div>
+            <span className="fuel-pct">{fuelPct}%</span>
+          </div>
+          {launching && <div className="liftoff-banner">{t('liftoff')}</div>}
         </div>
-        <span className="kid-hero-robot">🤖</span>
-        <span className="kid-hero-moon">🌙</span>
-      </div>
 
-      <div className="star-zone">
-        <div className="star-bank">
-          <div className="star-bank-super" title={t('superStarsTitle')}>
-            {superStars > 0
-              ? Array.from({ length: superStars }, (_, i) => (
-                  <span key={i} className="super-star">🌟</span>
-                ))
-              : t('noSuperStars')}
-          </div>
-          <div className="star-bank-progress">
-            {Array.from({ length: 5 }, (_, i) => (
-              <span key={i} className={`star-slot ${i < towardNext ? 'earned' : ''}`}>
-                {i < towardNext ? '⭐' : '☆'}
-              </span>
-            ))}
-            <span className="star-bank-label">{t('moreToNext', { n: 5 - towardNext })}</span>
-          </div>
-        </div>
-        <div className={`star-counter ${allDone ? 'celebrate' : ''}`} title={t('goldStarsTitle')}>
-          <span className="star-counter-star">⭐</span>
-          <span className="star-counter-num">{stars}</span>
-          <span className="star-counter-label">{t('goldStarsTitle')}</span>
+        <div className="launch-counter" title={t('launches')}>
+          <span className="launch-rocket">🚀</span>
+          <span className="launch-num">{launches}</span>
+          <span className="launch-label">{t('launches')}</span>
         </div>
       </div>
 
-      <div className={`kid-card checklist ${allDone ? 'complete' : ''}`}>
+      <div className={`kid-card checklist ${dayDone ? 'complete' : ''}`}>
         <div className="checklist-head">
-          <h3>{t('todaysMissions')}</h3>
+          <h3>🤖 {t('missionsTitle')}</h3>
+          <div className="day-selector">
+            <button className="icon-btn" onClick={() => setSelectedDay((d) => addDays(d, -1))}>◀</button>
+            <button
+              className={`btn subtle day-selector-label ${selectedDay === today ? 'is-today' : ''}`}
+              onClick={() => setSelectedDay(today)}
+            >
+              {relativeLabel(selectedDay)} · {weekdayName(selectedDay)}
+            </button>
+            <button className="icon-btn" onClick={() => setSelectedDay((d) => addDays(d, 1))}>▶</button>
+          </div>
           <button className="icon-btn" onClick={() => setEditList((v) => !v)}>
             {editList ? t('doneBtn') : '✏️'}
           </button>
         </div>
-        {data.kidChecklist.map((item) => (
-          <label key={item.id} className={`checklist-item ${checkedToday.includes(item.id) ? 'done' : ''}`}>
+
+        {isFuture && <p className="future-note">{t('futureLocked', { name: kid.name })}</p>}
+
+        {items.map((item) => (
+          <label key={item.id} className={`checklist-item ${checked.includes(item.id) ? 'done' : ''} ${isFuture ? 'locked' : ''}`}>
             <input
               type="checkbox"
-              checked={checkedToday.includes(item.id)}
+              checked={checked.includes(item.id)}
+              disabled={isFuture}
               onChange={() => toggleCheck(item.id)}
             />
             <span className="checklist-emoji">{item.emoji}</span>
-            <span className="checklist-text">{item.text}</span>
+            <span className="checklist-text">
+              {item.text}
+              {item.date && <span className="oneoff-tag">📅 {prettyDate(item.date)}</span>}
+            </span>
             {editList && (
               <button className="icon-btn tiny" onClick={(e) => { e.preventDefault(); removeItem(item.id) }}>
                 ✕
@@ -126,6 +161,7 @@ export function KidCorner() {
             )}
           </label>
         ))}
+
         {editList && (
           <div className="checklist-add-block">
             <div className="emoji-picker">
@@ -134,6 +170,14 @@ export function KidCorner() {
                   {e}
                 </button>
               ))}
+            </div>
+            <div className="kind-toggle">
+              <button className={`btn ${newRepeat ? 'primary' : 'subtle'}`} onClick={() => setNewRepeat(true)}>
+                🔁 {t('repeating')}
+              </button>
+              <button className={`btn ${!newRepeat ? 'primary' : 'subtle'}`} onClick={() => setNewRepeat(false)}>
+                📅 {t('justThisDay')} ({prettyDate(selectedDay)})
+              </button>
             </div>
             <div className="checklist-add">
               <input
@@ -148,13 +192,14 @@ export function KidCorner() {
             </div>
           </div>
         )}
-        {allDone && <div className="checklist-star">{t('allDoneStar')}</div>}
+        {dayDone && !isFuture && <div className="checklist-star">{t('liftoff')}</div>}
       </div>
 
       <div className="kid-daily">
         <div className="kid-card word">
           <h3>{t('wordOfDay')}</h3>
           <div className="kid-word">{word.word}</div>
+          <div className="kid-phonetic">🔤 {word.phonetic}</div>
           <p className="kid-meaning">{word.meaning}</p>
           <p className="kid-sentence">“{word.sentence}”</p>
         </div>
@@ -178,8 +223,8 @@ export function KidCorner() {
       </div>
 
       <h3 className="kid-subtitle">{t('flightPlan')}</h3>
-      <div className="kid-days">
-        {daySpan.map((date, i) => {
+      <div className="kid-days two">
+        {[today, addDays(today, 1)].map((date, i) => {
           const acts = activitiesOn(data.activities, date).filter(
             (a) => a.memberIds.length === 0 || a.memberIds.includes(kid.id),
           )

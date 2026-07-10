@@ -1,0 +1,240 @@
+import type { AvatarSpec, AvatarAge, Member } from '../types'
+
+// Parametric SVG avatars. Everything is drawn in a 100×100 viewBox and
+// composed from option lists indexed by AvatarSpec.
+
+export const SKIN_TONES = ['#ffe3c8', '#f6d0a7', '#eebe8e', '#dcae7e', '#c78f5f']
+
+export const HAIR_COLORS = ['#26211e', '#453128', '#6b4a33', '#8c8f93', '#e8e6e2'] as const
+
+export const AGES: { key: AvatarAge; emoji: string }[] = [
+  { key: 'baby', emoji: '👶' },
+  { key: 'toddler', emoji: '🧒' },
+  { key: 'kid', emoji: '🧒' },
+  { key: 'adult', emoji: '🧑' },
+  { key: 'grandparent', emoji: '🧓' },
+]
+
+export const FACIAL_HAIR = ['none', 'mustache', 'goatee', 'beard', 'stubble'] as const
+
+interface AgeGeo {
+  ry: number // face vertical radius
+  eye: number // eye radius
+  cheeks: boolean
+  wrinkles: boolean
+}
+
+const AGE_GEO: Record<AvatarAge, AgeGeo> = {
+  baby: { ry: 24, eye: 3.4, cheeks: true, wrinkles: false },
+  toddler: { ry: 25, eye: 3.1, cheeks: true, wrinkles: false },
+  kid: { ry: 26, eye: 2.8, cheeks: false, wrinkles: false },
+  adult: { ry: 27, eye: 2.5, cheeks: false, wrinkles: false },
+  grandparent: { ry: 27, eye: 2.5, cheeks: false, wrinkles: true },
+}
+
+export const HAIRSTYLE_NAMES = [
+  'Bald', 'Buzz cut', 'Short & neat', 'Side part', 'Spiky', 'Bowl cut', 'Short curls',
+  'Big curls', 'Bob', 'Long straight', 'Ponytail', 'Pigtails', 'Top bun', 'Double buns',
+  'Long braid', 'Fringe & long', 'Wavy', 'Mohawk', 'Comb-over', 'Baby tuft',
+]
+
+/** Hair drawn behind the face (long styles) — returns SVG elements */
+function hairBack(style: number, c: string) {
+  switch (style) {
+    case 8: // bob
+      return <path d="M22 50 Q20 84 32 84 L68 84 Q80 84 78 50 Q78 24 50 24 Q22 24 22 50Z" fill={c} />
+    case 9: // long straight
+      return <path d="M22 48 Q18 92 30 92 L70 92 Q82 92 78 48 Q78 22 50 22 Q22 22 22 48Z" fill={c} />
+    case 14: // long braid
+      return (
+        <g fill={c}>
+          <path d="M24 48 Q22 30 50 24 Q78 30 76 48 Z" />
+          <circle cx="76" cy="56" r="6" />
+          <circle cx="78" cy="67" r="5.5" />
+          <circle cx="79" cy="77" r="5" />
+          <circle cx="80" cy="86" r="4.5" />
+        </g>
+      )
+    case 15: // fringe & long
+      return <path d="M23 48 Q19 90 31 90 L69 90 Q81 90 77 48 Q77 22 50 22 Q23 22 23 48Z" fill={c} />
+    case 16: // wavy
+      return (
+        <path
+          d="M22 46 Q16 70 24 88 Q30 78 28 66 Q34 84 40 90 Q40 76 38 66 Q50 84 62 90 Q60 76 60 66 Q68 84 76 88 Q84 70 78 46 Q76 22 50 22 Q24 22 22 46Z"
+          fill={c}
+        />
+      )
+    case 10: // ponytail (tail behind)
+      return (
+        <g fill={c}>
+          <circle cx="76" cy="34" r="7" />
+          <path d="M76 34 Q86 52 78 70 Q73 68 72 52 Q72 42 76 34Z" />
+        </g>
+      )
+    case 11: // pigtails
+      return (
+        <g fill={c}>
+          <circle cx="20" cy="46" r="8" />
+          <circle cx="80" cy="46" r="8" />
+          <path d="M20 46 Q14 62 20 74 Q26 70 24 56Z" />
+          <path d="M80 46 Q86 62 80 74 Q74 70 76 56Z" />
+        </g>
+      )
+    default:
+      return null
+  }
+}
+
+/** Hair drawn over the face (caps, bangs, buns) */
+function hairFront(style: number, c: string) {
+  switch (style) {
+    case 0: // bald
+      return null
+    case 1: // buzz
+      return <path d="M27 42 Q28 22 50 21 Q72 22 73 42 Q72 32 50 30 Q28 32 27 42Z" fill={c} opacity="0.85" />
+    case 2: // short & neat
+      return <path d="M25 44 Q25 20 50 20 Q75 20 75 44 Q73 32 62 32 Q52 32 46 28 Q38 34 27 35 Q25 38 25 44Z" fill={c} />
+    case 3: // side part
+      return <path d="M25 44 Q24 20 52 20 Q76 22 75 46 Q74 30 58 33 Q40 36 33 32 Q27 36 25 44Z" fill={c} />
+    case 4: // spiky
+      return (
+        <path
+          d="M25 42 L28 28 L33 36 L38 22 L43 33 L50 19 L57 33 L62 22 L67 36 L72 28 L75 42 Q72 30 50 29 Q28 30 25 42Z"
+          fill={c}
+        />
+      )
+    case 5: // bowl
+      return <path d="M23 48 Q23 19 50 19 Q77 19 77 48 L71 48 Q71 34 50 34 Q29 34 29 48Z" fill={c} />
+    case 6: // short curls
+      return (
+        <g fill={c}>
+          <circle cx="30" cy="36" r="8" />
+          <circle cx="40" cy="29" r="8" />
+          <circle cx="51" cy="27" r="8" />
+          <circle cx="62" cy="29" r="8" />
+          <circle cx="71" cy="36" r="8" />
+        </g>
+      )
+    case 7: // big curls
+      return (
+        <g fill={c}>
+          <circle cx="50" cy="27" r="15" />
+          <circle cx="31" cy="35" r="11" />
+          <circle cx="69" cy="35" r="11" />
+          <circle cx="24" cy="48" r="8" />
+          <circle cx="76" cy="48" r="8" />
+        </g>
+      )
+    case 8: // bob bangs
+    case 9: // long straight bangs
+      return <path d="M26 42 Q26 21 50 21 Q74 21 74 42 Q70 30 50 30 Q30 30 26 42Z" fill={c} />
+    case 10: // ponytail cap
+      return <path d="M25 44 Q25 20 50 20 Q75 20 76 40 Q70 30 50 30 Q30 30 25 44Z" fill={c} />
+    case 11: // pigtails cap with middle part
+      return <path d="M26 42 Q26 21 50 21 Q74 21 74 42 Q70 30 52 30 L52 26 L48 26 L48 30 Q30 30 26 42Z" fill={c} />
+    case 12: // top bun
+      return (
+        <g fill={c}>
+          <circle cx="50" cy="16" r="9" />
+          <path d="M26 42 Q26 21 50 21 Q74 21 74 42 Q70 30 50 30 Q30 30 26 42Z" />
+        </g>
+      )
+    case 13: // double buns
+      return (
+        <g fill={c}>
+          <circle cx="32" cy="19" r="8" />
+          <circle cx="68" cy="19" r="8" />
+          <path d="M26 42 Q26 21 50 21 Q74 21 74 42 Q70 30 50 30 Q30 30 26 42Z" />
+        </g>
+      )
+    case 14: // braid front
+    case 15: // fringe
+      return <path d="M26 40 Q26 21 50 21 Q74 21 74 40 L70 40 Q70 32 50 32 Q30 32 30 40Z" fill={c} />
+    case 16: // wavy bangs
+      return <path d="M26 40 Q26 21 50 21 Q74 21 74 40 Q68 30 58 34 Q50 26 42 34 Q32 30 26 40Z" fill={c} />
+    case 17: // mohawk
+      return <path d="M44 30 L46 14 L50 26 L54 12 L56 30 Q50 26 44 30Z" fill={c} />
+    case 18: // comb-over (sparse)
+      return (
+        <g stroke={c} strokeWidth="3" strokeLinecap="round" fill="none">
+          <path d="M30 34 Q45 22 68 30" />
+          <path d="M32 39 Q48 28 70 35" />
+        </g>
+      )
+    case 19: // baby tuft
+      return <path d="M48 22 Q46 12 54 10 Q50 16 54 20 Q51 23 48 22Z" fill={c} />
+    default:
+      return null
+  }
+}
+
+function facialHair(kind: number, c: string) {
+  switch (kind) {
+    case 1: // mustache
+      return <path d="M40 66 Q50 61 60 66 Q55 69 50 68 Q45 69 40 66Z" fill={c} />
+    case 2: // goatee
+      return <ellipse cx="50" cy="79" rx="6" ry="4.5" fill={c} />
+    case 3: // full beard
+      return (
+        <path
+          d="M27 56 Q28 84 50 86 Q72 84 73 56 Q73 74 62 76 Q56 70 50 70 Q44 70 38 76 Q27 74 27 56Z"
+          fill={c}
+        />
+      )
+    case 4: // stubble
+      return <path d="M30 62 Q34 80 50 82 Q66 80 70 62 Q66 74 50 76 Q34 74 30 62Z" fill={c} opacity="0.28" />
+    default:
+      return null
+  }
+}
+
+export function AvatarSvg({ spec, ring, size = 40 }: { spec: AvatarSpec; ring?: string; size?: number }) {
+  const geo = AGE_GEO[spec.age]
+  const skin = SKIN_TONES[spec.skin] ?? SKIN_TONES[1]
+  const hc = HAIR_COLORS[spec.hairColor] ?? HAIR_COLORS[0]
+  return (
+    <svg viewBox="0 0 100 100" width={size} height={size} className="avatar-svg" style={ring ? { background: ring + '22', borderColor: ring } : undefined}>
+      {hairBack(spec.hair, hc)}
+      {/* ears */}
+      <circle cx="25" cy="56" r="5" fill={skin} />
+      <circle cx="75" cy="56" r="5" fill={skin} />
+      {/* face */}
+      <ellipse cx="50" cy="55" rx="25" ry={geo.ry} fill={skin} />
+      {/* eyes */}
+      <circle cx="40" cy="53" r={geo.eye} fill="#33302b" />
+      <circle cx="60" cy="53" r={geo.eye} fill="#33302b" />
+      {/* smile */}
+      <path d="M42 66 Q50 73 58 66" stroke="#8a5a3a" strokeWidth="2.4" fill="none" strokeLinecap="round" />
+      {geo.cheeks && (
+        <g fill="#f2a19b" opacity="0.55">
+          <circle cx="34" cy="62" r="4.5" />
+          <circle cx="66" cy="62" r="4.5" />
+        </g>
+      )}
+      {geo.wrinkles && (
+        <g stroke="#b98e63" strokeWidth="1.6" fill="none" strokeLinecap="round" opacity="0.7">
+          <path d="M34 45 Q40 42 46 45" />
+          <path d="M54 45 Q60 42 66 45" />
+        </g>
+      )}
+      {facialHair(spec.facialHair, hc)}
+      {hairFront(spec.hair, hc)}
+    </svg>
+  )
+}
+
+/** A member's face: their designed avatar, or their emoji as a fallback */
+export function MemberFace({ member, size = 32 }: { member: Member; size?: number }) {
+  if (member.avatar) return <AvatarSvg spec={member.avatar} ring={member.color} size={size} />
+  return (
+    <span
+      className="avatar"
+      title={member.name}
+      style={{ width: size, height: size, fontSize: size * 0.58, background: member.color + '22', borderColor: member.color }}
+    >
+      {member.emoji}
+    </span>
+  )
+}
+
+export const DEFAULT_SPEC: AvatarSpec = { age: 'adult', skin: 1, hair: 2, hairColor: 0, facialHair: 0 }

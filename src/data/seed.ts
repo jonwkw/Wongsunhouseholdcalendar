@@ -17,21 +17,15 @@ export function seedData(): AppData {
   return {
     version: 2,
     members: [
-      { id: 'jonathan', name: 'Jonathan', emoji: '👨', color: '#3b82c4' },
-      { id: 'lilian', name: 'Lilian', emoji: '👩', color: '#c45b9d' },
-      { id: 'jenny', name: 'Jenny', emoji: '🧑‍🍳', color: '#2f9e77' },
-      { id: 'waipo', name: 'Waipo', emoji: '👵', color: '#8a6bbf' },
-      { id: 'rosco', name: 'Rosco', emoji: '🧒', color: '#e08a2e', isChild: true },
-      { id: 'casper', name: 'Casper', emoji: '👶', color: '#d95d5d', isChild: true },
+      { id: 'jonathan', name: 'Jonathan', emoji: '👨', color: '#3b82c4', avatar: { age: 'adult', skin: 1, hair: 2, hairColor: 0, facialHair: 0 } },
+      { id: 'lilian', name: 'Lilian', emoji: '👩', color: '#c45b9d', avatar: { age: 'adult', skin: 0, hair: 9, hairColor: 0, facialHair: 0 } },
+      { id: 'jenny', name: 'Jenny', emoji: '🧑‍🍳', color: '#2f9e77', avatar: { age: 'adult', skin: 2, hair: 10, hairColor: 0, facialHair: 0 } },
+      { id: 'waipo', name: 'Waipo', emoji: '👵', color: '#8a6bbf', avatar: { age: 'grandparent', skin: 1, hair: 8, hairColor: 3, facialHair: 0 } },
+      { id: 'rosco', name: 'Rosco', emoji: '🧒', color: '#e08a2e', isChild: true, avatar: { age: 'kid', skin: 1, hair: 4, hairColor: 0, facialHair: 0 } },
+      { id: 'casper', name: 'Casper', emoji: '👶', color: '#d95d5d', isChild: true, avatar: { age: 'baby', skin: 0, hair: 19, hairColor: 0, facialHair: 0 } },
     ],
     activities: [],
-    activityTemplates: [
-      { id: 't-school', title: 'School', emoji: '🏫', memberIds: ['rosco'], time: '07:30', endTime: '13:30' },
-      { id: 't-enrich', title: 'Enrichment class', emoji: '📚', memberIds: ['rosco'], time: '15:00' },
-      { id: 't-swim', title: 'Swimming', emoji: '🏊', memberIds: ['rosco', 'casper'], time: '09:00' },
-      { id: 't-playdate', title: 'Playdate', emoji: '🎈', memberIds: ['rosco', 'casper'] },
-      { id: 't-doctor', title: 'Doctor appointment', emoji: '🩺', memberIds: [] },
-    ],
+    activityTemplates: [],
     dayNotes: [],
     dishes: [
       { id: 'd-1', name: 'Chicken rice', emoji: '🍗', slot: 'lunch' },
@@ -46,10 +40,10 @@ export function seedData(): AppData {
     boardItems: [
       {
         id: 'b-1',
-        kind: 'request',
-        text: 'Can we add mee goreng to the menu this week?',
-        byMemberId: 'jonathan',
-        assignedToId: 'jenny',
+        kind: 'reminder',
+        text: 'Clean the balcony this weekend',
+        byMemberId: 'lilian',
+        assignedToId: 'jonathan',
         status: 'open',
         createdAt: today,
       },

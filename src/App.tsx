@@ -5,20 +5,20 @@ import { TodayView } from './components/TodayView'
 import { Timetable } from './components/Timetable'
 import { MenuPlanner } from './components/MenuPlanner'
 import { KidCorner } from './components/KidCorner'
-import { FamilyModal } from './components/FamilyModal'
+import { ProfilePage } from './components/ProfilePage'
 
 function Shell() {
   const { data } = useApp()
   const { lang, setLang } = useLang()
   const [tab, setTab] = useState('today')
-  const [showFamily, setShowFamily] = useState(false)
 
   const kid = data.members.find((m) => m.isChild)
   const tabs = [
     { id: 'today', label: t('tabToday') },
     { id: 'timetable', label: t('tabTimetable') },
     { id: 'menu', label: t('tabMenu') },
-    ...(kid ? [{ id: 'kid', label: `⭐ ${kid.name}` }] : []),
+    ...(kid ? [{ id: 'kid', label: `🚀 ${kid.name}` }] : []),
+    { id: 'family', label: t('tabFamily') },
   ]
 
   return (
@@ -39,9 +39,6 @@ function Shell() {
           >
             {lang === 'en' ? '🇨🇳 中文' : '🇬🇧 English'}
           </button>
-          <button className="btn subtle" onClick={() => setShowFamily(true)}>
-            {t('editFamily')}
-          </button>
         </div>
       </header>
 
@@ -58,9 +55,8 @@ function Shell() {
         {tab === 'timetable' && <Timetable />}
         {tab === 'menu' && <MenuPlanner />}
         {tab === 'kid' && <KidCorner />}
+        {tab === 'family' && <ProfilePage />}
       </main>
-
-      {showFamily && <FamilyModal onClose={() => setShowFamily(false)} />}
     </div>
   )
 }

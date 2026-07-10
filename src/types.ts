@@ -2,12 +2,24 @@
 
 export type MealSlot = 'breakfast' | 'lunch' | 'dinner' | 'snack-am' | 'snack-pm'
 
+export type AvatarAge = 'baby' | 'toddler' | 'kid' | 'adult' | 'grandparent'
+
+/** A designed avatar: indexes into the option lists in avatars.tsx */
+export interface AvatarSpec {
+  age: AvatarAge
+  skin: number
+  hair: number
+  hairColor: number
+  facialHair: number
+}
+
 export interface Member {
   id: string
   name: string
   emoji: string
   color: string
   isChild?: boolean
+  avatar?: AvatarSpec
 }
 
 export interface Recurrence {
@@ -90,11 +102,12 @@ export interface BoardItem {
   reply?: string
 }
 
-/** A daily habit on the kid's checklist (brush teeth, eat breakfast, …) */
+/** A task on the kid's checklist. No date = repeats every day; a date = one-off for that day. */
 export interface ChecklistItem {
   id: string
   emoji: string
   text: string
+  date?: string
 }
 
 export interface AppData {
