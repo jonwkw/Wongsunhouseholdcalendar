@@ -3,7 +3,8 @@ import { useApp, uid } from '../store'
 import { activitiesOn, addDays, prettyDate, prettyTime, relativeLabel, todayKey, fromKey, weekdayName } from '../utils/dates'
 import { useForecast } from '../utils/useForecast'
 import { weatherEmoji } from '../utils/weather'
-import { mathProblemFor, missionFor, wordFor, cnWordFor, rocketFor, ROCKETS } from '../data/kidContent'
+import { mathProblemFor, missionFor, wordFor, cnWordFor, rocketFor, ROCKETS, CHINESE_WORDS } from '../data/kidContent'
+import type { WordOfDay, ChineseWordOfDay } from '../data/kidContent'
 import { RocketShip } from './RocketShip'
 import { t, getLang } from '../i18n'
 import { speak, stopSpeak } from '../utils/speech'
@@ -24,6 +25,8 @@ export function KidCorner() {
   const [celebrateLevel, setCelebrateLevel] = useState<number | null>(null)
   const [kidUnlocked, setKidUnlocked] = useState(false)
   const [showKidUnlock, setShowKidUnlock] = useState(false)
+  const [showSpellTest, setShowSpellTest] = useState(false)
+  const [showCnTest, setShowCnTest] = useState(false)
   const canEdit = !locked || kidUnlocked
   const launchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -258,6 +261,9 @@ export function KidCorner() {
             <button className="btn subtle speak-btn" onClick={stopSpeak}>
               {t('stopBtn')}
             </button>
+            <button className="btn subtle test-btn" onClick={() => setShowSpellTest(true)}>
+              {t('testMe')}
+            </button>
           </div>
         </div>
 
@@ -281,6 +287,9 @@ export function KidCorner() {
             </button>
             <button className="btn subtle speak-btn" onClick={stopSpeak}>
               {t('stopBtn')}
+            </button>
+            <button className="btn subtle test-btn" onClick={() => setShowCnTest(true)}>
+              {t('testMe')}
             </button>
           </div>
         </div>
@@ -377,7 +386,166 @@ export function KidCorner() {
           onClose={() => setShowKidUnlock(false)}
         />
       )}
+      {showSpellTest && <SpellTestModal word={word} onClose={() => { stopSpeak(); setShowSpellTest(false) }} />}
+      {showCnTest && <CnTestModal word={cnWord} onClose={() => { stopSpeak(); setShowCnTest(false) }} />}
     </div>
+  )
+}
+
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr]
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[a[i], a[j]] = [a[j], a[i]]
+  }
+  return a
+}
+
+interface Tile {
+  id: number
+  ch: string
+  used: boolean
+}
+
+function makeTiles(target: string): Tile[] {
+  const decoys = shuffle('abcdefghijklmnopqrstuvwxyz'.split('').filter((c) => !target.includes(c))).slice(0, 3)
+  return shuffle([...target.split(''), ...decoys]).map((ch, id) => ({ id, ch, used: false }))
+}
+
+/** Spelling game: hear the word, tap its letters in order from a shuffled pool */
+function SpellTestModal({ word, onClose }: { word: WordOfDay; onClose: () => void }) {
+  const target = word.word.toLowerCase()
+  const [tiles, setTiles] = useState<Tile[]>(() => makeTiles(target))
+  const [progress, setProgress] = useState(0)
+  const [wrongId, setWrongId] = useState<number | null>(null)
+  const done = progress >= target.length
+
+  const sayWord = () => speak(`Can you spell the word: ${word.word}? ${word.word} means ${word.meaning}.`)
+  useEffect(() => {
+    sayWord()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const tap = (tile: Tile) => {
+    if (tile.used || done) return
+    if (tile.ch === target[progress]) {
+      setTiles((ts) => ts.map((x) => (x.id === tile.id ? { ...x, used: true } : x)))
+      const next = progress + 1
+      setProgress(next)
+      if (next >= target.length) {
+        speak(`${target.split('').join('. ')}. spells ${word.word}! Amazing job!`)
+      }
+    } else {
+      setWrongId(tile.id)
+      setTimeout(() => setWrongId(null), 450)
+    }
+  }
+
+  const reset = () => {
+    setTiles(makeTiles(target))
+    setProgress(0)
+    sayWord()
+  }
+
+  return (
+    <Modal title={t('spellTitle')} onClose={onClose}>
+      <p className="hint" style={{ marginTop: 0 }}>{t('spellHint')}</p>
+      <div className="spell-slots">
+        {target.split('').map((ch, i) => (
+          <span key={i} className={`spell-slot ${i < progress ? 'filled' : ''}`}>
+            {i < progress ? ch : ''}
+          </span>
+        ))}
+      </div>
+      {done ? (
+        <div className="test-celebrate">
+          <div className="test-word">🎉 {word.word} 🎉</div>
+          <div className="kid-btn-row">
+            <button className="btn primary" onClick={reset}>{t('playAgain')}</button>
+            <button className="btn subtle" onClick={onClose}>{t('doneBtn')}</button>
+          </div>
+        </div>
+      ) : (
+        <>
+          <div className="letter-tiles">
+            {tiles.map((tile) => (
+              <button
+                key={tile.id}
+                className={`letter-tile ${tile.used ? 'used' : ''} ${wrongId === tile.id ? 'wrong' : ''}`}
+                disabled={tile.used}
+                onClick={() => tap(tile)}
+              >
+                {tile.ch}
+              </button>
+            ))}
+          </div>
+          <div className="kid-btn-row">
+            <button className="btn subtle speak-btn" onClick={sayWord}>{t('sayAgain')}</button>
+            <button className="btn subtle speak-btn" onClick={stopSpeak}>{t('stopBtn')}</button>
+          </div>
+        </>
+      )}
+    </Modal>
+  )
+}
+
+/** Listening game: hear the Chinese word, tap the matching character */
+function CnTestModal({ word, onClose }: { word: ChineseWordOfDay; onClose: () => void }) {
+  const [choices] = useState(() =>
+    shuffle([word, ...shuffle(CHINESE_WORDS.filter((w) => w.hanzi !== word.hanzi)).slice(0, 2)]),
+  )
+  const [wrong, setWrong] = useState<string | null>(null)
+  const [done, setDone] = useState(false)
+
+  const sayWord = () => speak(`听一听：${word.hanzi}。${word.hanzi}。哪一个字是 ${word.hanzi}？`, 'zh')
+  useEffect(() => {
+    sayWord()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const tap = (hanzi: string) => {
+    if (done) return
+    if (hanzi === word.hanzi) {
+      setDone(true)
+      speak(`答对了！${word.hanzi}，就是${word.meaningZh}。${word.sentence} 你真棒！`, 'zh')
+    } else {
+      setWrong(hanzi)
+      setTimeout(() => setWrong(null), 450)
+    }
+  }
+
+  return (
+    <Modal title={t('cnTestTitle')} onClose={onClose}>
+      <p className="hint" style={{ marginTop: 0 }}>{t('cnTestHint')}</p>
+      {done ? (
+        <div className="test-celebrate">
+          <div className="test-word">🎉 {word.hanzi} 🎉</div>
+          <p className="kid-meaning">{word.pinyin} · {word.meaning}</p>
+          <p className="kid-sentence">“{word.sentence}”</p>
+          <div className="kid-btn-row">
+            <button className="btn subtle" onClick={onClose}>{t('doneBtn')}</button>
+          </div>
+        </div>
+      ) : (
+        <>
+          <div className="cn-choices">
+            {choices.map((c) => (
+              <button
+                key={c.hanzi}
+                className={`cn-choice ${wrong === c.hanzi ? 'wrong' : ''}`}
+                onClick={() => tap(c.hanzi)}
+              >
+                {c.hanzi}
+              </button>
+            ))}
+          </div>
+          <div className="kid-btn-row">
+            <button className="btn subtle speak-btn" onClick={sayWord}>{t('sayAgain')}</button>
+            <button className="btn subtle speak-btn" onClick={stopSpeak}>{t('stopBtn')}</button>
+          </div>
+        </>
+      )}
+    </Modal>
   )
 }
 

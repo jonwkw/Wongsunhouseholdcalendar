@@ -2869,3 +2869,127 @@ textarea:focus {
     display: none;
   }
 }
+
+/* ---------- Rosco test games ---------- */
+.spell-slots {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin: 8px 0 14px;
+}
+
+.spell-slot {
+  width: 34px;
+  height: 42px;
+  border-bottom: 3.5px solid var(--accent);
+  border-radius: 6px 6px 0 0;
+  background: color-mix(in srgb, var(--accent) 8%, #fff);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 800;
+  text-transform: lowercase;
+}
+
+.spell-slot.filled {
+  background: color-mix(in srgb, var(--primary) 14%, #fff);
+  border-bottom-color: var(--primary);
+  animation: slot-pop 0.25s ease;
+}
+
+@keyframes slot-pop {
+  0% { transform: scale(0.6); }
+  70% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+.letter-tiles {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.letter-tile {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  border: 2px solid var(--line);
+  background: #fff;
+  font-size: 22px;
+  font-weight: 800;
+  text-transform: lowercase;
+  box-shadow: 0 2px 0 var(--line);
+  transition: transform 0.1s ease;
+}
+
+.letter-tile:hover:not(:disabled) {
+  transform: translateY(-2px);
+  border-color: var(--accent);
+}
+
+.letter-tile.used {
+  opacity: 0.25;
+  box-shadow: none;
+}
+
+.letter-tile.wrong,
+.cn-choice.wrong {
+  animation: tile-shake 0.4s ease;
+  border-color: var(--danger);
+}
+
+@keyframes tile-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  50% { transform: translateX(5px); }
+  75% { transform: translateX(-3px); }
+}
+
+.cn-choices {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin: 10px 0 14px;
+}
+
+.cn-choice {
+  min-width: 84px;
+  padding: 14px 18px;
+  border-radius: 16px;
+  border: 2.5px solid var(--line);
+  background: #fff;
+  font-size: 40px;
+  font-weight: 800;
+  box-shadow: 0 3px 0 var(--line);
+  transition: transform 0.1s ease;
+}
+
+.cn-choice:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent);
+}
+
+.test-celebrate {
+  text-align: center;
+}
+
+.test-celebrate .test-word {
+  font-size: 34px;
+  font-weight: 900;
+  margin: 8px 0;
+  animation: slot-pop 0.4s ease;
+}
+
+.test-celebrate .kid-btn-row {
+  justify-content: center;
+}
+
+.test-btn {
+  border-color: color-mix(in srgb, var(--accent) 45%, #fff);
+  background: color-mix(in srgb, var(--accent) 10%, #fff);
+  font-weight: 700;
+}
