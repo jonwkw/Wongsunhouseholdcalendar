@@ -53,6 +53,8 @@ export function seedData(): AppData {
     boardItems: [],
     kidChecklist: DEFAULT_CHECKLIST,
     kidChecks: {},
+    kidSkips: {},
+    kidChallenges: {},
     starDays: [],
   }
 }

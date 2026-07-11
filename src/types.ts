@@ -139,6 +139,10 @@ export interface AppData {
   kidChecklist: ChecklistItem[]
   /** Which checklist items were ticked on each date */
   kidChecks: Record<string, string[]>
+  /** Checklist items an adult marked "not needed" on each date — excluded from fuel */
+  kidSkips: Record<string, string[]>
+  /** Daily challenges completed per date: 'word' | 'cnword' | 'math' | 'mission' */
+  kidChallenges: Record<string, string[]>
   /** Dates where every checklist item was ticked — one gold star each */
   starDays: string[]
 }

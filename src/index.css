@@ -3127,3 +3127,79 @@ textarea:focus {
     flex-wrap: wrap;
   }
 }
+
+/* ---------- challenge COMPLETE badges + skips + test cover ---------- */
+.kid-card {
+  position: relative;
+}
+
+.done-badge {
+  position: absolute;
+  top: -10px;
+  right: 10px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 900;
+  padding: 3px 10px;
+  border-radius: 999px;
+  transform: rotate(3deg);
+  box-shadow: 0 3px 8px color-mix(in srgb, var(--primary) 45%, transparent);
+  animation: slot-pop 0.35s ease;
+}
+
+.kid-card.challenge-done {
+  border-style: solid;
+  box-shadow: inset 0 0 0 100vmax color-mix(in srgb, var(--primary) 4%, transparent);
+}
+
+.gotit-btn {
+  margin-left: 10px;
+  font-size: 13px;
+  padding: 4px 10px;
+}
+
+.checklist-item.skipped {
+  opacity: 0.55;
+}
+
+.checklist-item.skipped .checklist-text {
+  text-decoration: line-through;
+  text-decoration-color: color-mix(in srgb, var(--muted) 60%, transparent);
+}
+
+.skip-tag {
+  margin-left: 8px;
+  font-size: 11.5px;
+  color: var(--muted);
+  background: #f1ead9;
+  border-radius: 999px;
+  padding: 1px 8px;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.skip-btn.on {
+  background: #fbedd9;
+  outline: 1.5px solid var(--accent);
+}
+
+/* test games: hide the page completely so there's no peeking at the answer */
+.modal-backdrop.cover {
+  background: var(--bg);
+  background-image: radial-gradient(color-mix(in srgb, var(--accent) 9%, transparent) 1.2px, transparent 1.3px);
+  background-size: 26px 26px;
+}
+
+.cn-meaning-prompt {
+  text-align: center;
+  font-size: 17px;
+  font-weight: 700;
+  margin: 4px 0 8px;
+}
+
+.spell-slot.given {
+  background: #f4f1e8;
+  border-bottom-color: var(--line);
+  color: var(--muted);
+}

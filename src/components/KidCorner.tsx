@@ -58,13 +58,44 @@ export function KidCorner() {
 
   const items = itemsFor(selectedDay)
   const checked = data.kidChecks[selectedDay] ?? []
-  const dayDone = items.length > 0 && items.every((i) => checked.includes(i.id))
+  const skipped = data.kidSkips[selectedDay] ?? []
+  const effective = items.filter((i) => !skipped.includes(i.id))
+  const dayDone = effective.length > 0 && effective.every((i) => checked.includes(i.id))
+
+  // daily challenges Rosco has finished today (COMPLETE badges)
+  const challenges = data.kidChallenges[today] ?? []
+  const markChallenge = (id: string) =>
+    update((d) => ({
+      ...d,
+      kidChallenges: {
+        ...d.kidChallenges,
+        [today]: Array.from(new Set([...(d.kidChallenges[today] ?? []), id])),
+      },
+    }))
+
+  /** Adult switch: this task isn't needed today (doesn't count for fuel) */
+  const toggleSkip = (itemId: string) => {
+    if (locked) return
+    update((d) => {
+      const cur = d.kidSkips[selectedDay] ?? []
+      const next = cur.includes(itemId) ? cur.filter((x) => x !== itemId) : [...cur, itemId]
+      // recompute the day's star with the new skip list
+      const dayItems = d.kidChecklist.filter((i) => (!i.date || i.date === selectedDay) && !next.includes(i.id))
+      const checks = d.kidChecks[selectedDay] ?? []
+      const done = dayItems.length > 0 && dayItems.every((i) => checks.includes(i.id))
+      const starDays = done
+        ? d.starDays.includes(selectedDay) ? d.starDays : [...d.starDays, selectedDay]
+        : d.starDays.filter((x) => x !== selectedDay)
+      return { ...d, kidSkips: { ...d.kidSkips, [selectedDay]: next }, starDays }
+    })
+  }
 
   const totalDays = data.starDays.length
   const launches = Math.floor(totalDays / 5)
   const tank = totalDays % 5
   const { rocket, level } = rocketFor(launches)
-  const todayItems = itemsFor(today)
+  const todaySkipped = data.kidSkips[today] ?? []
+  const todayItems = itemsFor(today).filter((i) => !todaySkipped.includes(i.id))
   const todayChecked = data.kidChecks[today] ?? []
   const todayFraction = data.starDays.includes(today)
     ? 0
@@ -77,7 +108,8 @@ export function KidCorner() {
     update((d) => {
       const cur = d.kidChecks[selectedDay] ?? []
       const next = cur.includes(itemId) ? cur.filter((x) => x !== itemId) : [...cur, itemId]
-      const dayItems = d.kidChecklist.filter((i) => !i.date || i.date === selectedDay)
+      const daySkips = d.kidSkips[selectedDay] ?? []
+      const dayItems = d.kidChecklist.filter((i) => (!i.date || i.date === selectedDay) && !daySkips.includes(i.id))
       const done = dayItems.length > 0 && dayItems.every((i) => next.includes(i.id))
       const wasDone = d.starDays.includes(selectedDay)
       const starDays = done
@@ -191,7 +223,7 @@ export function KidCorner() {
         {items.map((item) => (
           <label
             key={item.id}
-            className={`checklist-item ${checked.includes(item.id) ? 'done' : ''} ${isFuture || !canEdit ? 'locked' : ''} ${dropTarget === item.id ? 'drop-target' : ''}`}
+            className={`checklist-item ${checked.includes(item.id) ? 'done' : ''} ${isFuture || !canEdit ? 'locked' : ''} ${skipped.includes(item.id) ? 'skipped' : ''} ${dropTarget === item.id ? 'drop-target' : ''}`}
             draggable={canEdit}
             onDragStart={(e) => setDragPayload(e, { kind: 'check-item', id: item.id })}
             onDragOver={(e) => {
@@ -212,14 +244,27 @@ export function KidCorner() {
             <input
               type="checkbox"
               checked={checked.includes(item.id)}
-              disabled={isFuture || !canEdit}
+              disabled={isFuture || !canEdit || skipped.includes(item.id)}
               onChange={() => toggleCheck(item.id)}
             />
             <span className="checklist-emoji">{item.emoji}</span>
             <span className="checklist-text">
               {getLang() === 'zh' && item.textZh ? item.textZh : item.text}
               {item.date && <span className="oneoff-tag">📅 {prettyDate(item.date)}</span>}
+              {skipped.includes(item.id) && <span className="skip-tag">{t('notNeededTag')}</span>}
             </span>
+            {!locked && !isFuture && (
+              <button
+                className={`icon-btn tiny skip-btn ${skipped.includes(item.id) ? 'on' : ''}`}
+                title={t('notNeeded')}
+                onClick={(e) => {
+                  e.preventDefault()
+                  toggleSkip(item.id)
+                }}
+              >
+                🙅
+              </button>
+            )}
             {editList && (
               <span className="reorder-btns">
                 <button className="icon-btn tiny" onClick={(e) => { e.preventDefault(); nudgeItem(item.id, -1) }}>
@@ -305,7 +350,8 @@ export function KidCorner() {
       </div>
 
       <div className="kid-daily">
-        <div className="kid-card word">
+        <div className={`kid-card word ${challenges.includes('word') ? 'challenge-done' : ''}`}>
+          {challenges.includes('word') && <span className="done-badge">{t('completeTag')}</span>}
           <h3>{t('wordOfDay')}</h3>
           <div className="kid-word">{word.word}</div>
           <div className="kid-phonetic">🔤 {word.phonetic}</div>
@@ -337,7 +383,8 @@ export function KidCorner() {
           </div>
         </div>
 
-        <div className="kid-card cnword">
+        <div className={`kid-card cnword ${challenges.includes('cnword') ? 'challenge-done' : ''}`}>
+          {challenges.includes('cnword') && <span className="done-badge">{t('completeTag')}</span>}
           <h3>{t('cnWordOfDay')}</h3>
           <div className="kid-word hanzi">{cnWord.hanzi}</div>
           <div className="kid-phonetic">🔤 {cnWord.pinyin} · {cnWord.meaning}</div>
@@ -370,10 +417,20 @@ export function KidCorner() {
           </div>
         </div>
 
-        <div className="kid-card math">
+        <div className={`kid-card math ${challenges.includes('math') ? 'challenge-done' : ''}`}>
+          {challenges.includes('math') && <span className="done-badge">{t('completeTag')}</span>}
           <h3>{t('mathOfDay')}</h3>
           <p className="kid-question">{lang === 'zh' ? math.questionZh : math.question}</p>
-          {showAnswer && <div className="kid-answer">{t('answerIs', { n: math.answer })}</div>}
+          {showAnswer && (
+            <div className="kid-answer">
+              {t('answerIs', { n: math.answer })}
+              {!challenges.includes('math') && (
+                <button className="btn primary gotit-btn" onClick={() => markChallenge('math')}>
+                  {t('gotIt')}
+                </button>
+              )}
+            </div>
+          )}
           <div className="kid-btn-row">
             {!showAnswer && (
               <button className="btn primary" onClick={() => setShowAnswer(true)}>
@@ -395,7 +452,8 @@ export function KidCorner() {
           </div>
         </div>
 
-        <div className="kid-card mission">
+        <div className={`kid-card mission ${challenges.includes('mission') ? 'challenge-done' : ''}`}>
+          {challenges.includes('mission') && <span className="done-badge">{t('completeTag')}</span>}
           <h3>{t('missionOfDay')}</h3>
           <p className="kid-question">{mission}</p>
           <div className="kid-btn-row">
@@ -421,6 +479,11 @@ export function KidCorner() {
             <button className="btn subtle" onClick={() => { stopSpeak(); setMissionN((n) => n + 1) }}>
               {t('nextOne')}
             </button>
+            {!challenges.includes('mission') && (
+              <button className="btn primary" onClick={() => markChallenge('mission')}>
+                {t('didIt')}
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -474,8 +537,22 @@ export function KidCorner() {
           onClose={() => setShowKidUnlock(false)}
         />
       )}
-      {showSpellTest && <SpellTestModal word={word} onClose={() => { stopSpeak(); setShowSpellTest(false) }} />}
-      {showCnTest && <CnTestModal word={cnWord} onClose={() => { stopSpeak(); setShowCnTest(false) }} />}
+      {showSpellTest && (
+        <SpellTestModal
+          word={word}
+          mode={now.getDate() % 2 === 0 ? 'full' : 'missing'}
+          onWin={() => markChallenge('word')}
+          onClose={() => { stopSpeak(); setShowSpellTest(false) }}
+        />
+      )}
+      {showCnTest && (
+        <CnTestModal
+          word={cnWord}
+          mode={now.getDate() % 2 === 0 ? 'sound' : 'meaning'}
+          onWin={() => markChallenge('cnword')}
+          onClose={() => { stopSpeak(); setShowCnTest(false) }}
+        />
+      )}
     </div>
   )
 }
@@ -495,18 +572,32 @@ interface Tile {
   used: boolean
 }
 
-function makeTiles(target: string): Tile[] {
-  const decoys = shuffle('abcdefghijklmnopqrstuvwxyz'.split('').filter((c) => !target.includes(c))).slice(0, 3)
-  return shuffle([...target.split(''), ...decoys]).map((ch, id) => ({ id, ch, used: false }))
+/** Which letter positions the kid must fill: all of them, or 2 blanked-out ones */
+function blanksFor(target: string, mode: 'full' | 'missing'): number[] {
+  if (mode === 'full') return target.split('').map((_, i) => i)
+  const count = target.length >= 6 ? 3 : 2
+  // deterministic-ish spread: every ~len/count-th letter
+  const step = Math.max(1, Math.floor(target.length / count))
+  const picks: number[] = []
+  for (let i = 1; picks.length < count && i < target.length; i += step) picks.push(i)
+  return picks
 }
 
-/** Spelling game: hear the word, tap its letters in order from a shuffled pool */
-function SpellTestModal({ word, onClose }: { word: WordOfDay; onClose: () => void }) {
+function makeTiles(target: string, blanks: number[]): Tile[] {
+  const needed = blanks.map((i) => target[i])
+  const decoys = shuffle('abcdefghijklmnopqrstuvwxyz'.split('').filter((c) => !target.includes(c))).slice(0, 3)
+  return shuffle([...needed, ...decoys]).map((ch, id) => ({ id, ch, used: false }))
+}
+
+/** Spelling game: hear the word, tap its letters in order from a shuffled pool.
+ * Alternates daily between spelling the whole word and filling missing letters. */
+function SpellTestModal({ word, mode, onWin, onClose }: { word: WordOfDay; mode: 'full' | 'missing'; onWin: () => void; onClose: () => void }) {
   const target = word.word.toLowerCase()
-  const [tiles, setTiles] = useState<Tile[]>(() => makeTiles(target))
+  const [blanks] = useState(() => blanksFor(target, mode))
+  const [tiles, setTiles] = useState<Tile[]>(() => makeTiles(target, blanks))
   const [progress, setProgress] = useState(0)
   const [wrongId, setWrongId] = useState<number | null>(null)
-  const done = progress >= target.length
+  const done = progress >= blanks.length
 
   const sayWord = () => speak(`Can you spell the word: ${word.word}? ${word.word} means ${word.meaning}.`)
   useEffect(() => {
@@ -516,12 +607,13 @@ function SpellTestModal({ word, onClose }: { word: WordOfDay; onClose: () => voi
 
   const tap = (tile: Tile) => {
     if (tile.used || done) return
-    if (tile.ch === target[progress]) {
+    if (tile.ch === target[blanks[progress]]) {
       setTiles((ts) => ts.map((x) => (x.id === tile.id ? { ...x, used: true } : x)))
       const next = progress + 1
       setProgress(next)
-      if (next >= target.length) {
+      if (next >= blanks.length) {
         speak(`${target.split('').join('. ')}. spells ${word.word}! Amazing job!`)
+        onWin()
       }
     } else {
       setWrongId(tile.id)
@@ -530,20 +622,25 @@ function SpellTestModal({ word, onClose }: { word: WordOfDay; onClose: () => voi
   }
 
   const reset = () => {
-    setTiles(makeTiles(target))
+    setTiles(makeTiles(target, blanks))
     setProgress(0)
     sayWord()
   }
 
   return (
-    <Modal title={t('spellTitle')} onClose={onClose}>
+    <Modal title={t('spellTitle')} onClose={onClose} cover>
       <p className="hint" style={{ marginTop: 0 }}>{t('spellHint')}</p>
       <div className="spell-slots">
-        {target.split('').map((ch, i) => (
-          <span key={i} className={`spell-slot ${i < progress ? 'filled' : ''}`}>
-            {i < progress ? ch : ''}
-          </span>
-        ))}
+        {target.split('').map((ch, i) => {
+          const blankPos = blanks.indexOf(i)
+          const isBlank = blankPos >= 0
+          const filled = !isBlank || blankPos < progress
+          return (
+            <span key={i} className={`spell-slot ${filled ? 'filled' : ''} ${!isBlank ? 'given' : ''}`}>
+              {filled ? ch : ''}
+            </span>
+          )
+        })}
       </div>
       {done ? (
         <div className="test-celebrate">
@@ -577,15 +674,19 @@ function SpellTestModal({ word, onClose }: { word: WordOfDay; onClose: () => voi
   )
 }
 
-/** Listening game: hear the Chinese word, tap the matching character */
-function CnTestModal({ word, onClose }: { word: ChineseWordOfDay; onClose: () => void }) {
+/** Listening game: hear the Chinese word, tap the matching character.
+ * Alternates daily: find the character you HEARD, or the one matching a MEANING. */
+function CnTestModal({ word, mode, onWin, onClose }: { word: ChineseWordOfDay; mode: 'sound' | 'meaning'; onWin: () => void; onClose: () => void }) {
   const [choices] = useState(() =>
     shuffle([word, ...shuffle(CHINESE_WORDS.filter((w) => w.hanzi !== word.hanzi)).slice(0, 2)]),
   )
   const [wrong, setWrong] = useState<string | null>(null)
   const [done, setDone] = useState(false)
 
-  const sayWord = () => speak(`听一听：${word.hanzi}。${word.hanzi}。哪一个字是 ${word.hanzi}？`, 'zh')
+  const sayWord = () =>
+    mode === 'sound'
+      ? speak(`听一听：${word.hanzi}。${word.hanzi}。哪一个字是 ${word.hanzi}？`, 'zh')
+      : speak(`找一找：哪个字的意思是——${word.meaningZh}？`, 'zh')
   useEffect(() => {
     sayWord()
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -596,6 +697,7 @@ function CnTestModal({ word, onClose }: { word: ChineseWordOfDay; onClose: () =>
     if (hanzi === word.hanzi) {
       setDone(true)
       speak(`答对了！${word.hanzi}，就是${word.meaningZh}。${word.sentence} 你真棒！`, 'zh')
+      onWin()
     } else {
       setWrong(hanzi)
       setTimeout(() => setWrong(null), 450)
@@ -603,8 +705,11 @@ function CnTestModal({ word, onClose }: { word: ChineseWordOfDay; onClose: () =>
   }
 
   return (
-    <Modal title={t('cnTestTitle')} onClose={onClose}>
-      <p className="hint" style={{ marginTop: 0 }}>{t('cnTestHint')}</p>
+    <Modal title={t('cnTestTitle')} onClose={onClose} cover>
+      <p className="hint" style={{ marginTop: 0 }}>
+        {mode === 'sound' ? t('cnTestHint') : t('cnTestHintMeaning')}
+      </p>
+      {mode === 'meaning' && !done && <p className="cn-meaning-prompt">“{word.meaning}” · {word.meaningZh}</p>}
       {done ? (
         <div className="test-celebrate">
           <div className="test-word">🎉 {word.hanzi} 🎉</div>

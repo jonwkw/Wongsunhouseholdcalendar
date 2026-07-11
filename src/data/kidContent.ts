@@ -156,31 +156,34 @@ function dayOfYear(d: Date): number {
   return Math.floor((d.getTime() - new Date(d.getFullYear(), 0, 0).getTime()) / 86400000)
 }
 
-/** Same date → same problem, everywhere. Sums stay within 20 for a 6-year-old.
+/** Same date → same problem, everywhere. Six rotating formats, numbers up to
+ * 20 (a notch harder than before but still Primary 1 friendly).
  * `extra` deals out bonus problems beyond the daily one ("another one!"). */
 export function mathProblemFor(d: Date, extra = 0): MathProblem {
-  const n = dayOfYear(d) + extra * 3
+  const n = dayOfYear(d) + extra * 5
   const day = d.getDate() + extra
   const countUp = (from: number, steps: number) =>
     Array.from({ length: steps }, (_, i) => from + i + 1).join(', ')
   const countDown = (from: number, steps: number) =>
     Array.from({ length: steps }, (_, i) => from - i - 1).join(', ')
 
-  const kind = n % 4
+  const kind = n % 6
   if (kind === 0) {
-    const a = (n % 4) + 2
-    const b = (day % 4) + 1
+    // addition within 20
+    const a = (n % 9) + 6 // 6..14
+    const b = Math.min((day % 6) + 3, 20 - a) // 3..8, capped at 20
     return {
       question: `What is ${a} + ${b}?`,
       questionZh: `${a} + ${b} 等于多少？`,
       answer: String(a + b),
-      explain: `Let's solve ${a} plus ${b} together! Hold up ${a} fingers. Now count up ${b} more: ${countUp(a, b)}. That's it — ${a} plus ${b} is ${a + b}! Great job!`,
-      explainZh: `我们一起算 ${a} 加 ${b}！先伸出 ${a} 根手指，再往上数 ${b} 个：${countUp(a, b)}。所以 ${a} 加 ${b} 等于 ${a + b}！你真棒！`,
+      explain: `Let's solve ${a} plus ${b} together! Start at ${a} and count up ${b} more: ${countUp(a, b)}. That's it — ${a} plus ${b} is ${a + b}! Great job!`,
+      explainZh: `我们一起算 ${a} 加 ${b}！从 ${a} 开始往上数 ${b} 个：${countUp(a, b)}。所以 ${a} 加 ${b} 等于 ${a + b}！你真棒！`,
     }
   }
   if (kind === 1) {
-    const a = (n % 5) + 5
-    const b = (day % 4) + 1
+    // subtraction from the teens
+    const a = (n % 8) + 11 // 11..18
+    const b = (day % 6) + 3 // 3..8
     return {
       question: `What is ${a} − ${b}?`,
       questionZh: `${a} − ${b} 等于多少？`,
@@ -190,8 +193,9 @@ export function mathProblemFor(d: Date, extra = 0): MathProblem {
     }
   }
   if (kind === 2) {
-    const step = [2, 10][n % 2]
-    const start = step
+    // skip counting from a non-zero start
+    const step = [2, 5, 10][n % 3]
+    const start = step * ((n % 2) + 1)
     return {
       question: `Count on: ${start}, ${start + step}, ${start + 2 * step}, … what comes next?`,
       questionZh: `接着数：${start}、${start + step}、${start + 2 * step}……下一个是多少？`,
@@ -200,8 +204,35 @@ export function mathProblemFor(d: Date, extra = 0): MathProblem {
       explainZh: `我们在按 ${step} 跳着数！每个数都比前一个多 ${step}。${start + 2 * step} 之后再跳 ${step}，就是 ${start + 3 * step}！`,
     }
   }
-  const a = (n % 4) + 2
-  const b = (day % 3) + 1
+  if (kind === 3) {
+    // missing number: a + ▢ = c
+    const a = (n % 7) + 4 // 4..10
+    const miss = (day % 5) + 3 // 3..7
+    const c = a + miss
+    return {
+      question: `Find the missing number: ${a} + ▢ = ${c}`,
+      questionZh: `找一找缺少的数字：${a} + ▢ = ${c}`,
+      answer: String(miss),
+      explain: `Something plus ${a} makes ${c}. Count up from ${a} until you reach ${c}: ${countUp(a, miss)}. You counted ${miss} steps — so the missing number is ${miss}!`,
+      explainZh: `${a} 加上多少等于 ${c}？从 ${a} 往上数到 ${c}：${countUp(a, miss)}。一共数了 ${miss} 步——缺少的数字就是 ${miss}！`,
+    }
+  }
+  if (kind === 4) {
+    // three-number addition
+    const a = (n % 5) + 3 // 3..7
+    const b = (day % 4) + 2 // 2..5
+    const c = ((n + day) % 4) + 2 // 2..5
+    return {
+      question: `What is ${a} + ${b} + ${c}?`,
+      questionZh: `${a} + ${b} + ${c} 等于多少？`,
+      answer: String(a + b + c),
+      explain: `Three numbers! First do ${a} plus ${b}, which is ${a + b}. Then add ${c} more: ${countUp(a + b, c)}. So the answer is ${a + b + c}! Super!`,
+      explainZh: `三个数！先算 ${a} 加 ${b}，等于 ${a + b}。再加 ${c}：${countUp(a + b, c)}。答案就是 ${a + b + c}！太棒了！`,
+    }
+  }
+  // sticker word problem, bigger numbers
+  const a = (n % 7) + 7 // 7..13
+  const b = (day % 5) + 3 // 3..7
   return {
     question: `You have ${a} stickers. Papa gives you ${b} more. How many stickers do you have now?`,
     questionZh: `你有 ${a} 张贴纸，爸爸再给你 ${b} 张。现在一共有多少张？`,

@@ -58,6 +58,8 @@ function migrate(data: AppData): AppData {
       textZh: c.textZh ?? DEFAULT_CHECKLIST.find((d) => d.id === c.id)?.textZh,
     })),
     kidChecks: data.kidChecks ?? {},
+    kidSkips: data.kidSkips ?? {},
+    kidChallenges: data.kidChallenges ?? {},
     starDays: data.starDays ?? [],
     // school timetable cancelled (holidays) — remove the seeded series everywhere
     activities: wipe ? [] : (data.activities ?? []).filter((a) => a.id !== 'a-school'),

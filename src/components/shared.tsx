@@ -123,14 +123,17 @@ export function Modal({
   onClose,
   children,
   wide,
+  cover,
 }: {
   title: string
   onClose: () => void
   children: ReactNode
   wide?: boolean
+  /** Fully hide the page behind the modal (test games — no peeking!) */
+  cover?: boolean
 }) {
   return (
-    <div className="modal-backdrop" onClick={onClose}>
+    <div className={`modal-backdrop ${cover ? 'cover' : ''}`} onClick={onClose}>
       <div className={`modal ${wide ? 'modal-wide' : ''}`} onClick={(e) => e.stopPropagation()}>
         <div className="modal-head">
           <h3>{title}</h3>
