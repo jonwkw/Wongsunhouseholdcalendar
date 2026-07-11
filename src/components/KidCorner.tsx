@@ -9,6 +9,7 @@ import { RocketShip } from './RocketShip'
 import { t, getLang } from '../i18n'
 import { speak, stopSpeak } from '../utils/speech'
 import { Modal } from './shared'
+import { setDragPayload, getDragPayload, leavesTarget } from '../utils/dnd'
 
 const MISSION_EMOJI = ['✅', '🪥', '🥣', '🎒', '📖', '🧸', '🌙', '🧦', '🚿', '🐟', '💪', '🎹', '✏️', '🧹', '💧', '🙏']
 
@@ -107,6 +108,34 @@ export function KidCorner() {
     update((d) => ({ ...d, kidChecklist: d.kidChecklist.filter((i) => i.id !== id) }))
   }
 
+  const [dropTarget, setDropTarget] = useState<string | null>(null)
+
+  /** Drop `dragId` at `overId`'s position in the checklist */
+  const reorderTo = (dragId: string, overId: string) => {
+    if (dragId === overId) return
+    update((d) => {
+      const list = [...d.kidChecklist]
+      const from = list.findIndex((x) => x.id === dragId)
+      const to = list.findIndex((x) => x.id === overId)
+      if (from < 0 || to < 0) return d
+      const [it] = list.splice(from, 1)
+      list.splice(to, 0, it)
+      return { ...d, kidChecklist: list }
+    })
+  }
+
+  /** Arrow buttons in edit mode — reordering for touch screens */
+  const nudgeItem = (id: string, dir: -1 | 1) => {
+    update((d) => {
+      const list = [...d.kidChecklist]
+      const i = list.findIndex((x) => x.id === id)
+      const j = i + dir
+      if (i < 0 || j < 0 || j >= list.length) return d
+      ;[list[i], list[j]] = [list[j], list[i]]
+      return { ...d, kidChecklist: list }
+    })
+  }
+
   if (!kid) return null
 
   return (
@@ -154,7 +183,26 @@ export function KidCorner() {
         {isFuture && <p className="future-note">{t('futureLocked', { name: kid.name })}</p>}
 
         {items.map((item) => (
-          <label key={item.id} className={`checklist-item ${checked.includes(item.id) ? 'done' : ''} ${isFuture || !canEdit ? 'locked' : ''}`}>
+          <label
+            key={item.id}
+            className={`checklist-item ${checked.includes(item.id) ? 'done' : ''} ${isFuture || !canEdit ? 'locked' : ''} ${dropTarget === item.id ? 'drop-target' : ''}`}
+            draggable={canEdit}
+            onDragStart={(e) => setDragPayload(e, { kind: 'check-item', id: item.id })}
+            onDragOver={(e) => {
+              e.preventDefault()
+              setDropTarget(item.id)
+            }}
+            onDragLeave={(e) => {
+              if (leavesTarget(e) && dropTarget === item.id) setDropTarget(null)
+            }}
+            onDrop={(e) => {
+              e.preventDefault()
+              setDropTarget(null)
+              const p = getDragPayload<{ kind: string; id: string }>(e)
+              if (p?.kind === 'check-item') reorderTo(p.id, item.id)
+            }}
+          >
+            {canEdit && <span className="drag-handle" title="Drag to reorder">⠿</span>}
             <input
               type="checkbox"
               checked={checked.includes(item.id)}
@@ -166,6 +214,16 @@ export function KidCorner() {
               {getLang() === 'zh' && item.textZh ? item.textZh : item.text}
               {item.date && <span className="oneoff-tag">📅 {prettyDate(item.date)}</span>}
             </span>
+            {editList && (
+              <span className="reorder-btns">
+                <button className="icon-btn tiny" onClick={(e) => { e.preventDefault(); nudgeItem(item.id, -1) }}>
+                  ▲
+                </button>
+                <button className="icon-btn tiny" onClick={(e) => { e.preventDefault(); nudgeItem(item.id, 1) }}>
+                  ▼
+                </button>
+              </span>
+            )}
             {editList && (
               <button className="icon-btn tiny" onClick={(e) => { e.preventDefault(); removeItem(item.id) }}>
                 ✕

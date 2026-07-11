@@ -89,7 +89,6 @@ function Shell() {
     <div className="app">
       <header className="app-header">
         <div className="brand">
-          <span className="brand-emoji">🏡</span>
           <div>
             <h1>Wong Sun Family Hub</h1>
             <span className="brand-sub">{t('appSub')}</span>

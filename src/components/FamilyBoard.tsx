@@ -3,6 +3,7 @@ import type { BoardItem } from '../types'
 import { useApp, uid } from '../store'
 import { prettyDate, todayKey } from '../utils/dates'
 import { t } from '../i18n'
+import { setDragPayload, getDragPayload, leavesTarget } from '../utils/dnd'
 
 /** Family reminders: one shared list with added-by / assigned-to and undoable delete. */
 export function FamilyBoard() {
@@ -44,6 +45,22 @@ export function FamilyBoard() {
         b.id === id ? { ...b, status: b.status === 'open' ? 'done' : 'open' } : b,
       ),
     }))
+
+  const [dropTarget, setDropTarget] = useState<string | null>(null)
+
+  /** Drop `dragId` at `overId`'s position on the board */
+  const reorderTo = (dragId: string, overId: string) => {
+    if (dragId === overId) return
+    update((d) => {
+      const list = [...d.boardItems]
+      const from = list.findIndex((x) => x.id === dragId)
+      const to = list.findIndex((x) => x.id === overId)
+      if (from < 0 || to < 0) return d
+      const [it] = list.splice(from, 1)
+      list.splice(to, 0, it)
+      return { ...d, boardItems: list }
+    })
+  }
 
   const remove = (item: BoardItem) => {
     update((d) => ({ ...d, boardItems: d.boardItems.filter((b) => b.id !== item.id) }))
@@ -123,7 +140,26 @@ export function FamilyBoard() {
       <div className="board-col full">
         {visible.length === 0 && <p className="hint">{t('noReminders')}</p>}
         {visible.map((b) => (
-          <div key={b.id} className={`board-item ${b.status}`}>
+          <div
+            key={b.id}
+            className={`board-item ${b.status} ${dropTarget === b.id ? 'drop-target' : ''}`}
+            draggable={!locked}
+            onDragStart={(e) => setDragPayload(e, { kind: 'board-item', id: b.id })}
+            onDragOver={(e) => {
+              e.preventDefault()
+              setDropTarget(b.id)
+            }}
+            onDragLeave={(e) => {
+              if (leavesTarget(e) && dropTarget === b.id) setDropTarget(null)
+            }}
+            onDrop={(e) => {
+              e.preventDefault()
+              setDropTarget(null)
+              const p = getDragPayload<{ kind: string; id: string }>(e)
+              if (p?.kind === 'board-item') reorderTo(p.id, b.id)
+            }}
+          >
+            {!locked && <span className="drag-handle" title="Drag to reorder">⠿</span>}
             <input type="checkbox" checked={b.status === 'done'} onChange={() => toggle(b.id)} />
             <div className="board-body">
               <div className="board-text">{b.text}</div>
