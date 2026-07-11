@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { AvatarAge, AvatarSpec, Member } from '../types'
 import { useApp, uid } from '../store'
 import { t } from '../i18n'
+import { parseSetupCode, makeSetupCode } from '../utils/sync'
 import {
   AvatarSvg, MemberFace, SKIN_TONES, HAIR_COLORS, HAIRSTYLE_NAMES, AGES, FACIAL_HAIR,
   GLASSES, EARRINGS, ACCESSORIES, SHIRT_COLORS, DEFAULT_SPEC,
@@ -236,6 +237,108 @@ export function ProfilePage() {
       )}
       {locked && <p className="hint center">{t('lockedHint')}</p>}
       {!selected && !locked && <p className="hint center">{t('pickProfileHint')}</p>}
+      {!locked && <SyncPanel />}
+    </div>
+  )
+}
+
+/** Stage 2: connect this device to the family's shared cloud copy */
+function SyncPanel() {
+  const { sync } = useApp()
+  const [code, setCode] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [copied, setCopied] = useState(false)
+  const [showHelp, setShowHelp] = useState(false)
+  const [parseError, setParseError] = useState(false)
+
+  const connect = async () => {
+    const parsed = parseSetupCode(code)
+    if (!parsed?.apiKey || !parsed?.projectId) {
+      setParseError(true)
+      return
+    }
+    setParseError(false)
+    setBusy(true)
+    try {
+      await sync.connect({
+        apiKey: parsed.apiKey,
+        projectId: parsed.projectId,
+        // creating a fresh sync? mint the family's shared secret now
+        familyId: parsed.familyId ?? uid('fam') + '-' + Math.random().toString(36).slice(2, 10),
+      })
+      setCode('')
+    } catch {
+      // state/error surface via sync.state below
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const copySetup = async () => {
+    if (!sync.config) return
+    await navigator.clipboard.writeText(makeSetupCode(sync.config))
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  const stateDot = { off: '⚪', ok: '🟢', syncing: '🟡', error: '🔴' }[sync.state]
+
+  return (
+    <div className="sync-panel">
+      <h3>☁️ {t('syncTitle')}</h3>
+      {sync.config ? (
+        <>
+          <p className="sync-status">
+            {stateDot}{' '}
+            {sync.state === 'error'
+              ? `${t('syncError')}${sync.error ? ` (${sync.error})` : ''}`
+              : t(sync.state === 'ok' ? 'syncOn' : 'syncing')}
+            {sync.lastSync && sync.state === 'ok' && (
+              <span className="hint" style={{ marginLeft: 8 }}>
+                {t('syncLast', { t: new Date(sync.lastSync).toLocaleTimeString() })}
+              </span>
+            )}
+          </p>
+          <p className="hint">{t('syncShareHint')}</p>
+          <div className="kid-btn-row">
+            <button className="btn primary" onClick={copySetup}>
+              {copied ? t('copied') : t('copySetup')}
+            </button>
+            <button className="btn subtle" onClick={sync.disconnect}>
+              {t('syncDisconnect')}
+            </button>
+          </div>
+        </>
+      ) : (
+        <>
+          <p className="hint">{t('syncIntro')}</p>
+          <textarea
+            className="sync-code-input"
+            rows={3}
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            placeholder={t('syncCodePh')}
+          />
+          {parseError && <p className="lock-wrong">{t('syncBadCode')}</p>}
+          <div className="kid-btn-row">
+            <button className="btn primary" onClick={connect} disabled={busy || !code.trim()}>
+              {busy ? t('syncing') : t('syncConnect')}
+            </button>
+            <button className="btn subtle" onClick={() => setShowHelp((v) => !v)}>
+              {t('syncHowTo')}
+            </button>
+          </div>
+          {showHelp && (
+            <ol className="sync-help">
+              <li>{t('syncStep1')}</li>
+              <li>{t('syncStep2')}</li>
+              <li>{t('syncStep3')}</li>
+              <li>{t('syncStep4')}</li>
+              <li>{t('syncStep5')}</li>
+            </ol>
+          )}
+        </>
+      )}
     </div>
   )
 }

@@ -1,5 +1,4 @@
 import type { AppData, ChecklistItem, Dish } from '../types'
-import { todayKey } from '../utils/dates'
 
 // Sample dishes spread across food types and cuisines so the library
 // grouping/filter has something to show. Added to existing data once (v3).
@@ -35,10 +34,8 @@ export const DEFAULT_CHECKLIST: ChecklistItem[] = [
 
 // Minimal starter data: one example of each thing so the logic is easy to verify.
 export function seedData(): AppData {
-  const today = todayKey()
-
   return {
-    version: 3,
+    version: 4,
     members: [
       { id: 'jonathan', name: 'Jonathan', emoji: '👨', color: '#3b82c4', avatar: { age: 'adult', skin: 1, hair: 2, hairColor: 0, facialHair: 0 } },
       { id: 'lilian', name: 'Lilian', emoji: '👩', color: '#c45b9d', avatar: { age: 'adult', skin: 0, hair: 9, hairColor: 0, facialHair: 0, gender: 'female' } },
@@ -50,21 +47,10 @@ export function seedData(): AppData {
     activities: [],
     activityTemplates: [],
     dayNotes: [],
-    dishes: [...SAMPLE_DISHES],
-    menuEntries: [
-      { id: 'm-1', date: today, slot: 'dinner', dishName: 'Fish porridge', emoji: '🐟', memberIds: [] },
-    ],
-    boardItems: [
-      {
-        id: 'b-1',
-        kind: 'reminder',
-        text: 'Clean the balcony this weekend',
-        byMemberId: 'lilian',
-        assignedToId: 'jonathan',
-        status: 'open',
-        createdAt: today,
-      },
-    ],
+    // clean slate from v4 — the family adds their own dishes
+    dishes: [],
+    menuEntries: [],
+    boardItems: [],
     kidChecklist: DEFAULT_CHECKLIST,
     kidChecks: {},
     starDays: [],

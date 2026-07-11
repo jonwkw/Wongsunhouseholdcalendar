@@ -3053,3 +3053,40 @@ textarea:focus {
   white-space: nowrap;
   align-self: stretch;
 }
+
+/* ---------- family sync panel ---------- */
+.sync-panel {
+  margin-top: 24px;
+  padding: 16px;
+  border: 2px solid var(--line);
+  border-radius: 16px;
+  background: var(--card);
+  max-width: 640px;
+}
+
+.sync-panel h3 {
+  margin: 0 0 8px;
+}
+
+.sync-status {
+  font-weight: 700;
+  margin: 4px 0 8px;
+}
+
+.sync-code-input {
+  width: 100%;
+  font-family: ui-monospace, monospace;
+  font-size: 12.5px;
+  margin-bottom: 8px;
+  resize: vertical;
+}
+
+.sync-help {
+  margin: 12px 0 0;
+  padding-left: 20px;
+  font-size: 13.5px;
+  color: var(--muted);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}

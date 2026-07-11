@@ -328,6 +328,9 @@ export function KidCorner() {
             <button className="btn subtle test-btn" onClick={() => setShowSpellTest(true)}>
               {t('testMe')}
             </button>
+            <button className="btn subtle" onClick={() => { stopSpeak(); setWordN((n) => Math.max(0, n - 1)) }}>
+              ◀
+            </button>
             <button className="btn subtle" onClick={() => { stopSpeak(); setWordN((n) => n + 1) }}>
               {t('nextOne')}
             </button>
@@ -358,6 +361,9 @@ export function KidCorner() {
             <button className="btn subtle test-btn" onClick={() => setShowCnTest(true)}>
               {t('testMe')}
             </button>
+            <button className="btn subtle" onClick={() => { stopSpeak(); setCnWordN((n) => Math.max(0, n - 1)) }}>
+              ◀
+            </button>
             <button className="btn subtle" onClick={() => { stopSpeak(); setCnWordN((n) => n + 1) }}>
               {t('nextOne')}
             </button>
@@ -379,6 +385,9 @@ export function KidCorner() {
             </button>
             <button className="btn subtle speak-btn" onClick={stopSpeak}>
               {t('stopBtn')}
+            </button>
+            <button className="btn subtle" onClick={() => { stopSpeak(); setShowAnswer(false); setMathN((n) => Math.max(0, n - 1)) }}>
+              ◀
             </button>
             <button className="btn subtle" onClick={() => { stopSpeak(); setShowAnswer(false); setMathN((n) => n + 1) }}>
               {t('nextOne')}
@@ -405,6 +414,9 @@ export function KidCorner() {
             </button>
             <button className="btn subtle speak-btn" onClick={stopSpeak}>
               {t('stopBtn')}
+            </button>
+            <button className="btn subtle" onClick={() => { stopSpeak(); setMissionN((n) => Math.max(0, n - 1)) }}>
+              ◀
             </button>
             <button className="btn subtle" onClick={() => { stopSpeak(); setMissionN((n) => n + 1) }}>
               {t('nextOne')}
