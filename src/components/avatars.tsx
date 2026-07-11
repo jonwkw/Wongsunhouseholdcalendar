@@ -62,21 +62,21 @@ export const HAIRSTYLE_NAMES = [
 
 // ---- the shared hair dome -------------------------------------------------
 
-/** Hairline edges: each draws from (76,55) back to (24,55) across the forehead.
- * Kept high (mid ≈ y36-38, just under the crown) so the whole forehead shows
- * and hair stays well clear of the eyebrows (y≈45). */
+/** Hairline edges: each draws from (75,50) back to (25,50) across the forehead.
+ * The dome ends at the temples (y=50, just above the ears) rather than framing
+ * the whole face, and the hairline sits high so the full forehead shows. */
 const EDGES = {
-  flat: 'Q50 20 24 55',
-  blunt: 'L75 35 L25 35 L24 55',
-  sweep: 'Q66 24 40 34 Q27 40 24 55',
-  part: 'Q68 30 54 31 L50 26 L46 31 Q32 30 24 55',
-  spiky: 'L73 32 L65 38 L57 30 L50 38 L43 30 L35 38 L27 32 L24 55',
-  wavy: 'Q70 38 63 32 Q56 28 50 34 Q44 28 37 32 Q30 38 24 55',
-  peak: 'Q62 31 53 31 L50 38 L47 31 Q38 31 24 55',
+  flat: 'Q50 22 25 50',
+  blunt: 'L74 35 L26 35 L25 50',
+  sweep: 'Q64 25 40 34 Q28 38 25 50',
+  part: 'Q66 29 54 30 L50 25 L46 30 Q34 29 25 50',
+  spiky: 'L72 32 L64 38 L56 30 L50 38 L43 30 L36 38 L28 32 L25 50',
+  wavy: 'Q68 37 62 31 Q55 27 50 33 Q44 27 38 31 Q31 37 25 50',
+  peak: 'Q61 30 53 30 L50 37 L47 30 Q39 30 25 50',
 } as const
 
 function dome(edge: keyof typeof EDGES, c: string, opacity?: number) {
-  return <path d={`M24 55 A26 30 0 1 1 76 55 ${EDGES[edge]} Z`} fill={c} opacity={opacity} />
+  return <path d={`M25 50 A25.5 28 0 1 1 75 50 ${EDGES[edge]} Z`} fill={c} opacity={opacity} />
 }
 
 /** Back shapes drawn behind the face */

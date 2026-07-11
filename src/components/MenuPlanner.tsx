@@ -125,6 +125,14 @@ export function MenuPlanner() {
     setTyping(null)
   }
 
+  /** Quick shortcut for meals out — adds the entry then opens it to tag who's going */
+  const addEatingOut = (date: string, slot: MealSlot) => {
+    const entry: MenuEntry = { id: uid('m'), date, slot, dishName: t('eatingOut'), emoji: '🍴', memberIds: [] }
+    update((d) => ({ ...d, menuEntries: [...d.menuEntries, entry] }))
+    setTyping(null)
+    setEditingEntry(entry)
+  }
+
   return (
     <div className="timetable-layout">
       <aside className="library">
@@ -249,6 +257,7 @@ export function MenuPlanner() {
               onDrop={onDrop}
               onCellClick={onCellClick}
               onEntryClick={(entry) => !locked && setEditingEntry(entry)}
+              onEatOut={addEatingOut}
               typing={typing}
               typedName={typedName}
               setTypedName={setTypedName}
@@ -326,6 +335,7 @@ interface RowProps {
   onDrop: (e: DragEvent, date: string, slot: MealSlot) => void
   onCellClick: (date: string, slot: MealSlot) => void
   onEntryClick: (entry: MenuEntry) => void
+  onEatOut: (date: string, slot: MealSlot) => void
   typing: { date: string; slot: MealSlot } | null
   typedName: string
   setTypedName: (v: string) => void
@@ -336,7 +346,7 @@ interface RowProps {
 function MenuRow(props: RowProps) {
   const { data } = useApp()
   const {
-    slot, days, dragOver, setDragOver, onDrop, onCellClick, onEntryClick,
+    slot, days, dragOver, setDragOver, onDrop, onCellClick, onEntryClick, onEatOut,
     typing, typedName, setTypedName, saveTyped, cancelTyped,
   } = props
 
@@ -389,19 +399,33 @@ function MenuRow(props: RowProps) {
               </div>
             ))}
             {isTyping ? (
-              <input
-                autoFocus
-                className="menu-inline-input"
-                value={typedName}
-                placeholder={t('typeDish')}
-                onChange={(e) => setTypedName(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') saveTyped()
-                  if (e.key === 'Escape') cancelTyped()
-                }}
-                onBlur={saveTyped}
-                onClick={(e) => e.stopPropagation()}
-              />
+              <>
+                <input
+                  autoFocus
+                  className="menu-inline-input"
+                  value={typedName}
+                  placeholder={t('typeDish')}
+                  onChange={(e) => setTypedName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') saveTyped()
+                    if (e.key === 'Escape') cancelTyped()
+                  }}
+                  onBlur={saveTyped}
+                  onClick={(e) => e.stopPropagation()}
+                />
+                <button
+                  className="btn subtle eat-out-btn"
+                  // mousedown fires before the input's blur, which would close the cell
+                  onMouseDown={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    onEatOut(date, slot)
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  🍴 {t('eatingOut')}
+                </button>
+              </>
             ) : (
               entries.length === 0 && <span className="menu-empty">＋</span>
             )}
