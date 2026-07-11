@@ -156,10 +156,11 @@ function dayOfYear(d: Date): number {
   return Math.floor((d.getTime() - new Date(d.getFullYear(), 0, 0).getTime()) / 86400000)
 }
 
-/** Same date → same problem, everywhere. Sums stay within 20 for a 6-year-old. */
-export function mathProblemFor(d: Date): MathProblem {
-  const n = dayOfYear(d)
-  const day = d.getDate()
+/** Same date → same problem, everywhere. Sums stay within 20 for a 6-year-old.
+ * `extra` deals out bonus problems beyond the daily one ("another one!"). */
+export function mathProblemFor(d: Date, extra = 0): MathProblem {
+  const n = dayOfYear(d) + extra * 3
+  const day = d.getDate() + extra
   const countUp = (from: number, steps: number) =>
     Array.from({ length: steps }, (_, i) => from + i + 1).join(', ')
   const countDown = (from: number, steps: number) =>
@@ -210,16 +211,16 @@ export function mathProblemFor(d: Date): MathProblem {
   }
 }
 
-export function wordFor(d: Date): WordOfDay {
-  return WORDS[dayOfYear(d) % WORDS.length]
+export function wordFor(d: Date, extra = 0): WordOfDay {
+  return WORDS[(dayOfYear(d) + extra) % WORDS.length]
 }
 
-export function cnWordFor(d: Date): ChineseWordOfDay {
-  return CHINESE_WORDS[dayOfYear(d) % CHINESE_WORDS.length]
+export function cnWordFor(d: Date, extra = 0): ChineseWordOfDay {
+  return CHINESE_WORDS[(dayOfYear(d) + extra) % CHINESE_WORDS.length]
 }
 
-export function missionFor(d: Date, lang: 'en' | 'zh' = 'en'): string {
-  const i = dayOfYear(d) % MISSIONS.length
+export function missionFor(d: Date, lang: 'en' | 'zh' = 'en', extra = 0): string {
+  const i = (dayOfYear(d) + extra) % MISSIONS.length
   return lang === 'zh' ? MISSIONS_ZH[i] ?? MISSIONS[i] : MISSIONS[i]
 }
 

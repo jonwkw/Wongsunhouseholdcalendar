@@ -40,12 +40,18 @@ export function KidCorner() {
     if (launchTimer.current) clearTimeout(launchTimer.current)
   }, [])
 
+  // "Another one!" counters — each click deals the next challenge in the deck
+  const [wordN, setWordN] = useState(0)
+  const [cnWordN, setCnWordN] = useState(0)
+  const [mathN, setMathN] = useState(0)
+  const [missionN, setMissionN] = useState(0)
+
   const now = fromKey(today)
-  const word = wordFor(now)
-  const cnWord = cnWordFor(now)
-  const math = mathProblemFor(now)
+  const word = wordFor(now, wordN)
+  const cnWord = cnWordFor(now, cnWordN)
+  const math = mathProblemFor(now, mathN)
   const lang = getLang()
-  const mission = missionFor(now, lang)
+  const mission = missionFor(now, lang, missionN)
 
   /** Tasks that apply on a given day: daily ones + one-offs for that date */
   const itemsFor = (date: string) => data.kidChecklist.filter((i) => !i.date || i.date === date)
@@ -322,6 +328,9 @@ export function KidCorner() {
             <button className="btn subtle test-btn" onClick={() => setShowSpellTest(true)}>
               {t('testMe')}
             </button>
+            <button className="btn subtle" onClick={() => { stopSpeak(); setWordN((n) => n + 1) }}>
+              {t('nextOne')}
+            </button>
           </div>
         </div>
 
@@ -349,6 +358,9 @@ export function KidCorner() {
             <button className="btn subtle test-btn" onClick={() => setShowCnTest(true)}>
               {t('testMe')}
             </button>
+            <button className="btn subtle" onClick={() => { stopSpeak(); setCnWordN((n) => n + 1) }}>
+              {t('nextOne')}
+            </button>
           </div>
         </div>
 
@@ -367,6 +379,9 @@ export function KidCorner() {
             </button>
             <button className="btn subtle speak-btn" onClick={stopSpeak}>
               {t('stopBtn')}
+            </button>
+            <button className="btn subtle" onClick={() => { stopSpeak(); setShowAnswer(false); setMathN((n) => n + 1) }}>
+              {t('nextOne')}
             </button>
           </div>
         </div>
@@ -390,6 +405,9 @@ export function KidCorner() {
             </button>
             <button className="btn subtle speak-btn" onClick={stopSpeak}>
               {t('stopBtn')}
+            </button>
+            <button className="btn subtle" onClick={() => { stopSpeak(); setMissionN((n) => n + 1) }}>
+              {t('nextOne')}
             </button>
           </div>
         </div>

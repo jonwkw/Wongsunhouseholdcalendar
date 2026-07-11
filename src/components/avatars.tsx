@@ -66,17 +66,17 @@ export const HAIRSTYLE_NAMES = [
  * The dome ends at the temples (y=50, just above the ears) rather than framing
  * the whole face, and the hairline sits high so the full forehead shows. */
 const EDGES = {
-  flat: 'Q50 22 25 50',
-  blunt: 'L74 35 L26 35 L25 50',
-  sweep: 'Q64 25 40 34 Q28 38 25 50',
-  part: 'Q66 29 54 30 L50 25 L46 30 Q34 29 25 50',
-  spiky: 'L72 32 L64 38 L56 30 L50 38 L43 30 L36 38 L28 32 L25 50',
-  wavy: 'Q68 37 62 31 Q55 27 50 33 Q44 27 38 31 Q31 37 25 50',
-  peak: 'Q61 30 53 30 L50 37 L47 30 Q39 30 25 50',
+  flat: 'Q50 30 25 50',
+  blunt: 'L74 38.5 L26 38.5 L25 50',
+  sweep: 'Q64 28 41 37 Q28 41 25 50',
+  part: 'Q66 32 54 33 L50 28 L46 33 Q34 32 25 50',
+  spiky: 'L72 34 L64 40 L56 32 L50 40 L43 32 L36 40 L28 34 L25 50',
+  wavy: 'Q68 39 62 33 Q55 29 50 35 Q44 29 38 33 Q31 39 25 50',
+  peak: 'Q61 32 53 32 L50 39 L47 32 Q39 32 25 50',
 } as const
 
 function dome(edge: keyof typeof EDGES, c: string, opacity?: number) {
-  return <path d={`M25 50 A25.5 28 0 1 1 75 50 ${EDGES[edge]} Z`} fill={c} opacity={opacity} />
+  return <path d={`M25 50 A25.5 26 0 1 1 75 50 ${EDGES[edge]} Z`} fill={c} opacity={opacity} />
 }
 
 /** Back shapes drawn behind the face */
