@@ -235,6 +235,7 @@ export function MenuPlanner() {
           <button className="btn subtle" onClick={() => setMonday((m) => addDays(m, 7))}>{t('nextShort')}</button>
         </div>
 
+        <div className="menu-scroll">
         <div className="menu-grid" style={{ gridTemplateColumns: `90px repeat(7, minmax(0, 1fr))` }}>
           <div />
           {days.map((date) => {
@@ -265,6 +266,7 @@ export function MenuPlanner() {
               cancelTyped={() => setTyping(null)}
             />
           ))}
+        </div>
         </div>
 
         <p className="hint">{t('tapMealHint')}</p>

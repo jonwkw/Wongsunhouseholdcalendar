@@ -3090,3 +3090,40 @@ textarea:focus {
   flex-direction: column;
   gap: 6px;
 }
+
+/* ---------- mobile menu: scroll the week sideways instead of crushing it ---------- */
+@media (max-width: 720px) {
+  .menu-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 0 -4px;
+    padding: 0 4px 8px;
+  }
+
+  .menu-scroll .menu-grid {
+    min-width: 660px;
+  }
+
+  .week-nav {
+    justify-content: center;
+  }
+
+  .week-nav .week-label {
+    width: 100%;
+    text-align: center;
+    order: -1;
+  }
+
+  .library {
+    width: 100%;
+    position: static;
+  }
+
+  .library-card .card-title {
+    white-space: normal;
+  }
+
+  .dish-meta {
+    flex-wrap: wrap;
+  }
+}
