@@ -169,7 +169,7 @@ const en = {
   flightPlan: '🛸 Your flight plan — next few days',
   freeDay: 'Free day! 🎈',
   // Profiles / avatars
-  tabFamily: '👤 Family',
+  tabFamily: 'Family',
   age: 'Age',
   age_baby: 'Baby',
   age_toddler: 'Toddler',
@@ -436,7 +436,7 @@ const zh: typeof en = {
   missionOfDay: '🏅 每日小任务',
   flightPlan: '🛸 你的飞行计划——未来几天',
   freeDay: '自由日！🎈',
-  tabFamily: '👤 家庭',
+  tabFamily: '家庭',
   age: '年龄',
   age_baby: '婴儿',
   age_toddler: '幼儿',

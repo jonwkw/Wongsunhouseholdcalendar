@@ -63,15 +63,16 @@ export const HAIRSTYLE_NAMES = [
 // ---- the shared hair dome -------------------------------------------------
 
 /** Hairline edges: each draws from (76,55) back to (24,55) across the forehead.
- * Kept high on the forehead (mid ≈ y40) so hair never crowds the eyebrows (y≈45). */
+ * Kept high (mid ≈ y36-38, just under the crown) so the whole forehead shows
+ * and hair stays well clear of the eyebrows (y≈45). */
 const EDGES = {
-  flat: 'Q50 28 24 55',
-  blunt: 'L75 39 L25 39 L24 55',
-  sweep: 'Q66 29 41 38 Q27 43 24 55',
-  part: 'Q68 34 54 35 L50 30 L46 35 Q32 34 24 55',
-  spiky: 'L73 36 L65 42 L57 34 L50 42 L43 34 L35 42 L27 36 L24 55',
-  wavy: 'Q70 42 63 36 Q56 32 50 38 Q44 32 37 36 Q30 42 24 55',
-  peak: 'Q62 35 53 35 L50 42 L47 35 Q38 35 24 55',
+  flat: 'Q50 20 24 55',
+  blunt: 'L75 35 L25 35 L24 55',
+  sweep: 'Q66 24 40 34 Q27 40 24 55',
+  part: 'Q68 30 54 31 L50 26 L46 31 Q32 30 24 55',
+  spiky: 'L73 32 L65 38 L57 30 L50 38 L43 30 L35 38 L27 32 L24 55',
+  wavy: 'Q70 38 63 32 Q56 28 50 34 Q44 28 37 32 Q30 38 24 55',
+  peak: 'Q62 31 53 31 L50 38 L47 31 Q38 31 24 55',
 } as const
 
 function dome(edge: keyof typeof EDGES, c: string, opacity?: number) {
