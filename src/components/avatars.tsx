@@ -62,21 +62,22 @@ export const HAIRSTYLE_NAMES = [
 
 // ---- the shared hair dome -------------------------------------------------
 
-/** Hairline edges: each draws from (75,50) back to (25,50) across the forehead.
- * The dome ends at the temples (y=50, just above the ears) rather than framing
- * the whole face, and the hairline sits high so the full forehead shows. */
+/** Hairline edges: each draws from (71.5,48) back to (28.5,48) across the
+ * forehead. Both anchor points sit ON the skull at temple height, so the
+ * hair is grounded on the head for every age instead of floating beside it. */
 const EDGES = {
-  flat: 'Q50 30 25 50',
-  blunt: 'L74 38.5 L26 38.5 L25 50',
-  sweep: 'Q64 28 41 37 Q28 41 25 50',
-  part: 'Q66 32 54 33 L50 28 L46 33 Q34 32 25 50',
-  spiky: 'L72 34 L64 40 L56 32 L50 40 L43 32 L36 40 L28 34 L25 50',
-  wavy: 'Q68 39 62 33 Q55 29 50 35 Q44 29 38 33 Q31 39 25 50',
-  peak: 'Q61 32 53 32 L50 39 L47 32 Q39 32 25 50',
+  flat: 'Q50 31 28.5 48',
+  blunt: 'L71 38.5 L29 38.5 L28.5 48',
+  sweep: 'Q62 29 42 36 Q31 40 28.5 48',
+  part: 'Q64 32 54 33 L50 28.5 L46 33 Q36 32 28.5 48',
+  spiky: 'L69 34 L62 40 L55 32 L49 40 L42.5 32 L36.5 40 L30 34 L28.5 48',
+  wavy: 'Q65 39 60 33.5 Q54 29.5 49.5 35.5 Q44 29.5 38.5 33.5 Q32 39 28.5 48',
+  peak: 'Q59 32 52.5 32 L50 39 L47.5 32 Q40 32 28.5 48',
 } as const
 
-function dome(edge: keyof typeof EDGES, c: string, opacity?: number) {
-  return <path d={`M25 50 A25.5 26 0 1 1 75 50 ${EDGES[edge]} Z`} fill={c} opacity={opacity} />
+/** domeRy scales with the face so baby heads get a lower dome than adults */
+function dome(edge: keyof typeof EDGES, c: string, domeRy: number, opacity?: number) {
+  return <path d={`M28.5 48 A21.5 ${domeRy} 0 1 1 71.5 48 ${EDGES[edge]} Z`} fill={c} opacity={opacity} />
 }
 
 /** Back shapes drawn behind the face */
@@ -192,60 +193,60 @@ function hairBack(style: number, c: string) {
 }
 
 /** Hair over the face: the dome (with the right hairline) plus style extras */
-function hairTop(style: number, c: string) {
+function hairTop(style: number, c: string, domeRy: number) {
   switch (style) {
     case 0: // bald
       return null
     case 1: // buzz
-      return dome('flat', c, 0.55)
+      return dome('flat', c, domeRy, 0.55)
     case 2: // short & neat
     case 8: // bob
     case 10: // ponytail
     case 14: // long braid
-      return dome('flat', c)
+      return dome('flat', c, domeRy)
     case 3: // side part
     case 26: // swept fringe
-      return dome('sweep', c)
+      return dome('sweep', c, domeRy)
     case 4: // spiky
       return (
         <g>
-          {dome('spiky', c)}
+          {dome('spiky', c, domeRy)}
           <path d="M32 27 L36 16 L41 25 M45 23 L50 12 L55 23 M59 25 L64 16 L68 27" stroke={c} strokeWidth="5" strokeLinejoin="round" fill={c} />
         </g>
       )
     case 5: // bowl
-      return dome('blunt', c)
+      return dome('blunt', c, domeRy)
     case 6: // short curls
       return (
         <g>
-          {dome('flat', c)}
+          {dome('flat', c, domeRy)}
           {chain(c, [[28, 37, 7], [37, 29, 7], [50, 26, 7.5], [63, 29, 7], [72, 37, 7]])}
         </g>
       )
     case 7: // big curls
       return (
         <g>
-          {dome('flat', c)}
+          {dome('flat', c, domeRy)}
           {chain(c, [[50, 24, 12], [33, 29, 10], [67, 29, 10]])}
         </g>
       )
     case 9: // long straight
     case 15: // fringe & long
-      return dome('blunt', c)
+      return dome('blunt', c, domeRy)
     case 11: // pigtails
     case 13: // double buns
     case 22: // twin braids
-      return dome('part', c)
+      return dome('part', c, domeRy)
     case 12: // top bun
       return (
         <g>
-          {dome('flat', c)}
+          {dome('flat', c, domeRy)}
           <circle cx="50" cy="16" r="9" fill={c} />
           <path d="M42 22 Q50 18 58 22" stroke="#00000022" strokeWidth="2" fill="none" />
         </g>
       )
     case 16: // wavy
-      return dome('wavy', c)
+      return dome('wavy', c, domeRy)
     case 17: // mohawk
       return <path d="M43 30 L45 12 L50 24 L55 10 L57 30 Q50 25 43 30Z" fill={c} />
     case 18: // comb-over (sparse)
@@ -260,7 +261,7 @@ function hairTop(style: number, c: string) {
     case 20: // man bun
       return (
         <g>
-          {dome('sweep', c)}
+          {dome('sweep', c, domeRy)}
           <circle cx="50" cy="15" r="6.5" fill={c} />
         </g>
       )
@@ -269,27 +270,27 @@ function hairTop(style: number, c: string) {
     case 23: // hairband
       return (
         <g>
-          {dome('flat', c)}
+          {dome('flat', c, domeRy)}
           <path d="M25.5 44 Q50 30 74.5 44 L73 48.5 Q50 35 27 48.5Z" fill="#e05d7e" />
         </g>
       )
     case 24: // shaggy
-      return dome('spiky', c)
+      return dome('spiky', c, domeRy)
     case 25: // long curly
       return (
         <g>
-          {dome('wavy', c)}
+          {dome('wavy', c, domeRy)}
           {chain(c, [[32, 30, 7], [46, 25, 7], [60, 26, 7], [70, 33, 6]])}
         </g>
       )
     case 27: // low pigtails
-      return dome('flat', c)
+      return dome('flat', c, domeRy)
     case 28: // light buzz
-      return dome('flat', c, 0.3)
+      return dome('flat', c, domeRy, 0.3)
     case 29: // light buzz with widow's peak — one path, one tint
-      return dome('peak', c, 0.3)
+      return dome('peak', c, domeRy, 0.3)
     default:
-      return dome('flat', c)
+      return dome('flat', c, domeRy)
   }
 }
 
@@ -539,9 +540,9 @@ export function AvatarSvg({ spec, ring, size = 40 }: { spec: AvatarSpec; ring?: 
       )}
       {facialHair(spec.facialHair, hc)}
       {BUZZ_STYLES.has(spec.hair) ? (
-        <g clipPath={`url(#${skullClip})`}>{hairTop(spec.hair, hc)}</g>
+        <g clipPath={`url(#${skullClip})`}>{hairTop(spec.hair, hc, geo.ry - 4)}</g>
       ) : (
-        hairTop(spec.hair, hc)
+        hairTop(spec.hair, hc, geo.ry - 4)
       )}
       {hairOrnaments(spec.hair, hc)}
       {accessoryFor(spec.accessory ?? 0)}
