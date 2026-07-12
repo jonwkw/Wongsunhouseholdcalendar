@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import type { TouchEvent as ReactTouchEvent } from 'react'
 import { useApp, uid } from '../store'
 import { activitiesOn, addDays, prettyDate, prettyTime, relativeLabel, todayKey, fromKey, weekdayName } from '../utils/dates'
 import { useForecast } from '../utils/useForecast'
@@ -146,6 +147,40 @@ export function KidCorner() {
     update((d) => ({ ...d, kidChecklist: d.kidChecklist.filter((i) => i.id !== id) }))
   }
 
+  // swipe a mission row left (touch) to reveal edit/delete/skip actions
+  const [swipedId, setSwipedId] = useState<string | null>(null)
+  const swipeStart = useRef<{ x: number; y: number } | null>(null)
+
+  const onRowTouchStart = (e: ReactTouchEvent) => {
+    swipeStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
+  }
+  const onRowTouchEnd = (itemId: string) => (e: ReactTouchEvent) => {
+    if (!swipeStart.current) return
+    const dx = e.changedTouches[0].clientX - swipeStart.current.x
+    const dy = Math.abs(e.changedTouches[0].clientY - swipeStart.current.y)
+    swipeStart.current = null
+    if (dy > 40) return
+    if (dx < -50) setSwipedId(itemId)
+    else if (dx > 50 || swipedId === itemId) setSwipedId(null)
+  }
+
+  const renameItem = (item: { id: string; text: string; textZh?: string }) => {
+    const current = getLang() === 'zh' && item.textZh ? item.textZh : item.text
+    const next = window.prompt(t('renameMission'), current)
+    if (!next?.trim()) return
+    update((d) => ({
+      ...d,
+      kidChecklist: d.kidChecklist.map((x) =>
+        x.id === item.id
+          ? getLang() === 'zh'
+            ? { ...x, textZh: next.trim() }
+            : { ...x, text: next.trim() }
+          : x,
+      ),
+    }))
+    setSwipedId(null)
+  }
+
   const [dropTarget, setDropTarget] = useState<string | null>(null)
 
   /** Drop `dragId` at `overId`'s position in the checklist */
@@ -221,9 +256,11 @@ export function KidCorner() {
         {isFuture && <p className="future-note">{t('futureLocked', { name: kid.name })}</p>}
 
         {items.map((item) => (
+          <div key={item.id} className="swipe-row">
           <label
-            key={item.id}
-            className={`checklist-item ${checked.includes(item.id) ? 'done' : ''} ${isFuture || !canEdit ? 'locked' : ''} ${skipped.includes(item.id) ? 'skipped' : ''} ${dropTarget === item.id ? 'drop-target' : ''}`}
+            className={`checklist-item ${checked.includes(item.id) ? 'done' : ''} ${isFuture || !canEdit ? 'locked' : ''} ${skipped.includes(item.id) ? 'skipped' : ''} ${dropTarget === item.id ? 'drop-target' : ''} ${swipedId === item.id ? 'swiped' : ''}`}
+            onTouchStart={onRowTouchStart}
+            onTouchEnd={onRowTouchEnd(item.id)}
             draggable={canEdit}
             onDragStart={(e) => setDragPayload(e, { kind: 'check-item', id: item.id })}
             onDragOver={(e) => {
@@ -281,6 +318,16 @@ export function KidCorner() {
               </button>
             )}
           </label>
+          {swipedId === item.id && canEdit && (
+            <div className="swipe-actions">
+              <button className="swipe-act edit" onClick={() => renameItem(item)}>✏️</button>
+              {!locked && (
+                <button className="swipe-act skip" onClick={() => { toggleSkip(item.id); setSwipedId(null) }}>🙅</button>
+              )}
+              <button className="swipe-act del" onClick={() => { removeItem(item.id); setSwipedId(null) }}>🗑️</button>
+            </div>
+          )}
+          </div>
         ))}
 
         {editList && (

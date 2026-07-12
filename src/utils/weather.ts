@@ -76,7 +76,9 @@ export async function fetchForecast(): Promise<DayForecast[]> {
     // Labels are i18n keys (morning/afternoon/evening/overnight) or raw NEA text.
     const periods: PeriodForecast[] = []
     for (const p of todayRecord.periods ?? []) {
-      const startHour = new Date(p?.timePeriod?.start ?? '').getHours()
+      // NEA timestamps are Singapore-local (+08:00) — read the hour straight
+      // from the string so a device in another timezone doesn't shift labels
+      const startHour = Number(/T(\d{2}):/.exec(p?.timePeriod?.start ?? '')?.[1] ?? NaN)
       const label = isNaN(startHour)
         ? p?.timePeriod?.text ?? ''
         : startHour < 6

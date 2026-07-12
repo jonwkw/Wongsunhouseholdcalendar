@@ -72,9 +72,17 @@ export function TodayView({ goTo }: { goTo: (tab: string) => void }) {
   const dayForecast = offset < 3 ? forecast?.[offset] : undefined
 
   const everyoneActs = acts.filter((a) => a.memberIds.length === 0)
-  const memberActs = data.members
-    .map((m) => ({ member: m, list: acts.filter((a) => a.memberIds.includes(m.id)) }))
-    .filter((x) => x.list.length > 0)
+  // one section per unique people-combination, so a shared activity
+  // ("swimming — Rosco + Casper") shows once instead of once per person
+  const comboSections: { members: Member[]; list: Activity[] }[] = []
+  for (const a of acts) {
+    if (a.memberIds.length === 0) continue
+    const members = data.members.filter((m) => a.memberIds.includes(m.id))
+    const key = members.map((m) => m.id).join('|')
+    const existing = comboSections.find((s) => s.members.map((m) => m.id).join('|') === key)
+    if (existing) existing.list.push(a)
+    else comboSections.push({ members, list: [a] })
+  }
 
   // ✕ on a card: one-offs are deleted; recurring activities just skip this day
   const removeFromDay = (a: Activity) => {
@@ -155,15 +163,26 @@ export function TodayView({ goTo }: { goTo: (tab: string) => void }) {
               </div>
               {dayForecast.periods && dayForecast.periods.length > 0 && (
                 <div className="weather-periods">
-                  {dayForecast.periods.map((p) => (
-                    <div key={p.label} className="weather-period">
-                      <span className="weather-period-label">
-                        {PERIOD_KEYS.includes(p.label) ? t(p.label as TKey) : p.label}
-                      </span>
-                      <span>{weatherEmoji(p.summary)}</span>
-                      <span className="weather-period-text">{p.summary}</span>
-                    </div>
-                  ))}
+                  {dayForecast.periods.map((p) => {
+                    // NEA gives one low/high per day: mornings are coolest,
+                    // afternoons hottest — show each where it belongs
+                    const temp =
+                      p.label === 'morning' || p.label === 'overnight'
+                        ? dayForecast.low !== undefined ? `↓${dayForecast.low}°` : null
+                        : p.label === 'afternoon'
+                          ? dayForecast.high !== undefined ? `↑${dayForecast.high}°` : null
+                          : null
+                    return (
+                      <div key={p.label} className="weather-period">
+                        <span className="weather-period-emoji">{weatherEmoji(p.summary)}</span>
+                        <span className="weather-period-label">
+                          {PERIOD_KEYS.includes(p.label) ? t(p.label as TKey) : p.label}
+                        </span>
+                        {temp && <span className="weather-period-temp">{temp}</span>}
+                        <span className="weather-period-text">{p.summary}</span>
+                      </div>
+                    )
+                  })}
                 </div>
               )}
               {dayForecast.reminders[0] && (
@@ -222,11 +241,13 @@ export function TodayView({ goTo }: { goTo: (tab: string) => void }) {
               ))}
             </div>
           )}
-          {memberActs.map(({ member, list }) => (
-            <div key={member.id} className="person-section" style={{ borderColor: member.color }}>
+          {comboSections.map(({ members, list }) => (
+            <div key={members.map((m) => m.id).join('|')} className="person-section" style={{ borderColor: members[0].color }}>
               <div className="person-head">
-                <MemberFace member={member} size={30} />
-                <strong>{member.name}</strong>
+                {members.map((m) => (
+                  <MemberFace key={m.id} member={m} size={30} />
+                ))}
+                <strong>{members.map((m) => m.name).join(' + ')}</strong>
               </div>
               {list.map((a) => (
                 <ActivityRow
