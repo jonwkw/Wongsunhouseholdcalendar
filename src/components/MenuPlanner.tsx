@@ -347,7 +347,7 @@ interface CellProps {
 
 /** One meal slot inside a day card */
 function MenuCell(props: CellProps) {
-  const { data } = useApp()
+  const { data, locked } = useApp()
   const {
     slot, date, dragOver, setDragOver, onDrop, onCellClick, onEntryClick, onEatOut,
     typing, typedName, setTypedName, saveTyped, cancelTyped,
@@ -427,8 +427,21 @@ function MenuCell(props: CellProps) {
               🍴 {t('eatingOut')}
             </button>
           </>
+        ) : entries.length === 0 ? (
+          <span className="menu-empty">＋</span>
         ) : (
-          entries.length === 0 && <span className="menu-empty">＋</span>
+          // entries can cover the whole cell — keep an explicit add button
+          !locked && (
+            <button
+              className="menu-add-more"
+              onClick={(e) => {
+                e.stopPropagation()
+                onCellClick(date, slot)
+              }}
+            >
+              ＋
+            </button>
+          )
         )}
       </div>
     </div>
