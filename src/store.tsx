@@ -4,6 +4,7 @@ import type { AppData, Member } from './types'
 import { seedData, DEFAULT_CHECKLIST, SAMPLE_DISHES } from './data/seed'
 import { getSyncConfig, saveSyncConfig, pullRemote, pushRemote } from './utils/sync'
 import type { SyncConfig } from './utils/sync'
+import { todayKey, addDays } from './utils/dates'
 
 // Stage 1 persistence: localStorage on this device.
 // Stage 2 (family sync): the same data is mirrored to a shared Firestore
@@ -41,9 +42,22 @@ function migrate(data: AppData): AppData {
   // dishes and planned meals once. Members, reminders and Rosco's data stay.
   const wipe = version < 4
   if (wipe) dishes = []
+  // v5: reset Rosco's rocket to 4 of 5 fuel cells on the first rocket
+  // (family request) — keep his most recent real star days where possible
+  let starDays = data.starDays ?? []
+  let bonusFuel = data.bonusFuel ?? 0
+  if (version < 5) {
+    starDays = starDays.slice(-4)
+    let pad = 1
+    while (starDays.length < 4) {
+      starDays = [addDays(todayKey(), -pad), ...starDays]
+      pad++
+    }
+    bonusFuel = 0
+  }
   return {
     ...data,
-    version: Math.max(version, 4),
+    version: Math.max(version, 5),
     dishes,
     activityTemplates: wipe ? [] : (data.activityTemplates ?? []),
     // snack rows retired — the menu is back to three meals
@@ -60,8 +74,8 @@ function migrate(data: AppData): AppData {
     kidChecks: data.kidChecks ?? {},
     kidSkips: data.kidSkips ?? {},
     kidChallenges: data.kidChallenges ?? {},
-    starDays: data.starDays ?? [],
-    bonusFuel: data.bonusFuel ?? 0,
+    starDays,
+    bonusFuel,
     // school timetable cancelled (holidays) — remove the seeded series everywhere
     activities: wipe ? [] : (data.activities ?? []).filter((a) => a.id !== 'a-school'),
     // requests retired — everything on the board is a reminder now
