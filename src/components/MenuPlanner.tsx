@@ -235,38 +235,38 @@ export function MenuPlanner() {
           <button className="btn subtle" onClick={() => setMonday((m) => addDays(m, 7))}>{t('nextShort')}</button>
         </div>
 
-        <div className="menu-scroll">
-        <div className="menu-grid" style={{ gridTemplateColumns: `90px repeat(7, minmax(0, 1fr))` }}>
-          <div />
+        <div className="menu-days">
           {days.map((date) => {
             const d = fromKey(date)
             return (
-              <div key={date} className={`menu-day-head ${date === today ? 'today' : ''}`}>
-                {dayShort(d.getDay())} {d.getDate()}
-                {date === today && <span className="today-tag">{t('today')}</span>}
+              <div key={date} className={`menu-day-card ${date === today ? 'today' : ''}`}>
+                <div className="menu-day-title">
+                  <strong>{dayShort(d.getDay())} {d.getDate()}</strong>
+                  {date === today && <span className="today-tag">{t('today')}</span>}
+                </div>
+                <div className="menu-day-slots">
+                  {SLOTS.map((slot) => (
+                    <MenuCell
+                      key={slot}
+                      slot={slot}
+                      date={date}
+                      dragOver={dragOver}
+                      setDragOver={setDragOver}
+                      onDrop={onDrop}
+                      onCellClick={onCellClick}
+                      onEntryClick={(entry) => !locked && setEditingEntry(entry)}
+                      onEatOut={addEatingOut}
+                      typing={typing}
+                      typedName={typedName}
+                      setTypedName={setTypedName}
+                      saveTyped={saveTyped}
+                      cancelTyped={() => setTyping(null)}
+                    />
+                  ))}
+                </div>
               </div>
             )
           })}
-
-          {SLOTS.map((slot) => (
-            <MenuRow
-              key={slot}
-              slot={slot}
-              days={days}
-              dragOver={dragOver}
-              setDragOver={setDragOver}
-              onDrop={onDrop}
-              onCellClick={onCellClick}
-              onEntryClick={(entry) => !locked && setEditingEntry(entry)}
-              onEatOut={addEatingOut}
-              typing={typing}
-              typedName={typedName}
-              setTypedName={setTypedName}
-              saveTyped={saveTyped}
-              cancelTyped={() => setTyping(null)}
-            />
-          ))}
-        </div>
         </div>
 
         <p className="hint">{t('tapMealHint')}</p>
@@ -329,9 +329,9 @@ function PlaceDishModal({
   )
 }
 
-interface RowProps {
+interface CellProps {
   slot: MealSlot
-  days: string[]
+  date: string
   dragOver: string | null
   setDragOver: (k: string | null) => void
   onDrop: (e: DragEvent, date: string, slot: MealSlot) => void
@@ -345,96 +345,93 @@ interface RowProps {
   cancelTyped: () => void
 }
 
-function MenuRow(props: RowProps) {
+/** One meal slot inside a day card */
+function MenuCell(props: CellProps) {
   const { data } = useApp()
   const {
-    slot, days, dragOver, setDragOver, onDrop, onCellClick, onEntryClick, onEatOut,
+    slot, date, dragOver, setDragOver, onDrop, onCellClick, onEntryClick, onEatOut,
     typing, typedName, setTypedName, saveTyped, cancelTyped,
   } = props
 
+  const key = `${date}|${slot}`
+  const entries = data.menuEntries.filter((m) => m.date === date && m.slot === slot)
+  const isTyping = typing?.date === date && typing?.slot === slot
+
   return (
-    <>
+    <div className="menu-slot-col">
       <div className="menu-slot-label">{slotLabel(slot)}</div>
-      {days.map((date) => {
-        const key = `${date}|${slot}`
-        const entries = data.menuEntries.filter((m) => m.date === date && m.slot === slot)
-        const isTyping = typing?.date === date && typing?.slot === slot
-        return (
+      <div
+        className={`menu-cell ${dragOver === key ? 'drag-over' : ''}`}
+        onDragOver={(e) => {
+          e.preventDefault()
+          e.dataTransfer.dropEffect = 'copy'
+          setDragOver(key)
+        }}
+        onDragLeave={(e) => {
+          if (leavesTarget(e) && dragOver === key) setDragOver(null)
+        }}
+        onDrop={(e) => onDrop(e, date, slot)}
+        onClick={() => !isTyping && onCellClick(date, slot)}
+      >
+        {entries.map((entry) => (
           <div
-            key={key}
-            className={`menu-cell ${dragOver === key ? 'drag-over' : ''}`}
-            onDragOver={(e) => {
-              e.preventDefault()
-              e.dataTransfer.dropEffect = 'copy'
-              setDragOver(key)
+            key={entry.id}
+            className="menu-entry"
+            style={{ borderLeft: `4px solid ${tagColor(entry.memberIds, data.members)}` }}
+            onClick={(e) => {
+              e.stopPropagation()
+              onEntryClick(entry)
             }}
-            onDragLeave={(e) => {
-              if (leavesTarget(e) && dragOver === key) setDragOver(null)
-            }}
-            onDrop={(e) => onDrop(e, date, slot)}
-            onClick={() => !isTyping && onCellClick(date, slot)}
           >
-            {entries.map((entry) => (
-              <div
-                key={entry.id}
-                className="menu-entry"
-                style={{ borderLeft: `4px solid ${tagColor(entry.memberIds, data.members)}` }}
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onEntryClick(entry)
-                }}
-              >
-                <div className="menu-entry-top">
-                  <span>{entry.emoji}</span>
-                  <span className="menu-entry-name">{displayDishName(entry.dishName, data.dishes)}</span>
-                </div>
-                {entry.ratings && Object.keys(entry.ratings).length > 0 && (
-                  <div className="menu-entry-stars dish-stars">
-                    ★ {(Object.values(entry.ratings).reduce((a, b) => a + b, 0) / Object.values(entry.ratings).length).toFixed(1)}
-                  </div>
-                )}
-                {entry.memberIds.length > 0 && (
-                  <div className="menu-entry-tags">
-                    <MemberChips memberIds={entry.memberIds} />
-                  </div>
-                )}
+            <div className="menu-entry-top">
+              <span>{entry.emoji}</span>
+              <span className="menu-entry-name">{displayDishName(entry.dishName, data.dishes)}</span>
+            </div>
+            {entry.ratings && Object.keys(entry.ratings).length > 0 && (
+              <div className="menu-entry-stars dish-stars">
+                ★ {(Object.values(entry.ratings).reduce((a, b) => a + b, 0) / Object.values(entry.ratings).length).toFixed(1)}
               </div>
-            ))}
-            {isTyping ? (
-              <>
-                <input
-                  autoFocus
-                  className="menu-inline-input"
-                  value={typedName}
-                  placeholder={t('typeDish')}
-                  onChange={(e) => setTypedName(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') saveTyped()
-                    if (e.key === 'Escape') cancelTyped()
-                  }}
-                  onBlur={saveTyped}
-                  onClick={(e) => e.stopPropagation()}
-                />
-                <button
-                  className="btn subtle eat-out-btn"
-                  // mousedown fires before the input's blur, which would close the cell
-                  onMouseDown={(e) => {
-                    e.preventDefault()
-                    e.stopPropagation()
-                    onEatOut(date, slot)
-                  }}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  🍴 {t('eatingOut')}
-                </button>
-              </>
-            ) : (
-              entries.length === 0 && <span className="menu-empty">＋</span>
+            )}
+            {entry.memberIds.length > 0 && (
+              <div className="menu-entry-tags">
+                <MemberChips memberIds={entry.memberIds} />
+              </div>
             )}
           </div>
-        )
-      })}
-    </>
+        ))}
+        {isTyping ? (
+          <>
+            <input
+              autoFocus
+              className="menu-inline-input"
+              value={typedName}
+              placeholder={t('typeDish')}
+              onChange={(e) => setTypedName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') saveTyped()
+                if (e.key === 'Escape') cancelTyped()
+              }}
+              onBlur={saveTyped}
+              onClick={(e) => e.stopPropagation()}
+            />
+            <button
+              className="btn subtle eat-out-btn"
+              // mousedown fires before the input's blur, which would close the cell
+              onMouseDown={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                onEatOut(date, slot)
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              🍴 {t('eatingOut')}
+            </button>
+          </>
+        ) : (
+          entries.length === 0 && <span className="menu-empty">＋</span>
+        )}
+      </div>
+    </div>
   )
 }
 

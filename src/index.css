@@ -2724,8 +2724,7 @@ textarea:focus {
 /* crayon-underlined headings */
 .today-section h4,
 .kid-subtitle,
-.today-board h2,
-.library h3 {
+.today-board h2 {
   text-decoration: underline wavy color-mix(in srgb, var(--accent) 55%, transparent);
   text-decoration-thickness: 2px;
   text-underline-offset: 5px;
@@ -3389,4 +3388,60 @@ textarea:focus {
 
 .super-bonus-btn:hover {
   transform: scale(1.06) rotate(-1deg);
+}
+
+/* ---------- menu as day cards going down the page ---------- */
+.menu-days {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.menu-day-card {
+  background: var(--card);
+  border: 1.5px solid var(--line);
+  border-radius: 16px;
+  padding: 10px 12px 12px;
+  box-shadow: 0 2px 6px rgba(70, 50, 15, 0.05);
+}
+
+.menu-day-card.today {
+  border: 2.5px solid var(--accent);
+  background: color-mix(in srgb, var(--accent) 5%, #fff);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+.menu-day-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  margin-bottom: 8px;
+}
+
+.menu-day-slots {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.menu-slot-col .menu-slot-label {
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  margin-bottom: 4px;
+  padding: 0;
+  text-align: left;
+}
+
+.menu-slot-col .menu-cell {
+  min-height: 56px;
+}
+
+@media (max-width: 520px) {
+  .menu-day-slots {
+    gap: 6px;
+  }
 }
