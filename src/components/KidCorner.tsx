@@ -425,8 +425,8 @@ export function KidCorner() {
       </div>
 
       <div className="kid-daily">
-        <div className={`kid-card word ${challenges.includes('word') ? 'challenge-done' : ''}`}>
-          {challenges.includes('word') && <span className="done-badge">{t('completeTag')}</span>}
+        <div className={`kid-card word ${challenges.includes(`word:${wordN}`) ? 'challenge-done' : ''}`}>
+          {challenges.includes(`word:${wordN}`) && <span className="done-badge">{t('completeTag')}</span>}
           <h3>{t('wordOfDay')}</h3>
           <div className="kid-word">{word.word}</div>
           <div className="kid-phonetic">🔤 {word.phonetic}</div>
@@ -458,8 +458,8 @@ export function KidCorner() {
           </div>
         </div>
 
-        <div className={`kid-card cnword ${challenges.includes('cnword') ? 'challenge-done' : ''}`}>
-          {challenges.includes('cnword') && <span className="done-badge">{t('completeTag')}</span>}
+        <div className={`kid-card cnword ${challenges.includes(`cnword:${cnWordN}`) ? 'challenge-done' : ''}`}>
+          {challenges.includes(`cnword:${cnWordN}`) && <span className="done-badge">{t('completeTag')}</span>}
           <h3>{t('cnWordOfDay')}</h3>
           <div className="kid-word hanzi">{cnWord.hanzi}</div>
           <div className="kid-phonetic">🔤 {cnWord.pinyin} · {cnWord.meaning}</div>
@@ -492,15 +492,15 @@ export function KidCorner() {
           </div>
         </div>
 
-        <div className={`kid-card math ${challenges.includes('math') ? 'challenge-done' : ''}`}>
-          {challenges.includes('math') && <span className="done-badge">{t('completeTag')}</span>}
+        <div className={`kid-card math ${challenges.includes(`math:${mathN}`) ? 'challenge-done' : ''}`}>
+          {challenges.includes(`math:${mathN}`) && <span className="done-badge">{t('completeTag')}</span>}
           <h3>{t('mathOfDay')}</h3>
           <p className="kid-question">{lang === 'zh' ? math.questionZh : math.question}</p>
           {showAnswer && (
             <div className="kid-answer">
               {t('answerIs', { n: math.answer })}
-              {!challenges.includes('math') && (
-                <button className="btn primary gotit-btn" onClick={() => markChallenge('math')}>
+              {!challenges.includes(`math:${mathN}`) && (
+                <button className="btn primary gotit-btn" onClick={() => markChallenge(`math:${mathN}`)}>
                   {t('gotIt')}
                 </button>
               )}
@@ -527,8 +527,8 @@ export function KidCorner() {
           </div>
         </div>
 
-        <div className={`kid-card mission ${challenges.includes('mission') ? 'challenge-done' : ''}`}>
-          {challenges.includes('mission') && <span className="done-badge">{t('completeTag')}</span>}
+        <div className={`kid-card mission ${challenges.includes(`mission:${missionN}`) ? 'challenge-done' : ''}`}>
+          {challenges.includes(`mission:${missionN}`) && <span className="done-badge">{t('completeTag')}</span>}
           <h3>{t('missionOfDay')}</h3>
           <p className="kid-question">{mission}</p>
           <div className="kid-btn-row">
@@ -554,8 +554,8 @@ export function KidCorner() {
             <button className="btn subtle" onClick={() => { stopSpeak(); setMissionN((n) => n + 1) }}>
               {t('nextOne')}
             </button>
-            {!challenges.includes('mission') && (
-              <button className="btn primary" onClick={() => markChallenge('mission')}>
+            {!challenges.includes(`mission:${missionN}`) && (
+              <button className="btn primary" onClick={() => markChallenge(`mission:${missionN}`)}>
                 {t('didIt')}
               </button>
             )}
@@ -623,7 +623,7 @@ export function KidCorner() {
         <SpellTestModal
           word={word}
           mode={now.getDate() % 2 === 0 ? 'full' : 'missing'}
-          onWin={() => markChallenge('word')}
+          onWin={() => markChallenge(`word:${wordN}`)}
           onClose={() => { stopSpeak(); setShowSpellTest(false) }}
         />
       )}
@@ -631,7 +631,7 @@ export function KidCorner() {
         <CnTestModal
           word={cnWord}
           mode={now.getDate() % 2 === 0 ? 'sound' : 'meaning'}
-          onWin={() => markChallenge('cnword')}
+          onWin={() => markChallenge(`cnword:${cnWordN}`)}
           onClose={() => { stopSpeak(); setShowCnTest(false) }}
         />
       )}

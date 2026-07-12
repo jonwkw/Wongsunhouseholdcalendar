@@ -73,7 +73,14 @@ function migrate(data: AppData): AppData {
     })),
     kidChecks: data.kidChecks ?? {},
     kidSkips: data.kidSkips ?? {},
-    kidChallenges: data.kidChallenges ?? {},
+    // completed challenges are keyed per specific challenge ("word:2");
+    // early entries stored just the type — treat those as the day's first
+    kidChallenges: Object.fromEntries(
+      Object.entries(data.kidChallenges ?? {}).map(([k, v]) => [
+        k,
+        (v ?? []).map((x) => (x.includes(':') ? x : `${x}:0`)),
+      ]),
+    ),
     starDays,
     bonusFuel,
     // school timetable cancelled (holidays) — remove the seeded series everywhere
