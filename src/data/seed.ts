@@ -56,5 +56,6 @@ export function seedData(): AppData {
     kidSkips: {},
     kidChallenges: {},
     starDays: [],
+    bonusFuel: 0,
   }
 }

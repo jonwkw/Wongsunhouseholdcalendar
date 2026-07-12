@@ -91,9 +91,34 @@ export function KidCorner() {
     })
   }
 
-  const totalDays = data.starDays.length
+  const totalDays = data.starDays.length + data.bonusFuel
   const launches = Math.floor(totalDays / 5)
   const tank = totalDays % 5
+
+  // Super bonus (adult-gated): the current tank fills right up — no shortcut
+  // theatrics, just fuel. Rosco sees the FULL tank first, then the rocket
+  // lifts off by the normal rule (a full tank always launches).
+  const [showSuperBonus, setShowSuperBonus] = useState(false)
+  const grantSuperBonus = () => {
+    setShowSuperBonus(false)
+    update((d) => {
+      const total = d.starDays.length + d.bonusFuel
+      const need = 5 - (total % 5) // whatever it takes to fill this tank
+      // show the old rocket with its brimming tank for a moment…
+      setCelebrateLevel(Math.min(Math.floor(total / 5), ROCKETS.length - 1))
+      setLaunching(false)
+      if (launchTimer.current) clearTimeout(launchTimer.current)
+      // …then the usual lift-off plays out
+      launchTimer.current = setTimeout(() => {
+        setLaunching(true)
+        launchTimer.current = setTimeout(() => {
+          setLaunching(false)
+          setCelebrateLevel(null)
+        }, 3200)
+      }, 1400)
+      return { ...d, bonusFuel: d.bonusFuel + need }
+    })
+  }
   const { rocket, level } = rocketFor(launches)
   const todaySkipped = data.kidSkips[today] ?? []
   const todayItems = itemsFor(today).filter((i) => !todaySkipped.includes(i.id))
@@ -393,6 +418,9 @@ export function KidCorner() {
           {t('daysToLaunch', { n: 5 - tank })}
         </div>
         <div className="launch-count-mini">🚀 × {launches}</div>
+        <button className="super-bonus-btn" onClick={() => setShowSuperBonus(true)}>
+          ⭐ {t('superBonus')}
+        </button>
       </div>
       </div>
 
@@ -574,6 +602,13 @@ export function KidCorner() {
         })}
       </div>
 
+      {showSuperBonus && (
+        <SuperBonusModal
+          kidName={kid.name}
+          onGrant={grantSuperBonus}
+          onClose={() => setShowSuperBonus(false)}
+        />
+      )}
       {showKidUnlock && (
         <SimpleUnlockModal
           kidName={kid.name}
@@ -785,6 +820,51 @@ function CnTestModal({ word, mode, onWin, onClose }: { word: ChineseWordOfDay; m
           </div>
         </>
       )}
+    </Modal>
+  )
+}
+
+/** Adult-gated instant full tank for something SUPER special (helped grandma,
+ * brave at the dentist…). The grown-up maths keeps little fingers out. */
+function SuperBonusModal({ kidName, onGrant, onClose }: { kidName: string; onGrant: () => void; onClose: () => void }) {
+  const [answer, setAnswer] = useState('')
+  const [wrong, setWrong] = useState(false)
+  const [q] = useState(() => {
+    const a = 6 + Math.floor(Math.random() * 4)
+    const b = 6 + Math.floor(Math.random() * 4)
+    const c = 2 + Math.floor(Math.random() * 8)
+    return { text: `${a} × ${b} + ${c}`, answer: a * b + c }
+  })
+  const check = () => {
+    if (Number(answer.trim()) === q.answer) onGrant()
+    else {
+      setWrong(true)
+      setAnswer('')
+    }
+  }
+  return (
+    <Modal title={t('superBonusTitle')} onClose={onClose}>
+      <div className="form">
+        <p className="hint" style={{ marginTop: 0 }}>{t('superBonusDesc', { name: kidName })}</p>
+        <label>
+          {t('lockQuestion')}
+          <div className="lock-question">{q.text} = ?</div>
+          <input
+            autoFocus
+            inputMode="numeric"
+            value={answer}
+            onChange={(e) => setAnswer(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && check()}
+          />
+        </label>
+        {wrong && <p className="lock-wrong">{t('wrongAnswer')}</p>}
+        <div className="form-actions">
+          <span className="spacer" />
+          <button className="btn primary" onClick={check} disabled={!answer.trim()}>
+            {t('superBonusGo')}
+          </button>
+        </div>
+      </div>
     </Modal>
   )
 }

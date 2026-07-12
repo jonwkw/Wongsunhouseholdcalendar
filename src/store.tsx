@@ -61,6 +61,7 @@ function migrate(data: AppData): AppData {
     kidSkips: data.kidSkips ?? {},
     kidChallenges: data.kidChallenges ?? {},
     starDays: data.starDays ?? [],
+    bonusFuel: data.bonusFuel ?? 0,
     // school timetable cancelled (holidays) — remove the seeded series everywhere
     activities: wipe ? [] : (data.activities ?? []).filter((a) => a.id !== 'a-school'),
     // requests retired — everything on the board is a reminder now

@@ -145,4 +145,6 @@ export interface AppData {
   kidChallenges: Record<string, string[]>
   /** Dates where every checklist item was ticked — one gold star each */
   starDays: string[]
+  /** Extra fuel cells awarded by adults for something super special */
+  bonusFuel: number
 }
