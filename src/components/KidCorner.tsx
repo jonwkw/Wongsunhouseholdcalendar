@@ -119,6 +119,16 @@ export function KidCorner() {
       return { ...d, bonusFuel: d.bonusFuel + 1 }
     })
   }
+
+  /** Corrections: take one cell back — bonus fuel first, then the newest star day */
+  const removeFuelCell = () => {
+    setShowSuperBonus(false)
+    update((d) => {
+      if (d.bonusFuel > 0) return { ...d, bonusFuel: d.bonusFuel - 1 }
+      if (d.starDays.length > 0) return { ...d, starDays: d.starDays.slice(0, -1) }
+      return d
+    })
+  }
   const { rocket, level } = rocketFor(launches)
   const todaySkipped = data.kidSkips[today] ?? []
   const todayItems = itemsFor(today).filter((i) => !todaySkipped.includes(i.id))
@@ -605,7 +615,10 @@ export function KidCorner() {
       {showSuperBonus && (
         <SuperBonusModal
           kidName={kid.name}
+          tank={tank}
+          launches={launches}
           onGrant={grantSuperBonus}
+          onRemove={removeFuelCell}
           onClose={() => setShowSuperBonus(false)}
         />
       )}
@@ -824,11 +837,26 @@ function CnTestModal({ word, mode, onWin, onClose }: { word: ChineseWordOfDay; m
   )
 }
 
-/** Adult-gated instant full tank for something SUPER special (helped grandma,
- * brave at the dentist…). The grown-up maths keeps little fingers out. */
-function SuperBonusModal({ kidName, onGrant, onClose }: { kidName: string; onGrant: () => void; onClose: () => void }) {
+/** Adult-gated fuel control: one grown-up maths solve, then add a bonus cell
+ * for something SUPER special — or take one back to fix a mistake. */
+function SuperBonusModal({
+  kidName,
+  tank,
+  launches,
+  onGrant,
+  onRemove,
+  onClose,
+}: {
+  kidName: string
+  tank: number
+  launches: number
+  onGrant: () => void
+  onRemove: () => void
+  onClose: () => void
+}) {
   const [answer, setAnswer] = useState('')
   const [wrong, setWrong] = useState(false)
+  const [solved, setSolved] = useState(false)
   const [q] = useState(() => {
     const a = 6 + Math.floor(Math.random() * 4)
     const b = 6 + Math.floor(Math.random() * 4)
@@ -836,7 +864,7 @@ function SuperBonusModal({ kidName, onGrant, onClose }: { kidName: string; onGra
     return { text: `${a} × ${b} + ${c}`, answer: a * b + c }
   })
   const check = () => {
-    if (Number(answer.trim()) === q.answer) onGrant()
+    if (Number(answer.trim()) === q.answer) setSolved(true)
     else {
       setWrong(true)
       setAnswer('')
@@ -845,25 +873,42 @@ function SuperBonusModal({ kidName, onGrant, onClose }: { kidName: string; onGra
   return (
     <Modal title={t('superBonusTitle')} onClose={onClose}>
       <div className="form">
-        <p className="hint" style={{ marginTop: 0 }}>{t('superBonusDesc', { name: kidName })}</p>
-        <label>
-          {t('lockQuestion')}
-          <div className="lock-question">{q.text} = ?</div>
-          <input
-            autoFocus
-            inputMode="numeric"
-            value={answer}
-            onChange={(e) => setAnswer(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && check()}
-          />
-        </label>
-        {wrong && <p className="lock-wrong">{t('wrongAnswer')}</p>}
-        <div className="form-actions">
-          <span className="spacer" />
-          <button className="btn primary" onClick={check} disabled={!answer.trim()}>
-            {t('superBonusGo')}
-          </button>
-        </div>
+        {!solved ? (
+          <>
+            <p className="hint" style={{ marginTop: 0 }}>{t('superBonusDesc', { name: kidName })}</p>
+            <label>
+              {t('lockQuestion')}
+              <div className="lock-question">{q.text} = ?</div>
+              <input
+                autoFocus
+                inputMode="numeric"
+                value={answer}
+                onChange={(e) => setAnswer(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && check()}
+              />
+            </label>
+            {wrong && <p className="lock-wrong">{t('wrongAnswer')}</p>}
+            <div className="form-actions">
+              <span className="spacer" />
+              <button className="btn primary" onClick={check} disabled={!answer.trim()}>
+                {t('unlock')}
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <p className="fuel-now">{t('fuelNow', { tank, n: launches })}</p>
+            <div className="kid-btn-row" style={{ justifyContent: 'center' }}>
+              <button className="btn primary" onClick={onGrant}>
+                {t('addFuelCell')}
+              </button>
+              <button className="btn danger" onClick={onRemove} disabled={tank === 0 && launches === 0}>
+                {t('removeFuelCell')}
+              </button>
+            </div>
+            <p className="hint" style={{ textAlign: 'center' }}>{t('fuelAdjustHint')}</p>
+          </>
+        )}
       </div>
     </Modal>
   )

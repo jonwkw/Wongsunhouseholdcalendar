@@ -3462,3 +3462,10 @@ textarea:focus {
   border-color: var(--accent);
   color: var(--accent-ink);
 }
+
+.fuel-now {
+  text-align: center;
+  font-size: 18px;
+  font-weight: 800;
+  margin: 4px 0 10px;
+}
