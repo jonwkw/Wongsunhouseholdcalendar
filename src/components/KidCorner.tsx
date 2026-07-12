@@ -95,28 +95,28 @@ export function KidCorner() {
   const launches = Math.floor(totalDays / 5)
   const tank = totalDays % 5
 
-  // Super bonus (adult-gated): the current tank fills right up — no shortcut
-  // theatrics, just fuel. Rosco sees the FULL tank first, then the rocket
-  // lifts off by the normal rule (a full tank always launches).
+  // Super bonus (adult-gated): ONE extra fuel cell — a whole day of missions,
+  // on the house. If it happens to be the fifth cell, the rocket lifts off
+  // by the normal full-tank rule.
   const [showSuperBonus, setShowSuperBonus] = useState(false)
   const grantSuperBonus = () => {
     setShowSuperBonus(false)
     update((d) => {
       const total = d.starDays.length + d.bonusFuel
-      const need = 5 - (total % 5) // whatever it takes to fill this tank
-      // show the old rocket with its brimming tank for a moment…
-      setCelebrateLevel(Math.min(Math.floor(total / 5), ROCKETS.length - 1))
-      setLaunching(false)
-      if (launchTimer.current) clearTimeout(launchTimer.current)
-      // …then the usual lift-off plays out
-      launchTimer.current = setTimeout(() => {
-        setLaunching(true)
+      if ((total + 1) % 5 === 0) {
+        // this cell fills the tank — show it brimming, then the usual lift-off
+        setCelebrateLevel(Math.min(Math.floor(total / 5), ROCKETS.length - 1))
+        setLaunching(false)
+        if (launchTimer.current) clearTimeout(launchTimer.current)
         launchTimer.current = setTimeout(() => {
-          setLaunching(false)
-          setCelebrateLevel(null)
-        }, 3200)
-      }, 1400)
-      return { ...d, bonusFuel: d.bonusFuel + need }
+          setLaunching(true)
+          launchTimer.current = setTimeout(() => {
+            setLaunching(false)
+            setCelebrateLevel(null)
+          }, 3200)
+        }, 1400)
+      }
+      return { ...d, bonusFuel: d.bonusFuel + 1 }
     })
   }
   const { rocket, level } = rocketFor(launches)
