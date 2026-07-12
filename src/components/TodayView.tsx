@@ -173,12 +173,12 @@ export function TodayView({ goTo }: { goTo: (tab: string) => void }) {
                           ? dayForecast.high !== undefined ? `↑${dayForecast.high}°` : null
                           : null
                     return (
-                      <div key={p.label} className="weather-period">
-                        <span className="weather-period-emoji">{weatherEmoji(p.summary)}</span>
+                      <div key={p.label} className={`weather-period p-${p.label}`}>
                         <span className="weather-period-label">
                           {PERIOD_KEYS.includes(p.label) ? t(p.label as TKey) : p.label}
                         </span>
-                        {temp && <span className="weather-period-temp">{temp}</span>}
+                        <span className="weather-period-emoji">{weatherEmoji(p.summary)}</span>
+                        <span className="weather-period-temp">{temp ?? ' '}</span>
                         <span className="weather-period-text">{p.summary}</span>
                       </div>
                     )
