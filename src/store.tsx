@@ -55,9 +55,13 @@ function migrate(data: AppData): AppData {
     }
     bonusFuel = 0
   }
+  // v6: undo one super bonus (family request) — tank sits fresh on rocket 2
+  if (version < 6) {
+    bonusFuel = Math.max(0, bonusFuel - 1)
+  }
   return {
     ...data,
-    version: Math.max(version, 5),
+    version: Math.max(version, 6),
     dishes,
     activityTemplates: wipe ? [] : (data.activityTemplates ?? []),
     // snack rows retired — the menu is back to three meals
