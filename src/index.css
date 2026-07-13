@@ -3469,3 +3469,16 @@ textarea:focus {
   font-weight: 800;
   margin: 4px 0 10px;
 }
+
+.today-meal-slot {
+  margin-bottom: 8px;
+}
+
+.today-meal-slot-label {
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  margin-bottom: 3px;
+}

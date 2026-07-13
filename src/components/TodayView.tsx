@@ -268,15 +268,26 @@ export function TodayView({ goTo }: { goTo: (tab: string) => void }) {
                 {t('notPlannedYet')} <button className="linklike" onClick={() => goTo('menu')}>{t('addToMenuLink')}</button>
               </p>
             )}
-            {meals.map((m) => (
-              <div key={m.id} className="today-meal" style={{ borderLeft: `4px solid ${tagColor(m.memberIds, data.members)}`, paddingLeft: 8 }}>
-                <span>{m.emoji}</span>
-                <span className="menu-entry-name">
-                  {getLang() === 'zh' ? (data.dishes.find((x) => x.name === m.dishName)?.nameZh || m.dishName) : m.dishName}
-                </span>
-                <MemberChips memberIds={m.memberIds} />
-              </div>
-            ))}
+            {(['breakfast', 'lunch', 'dinner'] as const).map((slot) => {
+              const slotMeals = meals.filter((m) => m.slot === slot)
+              if (slotMeals.length === 0) return null
+              return (
+                <div key={slot} className="today-meal-slot">
+                  <div className="today-meal-slot-label">
+                    {t(slot === 'breakfast' ? 'breakfast' : slot === 'lunch' ? 'lunch' : 'dinner')}
+                  </div>
+                  {slotMeals.map((m) => (
+                    <div key={m.id} className="today-meal" style={{ borderLeft: `4px solid ${tagColor(m.memberIds, data.members)}`, paddingLeft: 8 }}>
+                      <span>{m.emoji}</span>
+                      <span className="menu-entry-name">
+                        {getLang() === 'zh' ? (data.dishes.find((x) => x.name === m.dishName)?.nameZh || m.dishName) : m.dishName}
+                      </span>
+                      <MemberChips memberIds={m.memberIds} />
+                    </div>
+                  ))}
+                </div>
+              )
+            })}
           </div>
 
           {boardDue.length > 0 && (

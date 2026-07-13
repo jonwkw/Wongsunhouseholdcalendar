@@ -59,9 +59,16 @@ function migrate(data: AppData): AppData {
   if (version < 6) {
     bonusFuel = Math.max(0, bonusFuel - 1)
   }
+  // v7: mechanism change — one completed day now equals one FULL tank
+  // (a launch). Convert old cell-based progress: 5 old cells = 1 launch.
+  if (version < 7) {
+    const oldLaunches = Math.floor((starDays.length + bonusFuel) / 5)
+    starDays = starDays.slice(-oldLaunches)
+    bonusFuel = 0
+  }
   return {
     ...data,
-    version: Math.max(version, 6),
+    version: Math.max(version, 7),
     dishes,
     activityTemplates: wipe ? [] : (data.activityTemplates ?? []),
     // snack rows retired — the menu is back to three meals

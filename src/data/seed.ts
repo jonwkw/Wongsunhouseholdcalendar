@@ -35,7 +35,7 @@ export const DEFAULT_CHECKLIST: ChecklistItem[] = [
 // Minimal starter data: one example of each thing so the logic is easy to verify.
 export function seedData(): AppData {
   return {
-    version: 6,
+    version: 7,
     members: [
       { id: 'jonathan', name: 'Jonathan', emoji: '👨', color: '#3b82c4', avatar: { age: 'adult', skin: 1, hair: 2, hairColor: 0, facialHair: 0 } },
       { id: 'lilian', name: 'Lilian', emoji: '👩', color: '#c45b9d', avatar: { age: 'adult', skin: 0, hair: 9, hairColor: 0, facialHair: 0, gender: 'female' } },
