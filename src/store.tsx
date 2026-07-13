@@ -77,9 +77,13 @@ function migrate(data: AppData): AppData {
     starDays = rebuilt
     bonusFuel = 0
   }
+  // v9: two tanks on the house — Rosco starts the new gauge at 2/5 🎁
+  if (version < 9) {
+    bonusFuel += 2
+  }
   return {
     ...data,
-    version: Math.max(version, 8),
+    version: Math.max(version, 9),
     dishes,
     activityTemplates: wipe ? [] : (data.activityTemplates ?? []),
     // snack rows retired — the menu is back to three meals
