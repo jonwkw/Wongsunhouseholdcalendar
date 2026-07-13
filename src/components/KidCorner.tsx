@@ -91,10 +91,12 @@ export function KidCorner() {
     })
   }
 
-  // New mechanism: ONE completed day = ONE full tank = one lift-off.
-  // launches = completed days + bonus tanks; the visible tank is TODAY's
-  // task progress filling up cell by cell.
-  const launches = data.starDays.length + data.bonusFuel
+  // Mechanism: each FULLY completed day (adult skips honoured) fills ONE of
+  // the five fuel tanks; five tanks = lift-off. The next tank shows partial
+  // fill as today's tasks tick along.
+  const totalTanks = data.starDays.length + data.bonusFuel
+  const launches = Math.floor(totalTanks / 5)
+  const tank = totalTanks % 5
   const { rocket, level } = rocketFor(launches)
   const todaySkipped = data.kidSkips[today] ?? []
   const todayItems = itemsFor(today).filter((i) => !todaySkipped.includes(i.id))
@@ -104,11 +106,8 @@ export function KidCorner() {
     : todayItems.length === 0
       ? 0
       : todayItems.filter((i) => todayChecked.includes(i.id)).length / todayItems.length
-  const cellsExact = todayFraction * 5
-  const tank = Math.floor(cellsExact)
-  const partialCell = cellsExact - tank
 
-  /** Full-tank moment, then the usual lift-off animation */
+  /** Full-gauge moment, then the usual lift-off animation */
   const playLaunch = (fromLevel: number) => {
     setCelebrateLevel(Math.min(fromLevel, ROCKETS.length - 1))
     setLaunching(false)
@@ -122,19 +121,25 @@ export function KidCorner() {
     }, 1200)
   }
 
-  // Super bonus (adult-gated): FIVE full tanks — five lift-offs at once!
+  // Super bonus (adult-gated): FIVE tanks at once — a whole lift-off,
+  // with any part-filled progress carried to the next rocket.
   const [showSuperBonus, setShowSuperBonus] = useState(false)
   const grantSuperBonus = () => {
     setShowSuperBonus(false)
-    playLaunch(launches)
-    update((d) => ({ ...d, bonusFuel: d.bonusFuel + 5 }))
+    update((d) => {
+      playLaunch(Math.floor((d.starDays.length + d.bonusFuel) / 5))
+      return { ...d, bonusFuel: d.bonusFuel + 5 }
+    })
   }
 
   /** Fuel control: one tank at a time for corrections */
   const addTank = () => {
     setShowSuperBonus(false)
-    playLaunch(launches)
-    update((d) => ({ ...d, bonusFuel: d.bonusFuel + 1 }))
+    update((d) => {
+      const total = d.starDays.length + d.bonusFuel
+      if ((total + 1) % 5 === 0) playLaunch(Math.floor(total / 5))
+      return { ...d, bonusFuel: d.bonusFuel + 1 }
+    })
   }
   const removeTank = () => {
     setShowSuperBonus(false)
@@ -157,9 +162,11 @@ export function KidCorner() {
       const starDays = done
         ? wasDone ? d.starDays : [...d.starDays, selectedDay]
         : d.starDays.filter((x) => x !== selectedDay)
-      // finishing a day fills the tank → the CURRENT rocket lifts off
-      if (starDays.length > d.starDays.length) {
-        playLaunch(d.starDays.length + d.bonusFuel)
+      // the 5th tank filling launches the CURRENT rocket
+      const before = d.starDays.length + d.bonusFuel
+      const after = starDays.length + d.bonusFuel
+      if (Math.floor(after / 5) > Math.floor(before / 5)) {
+        playLaunch(Math.floor(before / 5))
       }
       return { ...d, kidChecks: { ...d.kidChecks, [selectedDay]: next }, starDays }
     })
@@ -395,7 +402,7 @@ export function KidCorner() {
           </div>
         )}
         {dayDone && !isFuture && tank !== 0 && (
-          <div className="checklist-star">{t('tankFullMsg')}</div>
+          <div className="checklist-star">⛽ {t('daysToLaunch', { n: 5 - tank })}</div>
         )}
       </div>
 
@@ -416,15 +423,15 @@ export function KidCorner() {
             const shownTank = celebrateLevel != null ? 5 : tank
             return (
               <div key={i} className={`fuel-cell ${i < shownTank ? 'full' : ''}`}>
-                {i < shownTank ? '⛽' : i === shownTank && partialCell > 0 ? (
-                  <div className="fuel-cell-partial" style={{ height: `${Math.round(partialCell * 100)}%` }} />
+                {i < shownTank ? '⛽' : i === shownTank && todayFraction > 0 ? (
+                  <div className="fuel-cell-partial" style={{ height: `${Math.round(todayFraction * 100)}%` }} />
                 ) : null}
               </div>
             )
           })}
         </div>
         <div className="rocket-caption">
-          {data.starDays.includes(todayKey()) ? t('tankFullMsg') : t('tankToday')}
+          {t('daysToLaunch', { n: 5 - tank })}
         </div>
         <div className="launch-count-mini">🚀 × {launches}</div>
         <button className="super-bonus-btn" onClick={() => setShowSuperBonus(true)}>
