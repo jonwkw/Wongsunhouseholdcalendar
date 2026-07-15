@@ -3509,3 +3509,93 @@ textarea:focus {
   opacity: 0.35;
   cursor: not-allowed;
 }
+
+/* ---------- live "fresh right now" section ---------- */
+.fresh-section {
+  background: var(--card);
+  border: 2px solid color-mix(in srgb, var(--accent) 30%, #fff);
+  border-radius: 18px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 3px 12px color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.fresh-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.fresh-head h3 {
+  margin: 0;
+}
+
+.fresh-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.fresh-actions .btn {
+  text-decoration: none;
+}
+
+.fetched-ago {
+  margin: 0;
+}
+
+.fresh-cols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.fresh-col h4 {
+  margin: 6px 0;
+}
+
+.news-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.news-item {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 8px 10px;
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  background: #fdfbf5;
+  text-decoration: none;
+  color: var(--ink);
+}
+
+.news-item:hover {
+  border-color: var(--accent);
+}
+
+.news-title {
+  font-weight: 600;
+  font-size: 13.5px;
+  line-height: 1.35;
+}
+
+.news-meta {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.fresh-error {
+  background: #fff8e6;
+  border-radius: 10px;
+  padding: 8px 10px;
+}

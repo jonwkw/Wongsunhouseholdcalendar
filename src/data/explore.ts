@@ -5,7 +5,7 @@
 export interface ExploreIdea {
   name: string
   emoji: string
-  category: 'play' | 'nature' | 'indoor' | 'eat' | 'new'
+  category: 'play' | 'nature' | 'indoor' | 'eat'
   area: string
   desc: string
   free?: boolean
@@ -70,20 +70,6 @@ export const EXPLORE_IDEAS: ExploreIdea[] = [
   { name: 'Whisk & Paddle', emoji: '🛶', category: 'eat', area: 'Punggol', source: 'Little Day Out', desc: 'Riverside brunch with a free sheltered kids play area; face painting and balloons on weekends.' },
   { name: 'Wildseed Cafe at The Summerhouse', emoji: '🌻', category: 'eat', area: 'Seletar', source: 'Sassy Mama', desc: 'Garden-style cafe with a retro playground — pair it with plane-spotting at Seletar Aerospace Park.' },
 
-  // ---- Newly opened (last ~3 months) ----
-  { name: 'Park Side', emoji: '🌸', category: 'new', area: 'Botanic Gardens', source: 'Honeycombers', desc: 'New all-day cafe from the PS.Cafe group inside the Botanic Gardens — lots of space for kids (and pets), Asian flavours with a twist.' },
-  { name: 'Wildseed Cafe @ The Garage', emoji: '🌼', category: 'new', area: 'Botanic Gardens', source: 'City Nomads', desc: 'Wildseed\'s new fourth outpost in the Gardens — built for slow mornings and long family brunches.' },
-  { name: 'Torikizoku', emoji: '🍢', category: 'new', area: 'VivoCity', source: 'TheSmartLocal', desc: 'Japan\'s famous yakitori chain lands in Singapore (Jun 2026): everything a flat $3.90++, 174 seats, very family-casual.' },
-  { name: 'Mary Grace', emoji: '🧁', category: 'new', area: 'Tras Street', source: 'DanielFoodDiary', desc: 'The Philippines\' beloved bakery-cafe debuts in Singapore — wallet-friendly bakes with familiar local flavours.' },
-  { name: 'Sio Pasta', emoji: '🍝', category: 'new', area: 'Raffles City', source: 'HungryGoWhere', desc: 'Casual Japanese-Italian pastas and pizzas from a Michelin-rated Tokyo chef — easy with kids.' },
-  { name: 'Gourmet Park OFC', emoji: '🚚', category: 'new', area: 'Raffles Place', source: 'City Nomads', desc: 'Pop-up food-truck park (May–Jul 2026): burgers, jerk chicken, tacos and deli sandwiches under one covered plaza.' },
-  { name: 'SKAI — Tea With a Little Honey', emoji: '🍯', category: 'new', area: 'Swissôtel The Stamford', source: 'Sassy Mama', desc: 'Winnie-the-Pooh-style themed high tea on level 70 that actually welcomes kids — storybook treats with a view.' },
-  { name: 'Souper Tang', emoji: '🍲', category: 'new', area: 'Raffles City', source: 'HungryGoWhere', desc: "Malaysia's award-winning herbal soup restaurant opens 29 Jul 2026 — nourishing family-style claypots." },
-  { name: 'The Blue Box Cafe', emoji: '💙', category: 'new', area: 'ION Orchard', source: 'Honeycombers', desc: "Tiffany & Co.'s famous cafe lands in Southeast Asia for the first time — a treat outing with Mama." },
-  { name: 'Tiap Tiap', emoji: '🍰', category: 'new', area: 'East Coast Road', source: 'DanielFoodDiary', desc: 'Home-based bakery gone shophouse: pandan chiffon, ondeh ondeh cake and banoffee pie near the beach.' },
-  { name: 'Cafe On:do', emoji: '🇰🇷', category: 'new', area: 'Alexandra Central', source: 'DanielFoodDiary', desc: 'Korean cafe with picture-perfect bakes made in-house daily — the $2.50 butter tteok is the famous one.' },
-  { name: 'Mimmo', emoji: '🥐', category: 'new', area: 'Asia Square', source: 'Honeycombers', desc: 'Hong Kong bakery meets French viennoiserie from a veteran pastry chef — grab-and-go before a Marina Bay walk.' },
-  { name: 'Big Short Coffee (Beach Road)', emoji: '☕', category: 'new', area: 'Beach Road', source: 'DanielFoodDiary', desc: 'The cult coffee bar\'s bright new outlet — warm orange tones, arches, and reliable flat whites.' },
 ]
 
 /** Deterministic pick-of-the-day so every device shows the same suggestion */
