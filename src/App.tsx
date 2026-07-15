@@ -103,10 +103,10 @@ function Shell() {
           {!locked && (
             <div className="history-btns">
               <button className="btn subtle history-btn" title={t('undoTip')} disabled={!canUndo} onClick={undo}>
-                ↶
+                ↶ {t('undoLabel')}
               </button>
               <button className="btn subtle history-btn" title={t('redoTip')} disabled={!canRedo} onClick={redo}>
-                ↷
+                {t('redoLabel')} ↷
               </button>
             </div>
           )}

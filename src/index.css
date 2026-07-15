@@ -3499,9 +3499,10 @@ textarea:focus {
 }
 
 .history-btn {
-  font-size: 16px;
-  padding: 5px 10px;
-  font-weight: 800;
+  font-size: 13px;
+  padding: 6px 10px;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 .history-btn:disabled {
