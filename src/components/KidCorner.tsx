@@ -5,7 +5,7 @@ import { activitiesOn, addDays, prettyDate, prettyTime, relativeLabel, todayKey,
 import { useForecast } from '../utils/useForecast'
 import { weatherEmoji } from '../utils/weather'
 import { mathProblemFor, missionFor, wordFor, cnWordFor, rocketFor, ROCKETS, CHINESE_WORDS } from '../data/kidContent'
-import type { WordOfDay, ChineseWordOfDay } from '../data/kidContent'
+import type { WordOfDay, ChineseWordOfDay, MathProblem } from '../data/kidContent'
 import { RocketShip } from './RocketShip'
 import { t, getLang } from '../i18n'
 import { speak, stopSpeak } from '../utils/speech'
@@ -29,6 +29,7 @@ export function KidCorner() {
   const [showKidUnlock, setShowKidUnlock] = useState(false)
   const [showSpellTest, setShowSpellTest] = useState(false)
   const [showCnTest, setShowCnTest] = useState(false)
+  const [showMathTest, setShowMathTest] = useState(false)
   const canEdit = !locked || kidUnlocked
   const launchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -534,6 +535,9 @@ export function KidCorner() {
             <button className="btn subtle speak-btn" onClick={stopSpeak}>
               {t('stopBtn')}
             </button>
+            <button className="btn subtle test-btn" onClick={() => setShowMathTest(true)}>
+              {t('testMe')}
+            </button>
             <button className="btn subtle" onClick={() => { stopSpeak(); setShowAnswer(false); setMathN((n) => Math.max(0, n - 1)) }}>
               ◀
             </button>
@@ -645,6 +649,14 @@ export function KidCorner() {
           mode={now.getDate() % 2 === 0 ? 'full' : 'missing'}
           onWin={() => markChallenge(`word:${wordN}`)}
           onClose={() => { stopSpeak(); setShowSpellTest(false) }}
+        />
+      )}
+      {showMathTest && (
+        <MathTestModal
+          problem={math}
+          lang={lang}
+          onWin={() => markChallenge(`math:${mathN}`)}
+          onClose={() => { stopSpeak(); setShowMathTest(false) }}
         />
       )}
       {showCnTest && (
@@ -768,6 +780,72 @@ function SpellTestModal({ word, mode, onWin, onClose }: { word: WordOfDay; mode:
           </div>
           <div className="kid-btn-row">
             <button className="btn subtle speak-btn" onClick={sayWord}>{t('sayAgain')}</button>
+            <button className="btn subtle speak-btn" onClick={stopSpeak}>{t('stopBtn')}</button>
+          </div>
+        </>
+      )}
+    </Modal>
+  )
+}
+
+/** Maths game: tap the right answer from four choices */
+function MathTestModal({ problem, lang, onWin, onClose }: { problem: MathProblem; lang: 'en' | 'zh'; onWin: () => void; onClose: () => void }) {
+  const answer = Number(problem.answer)
+  const [choices] = useState(() => {
+    const pool = new Set<number>([answer])
+    const near = [answer + 1, answer - 1, answer + 2, answer - 2, answer + 3, answer - 3, answer + 10]
+    for (const n of shuffle(near)) {
+      if (pool.size >= 4) break
+      if (n >= 0 && !pool.has(n)) pool.add(n)
+    }
+    return shuffle([...pool])
+  })
+  const [wrong, setWrong] = useState<number | null>(null)
+  const [done, setDone] = useState(false)
+
+  const sayIt = () => speak(lang === 'zh' ? problem.questionZh : problem.question, lang)
+  useEffect(() => {
+    sayIt()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const tap = (n: number) => {
+    if (done) return
+    if (n === answer) {
+      setDone(true)
+      speak(
+        lang === 'zh' ? `答对了！答案是 ${answer}！你真棒！` : `That's right! The answer is ${answer}! Amazing job!`,
+        lang,
+      )
+      onWin()
+    } else {
+      setWrong(n)
+      setTimeout(() => setWrong(null), 450)
+    }
+  }
+
+  return (
+    <Modal title={t('mathTestTitle')} onClose={onClose} cover>
+      <p className="hint" style={{ marginTop: 0 }}>{t('mathTestHint')}</p>
+      <p className="cn-meaning-prompt">{lang === 'zh' ? problem.questionZh : problem.question}</p>
+      {done ? (
+        <div className="test-celebrate">
+          <div className="test-word">🎉 {problem.answer} 🎉</div>
+          <div className="kid-btn-row">
+            <button className="btn subtle" onClick={onClose}>{t('doneBtn')}</button>
+          </div>
+        </div>
+      ) : (
+        <>
+          <div className="cn-choices">
+            {choices.map((n) => (
+              <button key={n} className={`cn-choice math-choice ${wrong === n ? 'wrong' : ''}`} onClick={() => tap(n)}>
+                {n}
+              </button>
+            ))}
+          </div>
+          <div className="kid-btn-row">
+            <button className="btn subtle speak-btn" onClick={sayIt}>{t('sayAgain')}</button>
             <button className="btn subtle speak-btn" onClick={stopSpeak}>{t('stopBtn')}</button>
           </div>
         </>

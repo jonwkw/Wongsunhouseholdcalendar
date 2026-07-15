@@ -152,6 +152,11 @@ interface AppStore {
   locked: boolean
   setLocked: (v: boolean) => void
   sync: SyncStatus
+  /** Step backwards/forwards through this device's own edits */
+  undo: () => void
+  redo: () => void
+  canUndo: boolean
+  canRedo: boolean
 }
 
 const StoreContext = createContext<AppStore | null>(null)
@@ -171,6 +176,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   configRef.current = syncConfig
   const stampRef = useRef(loadStamp())
   const pushTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // undo/redo of THIS device's edits (session-local; remote edits clear it)
+  const undoStack = useRef<AppData[]>([])
+  const redoStack = useRef<AppData[]>([])
+  const [, setHistTick] = useState(0)
+  const bumpHist = () => setHistTick((v) => v + 1)
 
   const setLocked = useCallback((v: boolean) => {
     localStorage.setItem(LOCK_KEY, v ? '1' : '0')
@@ -194,9 +204,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  /** Local edit: bump the stamp and push soon (debounced while typing) */
-  const update = useCallback((fn: (d: AppData) => AppData) => {
-    setData((prev) => fn(prev))
+  const schedulePush = useCallback(() => {
     stampRef.current = Date.now()
     saveStamp(stampRef.current)
     if (configRef.current) {
@@ -204,6 +212,40 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       pushTimer.current = setTimeout(doPush, PUSH_DEBOUNCE)
     }
   }, [doPush])
+
+  /** Local edit: record history, bump the stamp and push soon (debounced) */
+  const update = useCallback((fn: (d: AppData) => AppData) => {
+    setData((prev) => {
+      undoStack.current.push(prev)
+      if (undoStack.current.length > 50) undoStack.current.shift()
+      redoStack.current = []
+      return fn(prev)
+    })
+    bumpHist()
+    schedulePush()
+  }, [schedulePush])
+
+  const undo = useCallback(() => {
+    setData((prev) => {
+      const last = undoStack.current.pop()
+      if (!last) return prev
+      redoStack.current.push(prev)
+      return last
+    })
+    bumpHist()
+    schedulePush()
+  }, [schedulePush])
+
+  const redo = useCallback(() => {
+    setData((prev) => {
+      const next = redoStack.current.pop()
+      if (!next) return prev
+      undoStack.current.push(prev)
+      return next
+    })
+    bumpHist()
+    schedulePush()
+  }, [schedulePush])
 
   // poll for remote edits from the rest of the family
   useEffect(() => {
@@ -218,6 +260,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         if (remote && remote.stamp > stampRef.current) {
           stampRef.current = remote.stamp
           saveStamp(remote.stamp)
+          undoStack.current = []
+          redoStack.current = []
+          bumpHist()
           setData(migrate(remote.data))
         }
         setSyncState('ok')
@@ -285,8 +330,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       locked,
       setLocked,
       sync: { config: syncConfig, state: syncState, lastSync, error: syncError, connect, disconnect },
+      undo,
+      redo,
+      canUndo: undoStack.current.length > 0,
+      canRedo: redoStack.current.length > 0,
     }),
-    [data, update, resetAll, locked, setLocked, syncConfig, syncState, lastSync, syncError, connect, disconnect],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [data, update, resetAll, locked, setLocked, syncConfig, syncState, lastSync, syncError, connect, disconnect, undo, redo],
   )
 
   return <StoreContext.Provider value={store}>{children}</StoreContext.Provider>

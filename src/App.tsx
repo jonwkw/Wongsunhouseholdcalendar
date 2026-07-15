@@ -64,7 +64,7 @@ function LockModal({ onUnlock, onClose }: { onUnlock: () => void; onClose: () =>
 }
 
 function Shell() {
-  const { data, locked, setLocked } = useApp()
+  const { data, locked, setLocked, undo, redo, canUndo, canRedo } = useApp()
   const { lang, setLang } = useLang()
   const [tab, setTab] = useState('today')
   const [theme, setTheme] = useState(() => localStorage.getItem('wongsun-theme') ?? 'cream')
@@ -100,6 +100,16 @@ function Shell() {
           ))}
         </button>
         <div className="header-actions">
+          {!locked && (
+            <div className="history-btns">
+              <button className="btn subtle history-btn" title={t('undoTip')} disabled={!canUndo} onClick={undo}>
+                ↶
+              </button>
+              <button className="btn subtle history-btn" title={t('redoTip')} disabled={!canRedo} onClick={redo}>
+                ↷
+              </button>
+            </div>
+          )}
           <div className="theme-dots" title={t('themeLabel')}>
             {THEMES.map((th) => (
               <button

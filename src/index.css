@@ -3482,3 +3482,29 @@ textarea:focus {
   color: var(--muted);
   margin-bottom: 3px;
 }
+
+/* uniform look for all four mini-tests */
+.cn-choice.math-choice {
+  font-size: 28px;
+  min-width: 68px;
+}
+
+.modal .kid-btn-row {
+  justify-content: center;
+}
+
+.history-btns {
+  display: flex;
+  gap: 4px;
+}
+
+.history-btn {
+  font-size: 16px;
+  padding: 5px 10px;
+  font-weight: 800;
+}
+
+.history-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
