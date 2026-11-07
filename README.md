@@ -14,6 +14,7 @@ A household management web app for the whole family — parents, grandma, helper
 - **Menu** — weekly meal planner (breakfast / lunch / dinner, plus an optional snacks row).
   - Drag dishes from the **Dish library** into a meal box, or tap any box and type directly.
   - Tap a placed meal to tag who it's for.
+- **Space Muncher** (🎮 button in the kid's tab, or open `space-muncher.html`) — a rocket game for the kids: steer with the big arrow pad (or keyboard arrows), eat anything smaller than you, and grow from stardust-eater to Universe Eater across 14 rocket upgrades. ⚡ Turbo unlocks once a minute by answering a simple sum. Paint the rocket in the 🎨 garage. Progress saves on the device.
 - **Family Board** — special requests ("can we add this to the menu?") and one-off reminders ("balcony clean"), with replies and done-ticking.
 
 Every activity and meal can be tagged to one or more family members — or **Everyone** — and is colour-coded to the person, with a colour key shown on each page. Edit names/emoji or add members via the "Edit family" button.

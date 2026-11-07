@@ -438,6 +438,9 @@ export function KidCorner() {
         <button className="super-bonus-btn" onClick={() => setShowSuperBonus(true)}>
           ⭐ {t('superBonus')}
         </button>
+        <a className="space-game-btn" href={`./space-muncher.html?name=${encodeURIComponent(kid.name)}`}>
+          🎮 {t('playSpaceGame')}
+        </a>
       </div>
       </div>
 
