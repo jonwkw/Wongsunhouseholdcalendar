@@ -210,6 +210,7 @@
       <div id="nextHint">Eat things smaller than you!</div>
     </div>
     <div class="top-btns">
+      <button class="round-btn" id="fsBtn" aria-label="Full screen">⛶</button>
       <button class="round-btn" id="muteBtn" aria-label="Sound on or off">🔊</button>
       <button class="round-btn" id="pauseBtn" aria-label="Pause">⏸</button>
     </div>
@@ -244,6 +245,7 @@
       <div><b>⚡</b>Turbo = solve a sum</div>
     </div>
     <button class="big-btn" id="playBtn">▶ PLAY</button>
+    <button class="mid-btn" id="startFsBtn">⛶ Full screen</button>
     <button class="mid-btn paint" id="startPaintBtn">🎨 Paint my rocket</button>
     <a class="mid-btn" href="./">🏡 Back to Family Hub</a>
   </div>
@@ -1202,6 +1204,7 @@ window.addEventListener('keydown', (e) => {
   if ((e.key === ' ' || e.key === 't' || e.key === 'T') && mode === 'play') { e.preventDefault(); tryTurbo(); }
   if (e.key === 'Escape' || e.key === 'p' || e.key === 'P') { if (mode === 'play') pause(); else if (mode === 'pause') resume(); }
   if (e.key === 'Enter' && mode === 'levelup') closeLevelUp();
+  if (e.key === 'f' || e.key === 'F') { if (isFull()) exitFull(); else enterFull(); }
 });
 window.addEventListener('keyup', (e) => { const d = KEYMAP[e.key]; if (d) setKey(d, false); });
 window.addEventListener('blur', clearKeys);
@@ -1263,7 +1266,37 @@ $('restartBtn').onclick = () => {
   persist(); resetRestart(); hide('pauseMenu'); mode = 'play';
 };
 
-$('playBtn').onclick = startGame;
+// ---- full screen (desktop, Android, iPad; iPhone Safari doesn't allow it) ----
+const fsEl = document.documentElement;
+const fsSupported = !!(fsEl.requestFullscreen || fsEl.webkitRequestFullscreen) && (document.fullscreenEnabled !== false || document.webkitFullscreenEnabled);
+const isFull = () => !!(document.fullscreenElement || document.webkitFullscreenElement);
+function enterFull() {
+  if (!fsSupported || isFull()) return;
+  try {
+    const r = fsEl.requestFullscreen ? fsEl.requestFullscreen({ navigationUI: 'hide' }) : fsEl.webkitRequestFullscreen();
+    if (r && r.catch) r.catch(() => {});
+  } catch (e) { /* not allowed here */ }
+}
+function exitFull() {
+  try {
+    const r = document.exitFullscreen ? document.exitFullscreen() : document.webkitExitFullscreen && document.webkitExitFullscreen();
+    if (r && r.catch) r.catch(() => {});
+  } catch (e) { /* ignore */ }
+}
+function syncFs() {
+  const on = isFull();
+  $('fsBtn').textContent = on ? '🗗' : '⛶';
+  $('fsBtn').setAttribute('aria-label', on ? 'Exit full screen' : 'Full screen');
+  $('startFsBtn').textContent = on ? '🗗 Exit full screen' : '⛶ Full screen';
+  setTimeout(resize, 50);
+}
+if (!fsSupported) { $('fsBtn').classList.add('hidden'); $('startFsBtn').classList.add('hidden'); }
+$('fsBtn').onclick = () => (isFull() ? exitFull() : enterFull());
+$('startFsBtn').onclick = () => (isFull() ? exitFull() : enterFull());
+document.addEventListener('fullscreenchange', syncFs);
+document.addEventListener('webkitfullscreenchange', syncFs);
+
+$('playBtn').onclick = () => { enterFull(); startGame(); };
 $('startPaintBtn').onclick = () => openGarage('start');
 $('pausePaintBtn').onclick = () => openGarage('pause');
 $('garageDone').onclick = closeGarage;
