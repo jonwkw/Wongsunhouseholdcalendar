@@ -238,7 +238,7 @@
     <p class="subtitle">Eat space stuff. Grow HUGE!</p>
     <canvas class="preview" id="startPreview" width="360" height="360"></canvas>
     <div class="how">
-      <div><b>◀ ▲ ▶</b>Fly your rocket</div>
+      <div><b>👆</b>Tap where to fly (or use arrows)</div>
       <div><b>😋</b>Eat smaller things</div>
       <div><b>🔴</b>Red ring = too big!</div>
       <div><b>⚡</b>Turbo = solve a sum</div>
@@ -376,7 +376,7 @@ const FLAMES = [
   ['#ff8c2e', '#ffe680'], ['#3ce0ff', '#e8fdff'], ['#ff4fd8', '#ffd0f5'], ['#7dff6a', '#f2fff0'],
 ];
 
-const GAIN = 0.3;           // how much you grow per bite
+const GAIN = 0.45;          // how much you grow per bite
 const TURBO_TIME = 12;      // seconds
 const TURBO_COOLDOWN = 60;  // seconds
 const SAVE_KEY = 'spaceMuncher.v1';
@@ -444,7 +444,7 @@ const custom = { color: clamp(save.color | 0, 0, COLORS.length - 1), pattern: sa
 let muted = !!save.muted;
 let eaten = save.eaten | 0;
 
-const player = { x: 0, y: 0, vx: 0, vy: 0, angle: -Math.PI / 2, mass: Math.max(64, save.mass || 64) };
+const player = { x: 0, y: 0, vx: 0, vy: 0, hx: 0, hy: -1, angle: -Math.PI / 2, mass: Math.max(64, save.mass || 64) };
 const pr = () => Math.sqrt(player.mass);
 let level = levelFor(pr());
 
@@ -461,6 +461,7 @@ let bumpMsgAt = -10;
 let sky = SKIES[level].map(hexToRgb);
 const keys = { up: false, down: false, left: false, right: false };
 let starOff = { x: 0, y: 0 };
+let steerPointer = null; // finger/mouse held on the screen: fly towards it
 
 // ================= CANVAS =================
 const canvas = $('game');
@@ -998,21 +999,25 @@ function update(dt) {
   const R = pr();
   const turbo = gameTime < turboUntil;
 
-  // steering
-  let dx = (keys.right ? 1 : 0) - (keys.left ? 1 : 0);
-  let dy = (keys.down ? 1 : 0) - (keys.up ? 1 : 0);
-  const len = Math.hypot(dx, dy);
+  // steering: the rocket always cruises; arrows or a finger just point it.
+  // It keeps flying the last way you pointed, so you don't have to hold anything.
+  const dx = (keys.right ? 1 : 0) - (keys.left ? 1 : 0);
+  const dy = (keys.down ? 1 : 0) - (keys.up ? 1 : 0);
+  if (dx || dy) { const l = Math.hypot(dx, dy); player.hx = dx / l; player.hy = dy / l; }
+  else if (steerPointer) {
+    const px = steerPointer.x - W / 2, py = steerPointer.y - H / 2; const l = Math.hypot(px, py);
+    if (l > 12) { player.hx = px / l; player.hy = py / l; }
+  }
   const speed = R * 5.5 * (turbo ? 1.8 : 1);
-  if (len) { dx /= len; dy /= len; }
-  const k = Math.min(1, dt * (len ? 4 : 1.6));
-  player.vx += (dx * speed - player.vx) * k;
-  player.vy += (dy * speed - player.vy) * k;
+  const k = Math.min(1, dt * 6);
+  player.vx += (player.hx * speed - player.vx) * k;
+  player.vy += (player.hy * speed - player.vy) * k;
   player.x += player.vx * dt; player.y += player.vy * dt;
   const sp = Math.hypot(player.vx, player.vy);
   if (sp > R * 0.3) {
     const target = Math.atan2(player.vy, player.vx);
     let diff = target - player.angle; diff = Math.atan2(Math.sin(diff), Math.cos(diff));
-    player.angle += diff * Math.min(1, dt * 10);
+    player.angle += diff * Math.min(1, dt * 14);
   }
   starOff.x += player.vx * zoom * dt; starOff.y += player.vy * zoom * dt;
 
@@ -1058,6 +1063,8 @@ function update(dt) {
       player.x += nx * overlap; player.y += ny * overlap;
       const dot = player.vx * nx + player.vy * ny;
       if (dot < 0) { player.vx -= 1.7 * dot * nx; player.vy -= 1.7 * dot * ny; }
+      const hd = player.hx * nx + player.hy * ny;
+      if (hd < 0) { player.hx -= 2 * hd * nx; player.hy -= 2 * hd * ny; }
       shake = Math.max(shake, 0.25);
       if (gameTime - bumpMsgAt > 2.5) { bumpMsgAt = gameTime; sfx.bump(); floatText('Too big! Grow more! 💪', '#ff8a9a', true); }
     }
@@ -1083,7 +1090,7 @@ function eat(o) {
   o.eaten = 0.001;
   const turbo = gameTime < turboUntil;
   // later levels need more bites, so the big stuff feels earned
-  player.mass += (o.r * o.r * GAIN * (turbo ? 2 : 1)) / (1 + level * 0.25);
+  player.mass += (o.r * o.r * GAIN * (turbo ? 2 : 1)) / (1 + level * 0.15);
   eaten++;
   sfx.chomp();
   burst(o.x, o.y, objColor(o), 10, o.r * 0.35, pr() * 2.5);
@@ -1188,7 +1195,7 @@ const KEYMAP = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight
 const padBtns = {};
 document.querySelectorAll('.arrow').forEach((b) => { padBtns[b.dataset.dir] = b; });
 function setKey(dir, on) { keys[dir] = on; padBtns[dir].classList.toggle('on', on); }
-function clearKeys() { Object.keys(keys).forEach((k) => setKey(k, false)); }
+function clearKeys() { steerPointer = null; Object.keys(keys).forEach((k) => setKey(k, false)); }
 window.addEventListener('keydown', (e) => {
   const d = KEYMAP[e.key];
   if (d) { e.preventDefault(); if (mode === 'play') setKey(d, true); }
@@ -1203,6 +1210,10 @@ Object.entries(padBtns).forEach(([dir, b]) => {
   const off = () => setKey(dir, false);
   b.addEventListener('pointerup', off); b.addEventListener('pointercancel', off); b.addEventListener('lostpointercapture', off);
 });
+canvas.addEventListener('pointerdown', (e) => { if (mode !== 'play') return; audio(); steerPointer = { id: e.pointerId, x: e.clientX, y: e.clientY }; });
+canvas.addEventListener('pointermove', (e) => { if (steerPointer && steerPointer.id === e.pointerId) { steerPointer.x = e.clientX; steerPointer.y = e.clientY; } });
+const endSteer = (e) => { if (steerPointer && steerPointer.id === e.pointerId) steerPointer = null; };
+canvas.addEventListener('pointerup', endSteer); canvas.addEventListener('pointercancel', endSteer); canvas.addEventListener('pointerleave', endSteer);
 document.addEventListener('contextmenu', (e) => e.preventDefault());
 document.addEventListener('visibilitychange', () => { if (document.hidden && mode === 'play') pause(); });
 window.addEventListener('pagehide', persist);
@@ -1216,7 +1227,7 @@ function startGame() {
   hide('startScreen'); show('hud');
   if (!objects.length) { for (let i = 0; i < TARGET_COUNT; i++) spawn(true); }
   mode = 'play';
-  if (eaten === 0) setTimeout(() => toast('Fly into small things to eat them! 😋', 2600), 400);
+  if (eaten === 0) setTimeout(() => toast('👆 Tap where you want to fly! Eat small things 😋', 3000), 400);
 }
 function pause() { clearKeys(); mode = 'pause'; show('pauseMenu'); persist(); }
 function resume() { hide('pauseMenu'); mode = 'play'; resetRestart(); }
@@ -1245,7 +1256,7 @@ let restartArmed = false;
 function resetRestart() { restartArmed = false; $('restartBtn').textContent = '🔄 Start over from Level 1'; }
 $('restartBtn').onclick = () => {
   if (!restartArmed) { restartArmed = true; $('restartBtn').textContent = '⚠️ Sure? Tap again to start over'; return; }
-  player.mass = 64; player.x = player.y = player.vx = player.vy = 0; eaten = 0; level = 0;
+  player.mass = 64; player.x = player.y = player.vx = player.vy = 0; player.hx = 0; player.hy = -1; eaten = 0; level = 0;
   objects = []; particles = []; floaters = []; turboReadyAt = gameTime; turboUntil = -1;
   zoom = targetZoom(); hudLevel = -1;
   for (let i = 0; i < TARGET_COUNT; i++) spawn(true);
